@@ -1,0 +1,5 @@
+&bands
+  prefix = 'pwscf'
+  outdir = './work'
+  filband = 'bands.out'
+/
