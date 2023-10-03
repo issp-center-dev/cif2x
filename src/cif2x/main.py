@@ -65,13 +65,14 @@ def main():
 
         qe = Struct2QE(params, struct)
 
-        try:
-            output_file = info["output_file"]
-        except KeyError as e:
+        if "output_file" not in info:
             logger.error(f"task {taskid}: output_file not specified")
             raise RuntimeError("output_file not specified")
 
-        qe.write_input(output_file)
+        output_file = info.get("output_file")
+        output_dir = info.get("output_dir", ".")
+
+        qe.write_input(output_file, output_dir)
 
 def deepupdate(dict1, dict2):
     """
