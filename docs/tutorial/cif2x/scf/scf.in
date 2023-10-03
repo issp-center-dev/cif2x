@@ -1,0 +1,47 @@
+&control
+    calculation = 'scf'
+    prefix = 'pwscf'
+    pseudo_dir = './pseudo'
+    outdir = './work'
+    tstress = .true.
+    tprnfor = .true.
+/
+
+&system
+    ibrav = 0
+    nat = 7
+    ntyp = 3
+    ecutwfc = 35.7641030992696
+    ecutrho = 179.501065844332
+    occupations = 'smearing'
+    smearing = 'm-p'
+    degauss = 0.01
+    nspin = 2
+/
+
+&electrons
+    missing_beta = 0.1
+    conv_thr = 1e-08
+/
+CELL_PARAMETERS {angstrom}
+4.666246  0.000000  2.680170
+1.551393  4.400799  2.680170
+0.000000  0.000000  5.381186
+
+ATOMIC_SPECIES
+Co  58.933195  Co.pbe-n-rrkjus_psl.0.2.3.UPF
+Sn  118.710000  Sn.pbe-dn-rrkjus_psl.0.2.UPF
+S  32.065000  S.pbe-n-rrkjus_psl.0.1.UPF
+
+ATOMIC_POSITIONS {crystal}
+Co  0.500000  0.000000  0.000000
+Co  0.000000  0.500000  0.000000
+Co  0.000000  0.000000  0.500000
+Sn  0.500000  0.500000  0.500000
+Sn  0.000000  0.000000  0.000000
+S  0.719510  0.719510  0.719510
+S  0.280490  0.280490  0.280490
+
+K_POINTS {automatic}
+8  8  8  0  0  0
+

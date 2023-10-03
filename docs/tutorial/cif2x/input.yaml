@@ -1,0 +1,29 @@
+structure:
+  use_ibrav: false
+  tolerance: 0.05
+
+optional:
+  pseudo_dir: ./pseudo
+  pp_file: ./pseudo/pp_psl_pbe_rrkjus.csv
+
+tasks:
+  - mode: scf
+    output_file: scf.in
+    output_dir: scf
+    template: scf.in_tmpl
+    content:
+      namelist:
+        control:
+          prefix: pwscf
+          pseudo_dir:
+          outdir: ./work
+        system:
+          ecutwfc:
+          ecutrho:
+      CELL_PARAMETERS:
+      ATOMIC_SPECIES:
+      ATOMIC_POSITIONS:
+        option: crystal
+      K_POINTS:
+        option: automatic
+        grid: [8,8,8]
