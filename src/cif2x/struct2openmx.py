@@ -162,16 +162,14 @@ class Struct2OpenMX:
         self._fill_unitvectors(content)
 
     def _fill_species(self, content):
-        content["Species.Number"] = len(self.struct.atom_types)
-
-        atoms = [ atom.symbol for atom in self.struct.atoms ]
         prec = { "quick": 3, "standard": 4, "precise": 5 }[self.info.get("precision", "quick")]
 
+        content["Species.Number"] = len(self.struct.atom_types)
+
         tbl = []
-        for atom in atoms:
+        for atom in [atom_type.symbol for atom_type in self.struct.atom_types]:
             entry = _lookup_vps_table(atom)
             tbl.append([atom, entry[prec], entry[1]])
-
         content["Definition.of.Atomic.Species"] = tbl
 
     def _fill_atoms(self, content):
