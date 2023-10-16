@@ -1,6 +1,7 @@
 import re
 import itertools
 import json
+from collections import UserDict
 
 import logging
 logger = logging.getLogger(__name__)
@@ -104,3 +105,53 @@ def inflate(content):
         infos += [(key, content_new)]
 
     return infos
+
+
+class CaseInsensitiveKey(object):
+    def __init__(self, key):
+        # logger.debug("Key: __init__ with type {}, value {}".format(type(key),key))
+        if isinstance(key, CaseInsensitiveKey):
+            self.key = key.key
+        else:
+            self.key = key
+    def __hash__(self):
+        # logger.debug("Key: __hash__ with type {}, value {}".format(type(self.key),self.key))
+        return hash(self.key.casefold())
+    def __eq__(self, other):
+        # logger.debug("Key: __eq__ self={}, other={}({})".format(self.key, other, type(other)))
+        return self.key.casefold() == other.key.casefold()
+    def __str__(self):
+        return self.key
+
+class CaseInsensitiveDict(UserDict):
+    def __init__(self, mapping=None, /, **kwargs):
+        if mapping is not None:
+            # logger.debug("Dict: __init__ with {}".format(mapping))
+            mapping = { CaseInsensitiveKey(key): value for key, value in mapping.items() }
+        else:
+            mapping = {}
+        if kwargs:
+            # logger.debug("Dict: __init__ with kwargs={}".format(kwargs))
+            mapping.update({ CaseInsensitiveKey(key): value for key, value in kwargs.items() })
+        super().__init__(mapping)
+
+    def __setitem__(self, key, value):
+        # logger.debug("Dict: __setitem__ with key={}, value={}".format(key, value))
+        super().__setitem__(CaseInsensitiveKey(key), value)
+
+    def __getitem__(self, key):
+        value = super().__getitem__(CaseInsensitiveKey(key))
+        # logger.debug("Dict: __getitem__ with key={}, value={}".format(key, value))
+        return value
+
+    def __contains__(self, key):
+        # logger.debug("Dict: __contains__ {} {}".format(key, type(key)))
+        return super().__contains__(CaseInsensitiveKey(key))
+
+    def __str__(self):
+        s = "{ " + ", ".join([ str(k) + ": " + str(v) for k, v in super().items()]) + " }"
+        return s
+
+    def as_dict(self):
+        return { str(k): v for k, v in super().items() }
+
