@@ -17,6 +17,7 @@ from cif2x import __version__
 from cif2x.cif2struct import Cif2Struct
 from cif2x.struct2qe  import Struct2QE
 from cif2x.struct2vasp  import Struct2Vasp
+from cif2x.struct2openmx  import Struct2OpenMX
 
 def main():
     import argparse
@@ -95,6 +96,26 @@ def main():
             vsp = Struct2Vasp(params, struct)
 
             output_file = info.get("output_file", None)  #dummy
+            output_dir = info.get("output_dir", ".")
+
+            vsp.write_input(output_file, output_dir)
+
+    elif target.lower() in ["openmx"]:
+
+        info_optional = info_dict.get("optional", {})
+
+        info_tasks = info_dict.get("tasks", [])
+        for idx, info in enumerate(info_tasks):
+            taskid = idx + 1
+            logger.info(f"start task {taskid}")
+
+            params = {}
+            params.update(info)
+            deepupdate(params, {'optional': info_optional})
+
+            vsp = Struct2OpenMX(params, struct)
+
+            output_file = info.get("output_file")
             output_dir = info.get("output_dir", ".")
 
             vsp.write_input(output_file, output_dir)
