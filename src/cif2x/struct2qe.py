@@ -5,11 +5,11 @@ import numpy as np
 from pandas import read_csv, DataFrame
 from pymatgen.core.periodic_table import Element
 
-from cif2struct import Cif2Struct
-from qe.tools import *
-from qe.qeutil import QEInputGeneral
-from qe.content import Content, inflate
-from qe.calc_mode import create_modeproc
+from cif2x.cif2struct import Cif2Struct
+from cif2x.qe.tools import *
+from cif2x.qe.qeutil import QEInputGeneral
+from cif2x.qe.content import Content, inflate
+from cif2x.qe.calc_mode import create_modeproc
 
 import logging
 logger = logging.getLogger(__name__)

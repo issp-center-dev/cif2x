@@ -39,6 +39,10 @@ class Cif2Struct:
             self.structure = structure.get_primitive_structure(tolerance=self.tolerance)
             self.system = {}
 
+        if "supercell" in params:
+            self.supercell = params["supercell"]
+            self.structure.make_supercell(self.supercell)
+
         if "magmom" in self.structure.site_properties:
             logger.info("init: magnetic moment found")
             self._set_atom_info_mag()
@@ -48,6 +52,7 @@ class Cif2Struct:
             self._set_atom_info_base()
             self.is_mag = False
 
+            
     def _set_atom_info_base(self):
         """
         Manufacture atomic information for ATOMIC_SPECIES and ATOMIC_POSITIONS 

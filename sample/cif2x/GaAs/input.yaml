@@ -1,0 +1,12 @@
+structure:
+  use_ibrav: true
+  tolerance: 0.01
+  # supercell: [2,2,2]
+optional:
+  data_dir: /scr/src/openmx/openmx3.9/DFT_DATA19
+tasks:
+  - output_file: test.in
+    template: GaAs.dat
+    content:
+      system.name: gallium_arsenide
+    precision: precise
