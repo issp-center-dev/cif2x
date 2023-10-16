@@ -11,6 +11,7 @@ HTP-tools Users Guide
    :caption: Contents:
 
    about/index
+   moller/index
    cif2x/index
 
 .. Indices and tables

@@ -227,3 +227,30 @@ content
     - ``automatic_linemode``
 
       parameter: ``division``, ``path_type`` (HighSymmKpath の path_type に対応)
+
+
+OpenMX 向けパラメータ
+===============================
+
+``optional`` セクションおよび ``tasks`` セクションの ``content`` に記載する内容について、OpenMX 固有の内容を記述します。
+
+optional
+--------
+
+  ``data_dir``
+
+    擬原子軌道および擬ポテンシャルのファイルを格納するディレクトリを指定します。入力ファイルの ``DATA.DIR`` パラメータに対応します。
+
+content
+--------
+
+  ``precision``
+
+    擬原子軌道を OpenMXマニュアル 10.6 章の Table 1, 2 にしたがって選択します。 ``quick``, ``standard``, ``precise`` のいずれかの値を取ります。デフォルト値は ``quick`` です。
+
+OpenMX で分子を扱う
+===============================
+
+``cif2x`` の target オプションに ``-t openmx-mol`` を指定すると、分子構造データをもとに OpenMX の入力ファイルを生成することができます。
+分子構造データのフォーマットは pymatgen が対応する xyz 形式や Gaussian 形式のほか、OpenBabel ライブラリを予めインストールしておけば、OpenBabel が対応する多様なフォーマットを入力とすることができます。
+

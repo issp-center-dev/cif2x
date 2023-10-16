@@ -35,6 +35,10 @@ cif2x
 
     - ``VASP``: VASP向け入力ファイルを生成します。
 
+    - ``OpenMX``: OpenMX向け入力ファイルを生成します。
+
+    - ``OpenMX-mol``: 分子構造を対象に OpenMX向け入力ファイルを生成します。material.cif に分子構造データ(xyz形式等)を指定します。
+
   - ``input_yaml``
 
     入力パラメータファイルを指定します。形式は YAML format です。
