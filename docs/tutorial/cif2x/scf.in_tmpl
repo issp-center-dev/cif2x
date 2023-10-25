@@ -1,0 +1,26 @@
+&control
+    calculation = 'scf'
+    prefix = 'pwscf'
+    pseudo_dir = './pseudo'
+    outdir = './work'
+    tstress = .true.
+    tprnfor = .true.
+/
+
+&system
+    ibrav = 0
+    nat = 7
+    ntyp = 3
+    ecutwfc = 36.0
+    ecutrho = 180.0
+    occupations = 'smearing'
+    smearing = 'm-p'
+    degauss = 0.01
+    noncolin = .true.
+    nspin = 2
+/
+
+&electrons
+    missing_beta = 0.1
+    conv_thr = 1e-08
+/
