@@ -3,8 +3,9 @@ structure:
   tolerance: 0.05
 
 optional:
-  pseudo_dir: &pseudo_dir ../pseudo
+  pseudo_dir: ../pseudo
   pp_file: ../pseudo/pp_psl_pbe_rrkjus.csv
+  cutoff_file: ../pseudo/cutoff_psl_pbe_rrkjus.csv
 
 tasks:
   - mode: scf
@@ -13,7 +14,7 @@ tasks:
       namelist:
         control:
           prefix: pwscf
-          pseudo_dir: *pseudo_dir
+          pseudo_dir: ./pseudo_psl
           outdir: ./work
           tstress: true
           tprnfor: true
@@ -43,7 +44,7 @@ tasks:
       namelist:
         control:
           prefix: pwscf
-          pseudo_dir: *pseudo_dir
+          pseudo_dir: ./pseudo_psl
           outdir: ./work
           tstress: true
           tprnfor: true
