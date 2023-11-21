@@ -19,10 +19,15 @@ def generate_cell_parameters(qe, params):
 
 def generate_atomic_species(qe, params):
     data = []
-    for aname, ename in zip(qe.struct.atom_names, qe.struct.elem_names):
-        pp = qe.pp_list.at[ename, "pseudopotential"]
-        ppfile = "{}.{}{}.UPF".format(ename, ("rel-" if qe.is_soc else ""), pp)
-        data += [[aname, Element(ename).atomic_mass, ppfile]]
+
+    if qe.pp_list is not None:
+        for aname, ename in zip(qe.struct.atom_names, qe.struct.elem_names):
+            pp = qe.pp_list.at[ename, "pseudopotential"]
+            ppfile = "{}.{}{}.UPF".format(ename, ("rel-" if qe.is_soc else ""), pp)
+            data += [[aname, Element(ename).atomic_mass, ppfile]]
+    else:
+        logger.error("generate_atomic_species: pp_file is not specified")
+        raise RuntimeError("generate_atomic_species: pp_file not specified")
     return {
         'key': 'ATOMIC_SPECIES',
         'option': None,
