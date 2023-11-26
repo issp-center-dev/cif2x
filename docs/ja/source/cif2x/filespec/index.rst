@@ -85,13 +85,25 @@ Quantum ESPRESSO 向けパラメータ
 optionalセクション
 ------------------
 
-  ``pseudo_dir``
-
-    擬ポテンシャルファイルを格納するディレクトリ名を指定します。 各taskの ``content`` に ``pseudo_dir`` が指定されている場合は後者が優先します。
-
   ``pp_file``
 
     元素種と擬ポテンシャルを対応付けるCSV形式のインデックスファイルを指定します。
+    ファイルの書式は、元素種、擬ポテンシャルファイルのタイプ、nexclude、orbitals です。例:
+
+    .. code-block::
+
+      Fe,pbe-spn-rrkjus_psl.0.2.1,4,spd
+
+    擬ポテンシャルファイルのファイル名は Fe.pbe-spn-rrkjus_psl.0.2.1.UPF に対応します。
+
+  ``cutoff_file``
+
+    擬ポテンシャルファイルとカットオフを対応付けるCSV形式のインデックスファイルを指定します。
+    ファイルの書式は、擬ポテンシャルファイル、ecutwfcの値、ecutrhoの値 です。
+
+  ``pseudo_dir``
+
+    擬ポテンシャルファイルを格納するディレクトリ名を指定します。カットオフの値を擬ポテンシャルファイルから取得する場合に使用します。Quantum ESPRESSO の ``pseudo_dir`` パラメータとは独立に指定します。
 
 
 content
