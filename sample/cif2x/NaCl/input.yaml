@@ -4,9 +4,10 @@ structure:
   supercell: [2,2,2]
 
 optional:
-  #pseudo_dir: &pseudo_dir ../pseudo
-  pseudo_dir: ./pot
-  pseudo_functional: PBE
+  pp_file: list_pbe.csv
+  pseudo_dir: /home/issp/vasp/vasp5/pot
+  #pseudo_functional: PBE
+  #pseudo_map: ./element_map.csv
 
 tasks:
   - output_dir: default
