@@ -7,6 +7,7 @@ from pymatgen.symmetry.bandstructure import HighSymmKpath
 from pymatgen.core import SETTINGS
 from monty.io import zopen
 from monty.os.path import zpath
+from pandas import read_csv, DataFrame
 
 from cif2x.cif2struct import Cif2Struct
 from cif2x.utils import *
@@ -220,32 +221,35 @@ def generate_poscar(vsp, params):
 def generate_potcar(vsp, params):
     logger.debug("generate_potcar")
 
-    def _find_option(key):
+    def _find_option(key, default=None):
         if "optional" in vsp.info:
             return vsp.info["optional"].get(key)
         else:
-            return None
+            return default
+
+    pp_file = _find_option("pp_file")
+    pp_list = None
+    try:
+        pp_list = read_csv(pp_file, index_col=0)
+    except Exception as e:
+        logger.warning("generate_potcar: {}".format(e))
 
     pseudo_dir = _find_option("pseudo_dir")
     pseudo_functional = _find_option("pseudo_functional")
 
-    logger.debug(f"generate_potcar: pseudo_dir = {pseudo_dir}, pseudo_functional = {pseudo_functional}")
+    logger.debug(f"generate_potcar: pp_file = {pp_file}, pseudo_dir = {pseudo_dir}, pseudo_functional = {pseudo_functional}")
 
-    if pseudo_dir:
+    if pp_list is not None:
         # read POTCAR files for elements
-        def _find_potcar_file(el):
-            for p in [Path(pseudo_dir, f"POTCAR.{el}"), Path(pseudo_dir, el, "POTCAR")]:
-                pp = zpath(p)
-                if Path(pp).exists():
-                    return pp
-            return None
-
         potcar_map = {}
         for el in vsp.struct.elem_names:
-            p = _find_potcar_file(el)
-            if p is None:
-                logger.warning(f"generate_potcar: POTCAR file for {el} not found")
+            # p = _find_potcar_file(el)
+            if el not in pp_list.index:
+                logger.warning(f"generate_potcar: element {el} not found in pp_list")
                 return None
+            p = pp_list.at[el, "pseudopotential"]
+            if pseudo_dir:
+                p = Path(pseudo_dir, p)
             logger.debug(f"generate_potcar: read POTCAR for {el} from {p}")
             try:
                 with zopen(p, "rt") as f:
@@ -255,7 +259,7 @@ def generate_potcar(vsp, params):
                 return None
             potcar_map[el] = dat
 
-        potcar = Potcar(vsp.struct.elem_names, functional=pseudo_functional, sym_potcar_map=potcar_map)
+        potcar = Potcar(vsp.struct.elem_names, sym_potcar_map=potcar_map)
 
     else:
         if not "PMG_VASP_PSP_DIR" in SETTINGS:
