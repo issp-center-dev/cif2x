@@ -227,17 +227,18 @@ def generate_potcar(vsp, params):
         else:
             return default
 
+    # csv file for mapping element types to POTCAR files
     pp_file = _find_option("pp_file")
+    # base directory for POTCAR files
+    pp_dir = _find_option("pseudo_dir")
+
     pp_list = None
     try:
         pp_list = read_csv(pp_file, index_col=0)
     except Exception as e:
         logger.warning("generate_potcar: {}".format(e))
 
-    pseudo_dir = _find_option("pseudo_dir")
-    pseudo_functional = _find_option("pseudo_functional")
-
-    logger.debug(f"generate_potcar: pp_file = {pp_file}, pseudo_dir = {pseudo_dir}, pseudo_functional = {pseudo_functional}")
+    logger.debug(f"generate_potcar: pp_file = {pp_file}, pseudo_dir = {pp_dir}")
 
     if pp_list is not None:
         # read POTCAR files for elements
@@ -248,8 +249,8 @@ def generate_potcar(vsp, params):
                 logger.warning(f"generate_potcar: element {el} not found in pp_list")
                 return None
             p = pp_list.at[el, "pseudopotential"]
-            if pseudo_dir:
-                p = Path(pseudo_dir, p)
+            if pp_dir:
+                p = Path(pp_dir, p)
             logger.debug(f"generate_potcar: read POTCAR for {el} from {p}")
             try:
                 with zopen(p, "rt") as f:
@@ -262,19 +263,37 @@ def generate_potcar(vsp, params):
         potcar = Potcar(vsp.struct.elem_names, sym_potcar_map=potcar_map)
 
     else:
+        # pymatgen-way of POTCAR handling
+        pseudo_functional = _find_option("pseudo_functional")
+        pseudo_map_file = _find_option("pseudo_map")
+
+        logger.debug(f"generate_potcar: pseudo_functional = {pseudo_functional}, pseudo_map = {pseudo_map_file}")
+
+        elem_map = None
+        if pseudo_map_file:
+            try:
+                elem_map = read_csv(pseudo_map_file, index_col=0)
+            except Exception as e:
+                logger.warning("read pseudo_map: {}".format(e))
+
         if not "PMG_VASP_PSP_DIR" in SETTINGS:
             logger.error("Path to pseudo-potential directory is not specified. Specify pseudo_dir parameter, or set PMG_VASP_PSP_DIR through .config/.pmgrc.yaml or environment variable")
             return None
 
         logger.debug(f"atom_types = {vsp.struct.elem_names}")
-        logger.debug("pseudo_dir = {}, functional = {}, default = {}".format(
+        logger.debug("psp_dir = {}, functional = {}, default = {}".format(
             SETTINGS.get("PMG_VASP_PSP_DIR", None),
             pseudo_functional,
             SETTINGS.get("PMG_DEFAULT_FUNCTIONAL", "PBE")
         ))
 
+        elem_list = vsp.struct.elem_names
+        if elem_map is not None:
+            elem_list = [ elem_map.at[el, "symbol"] if el in elem_map.index else el for el in elem_list ]
+        logger.debug("element list = {}".format(elem_list))
+
         try:
-            potcar = Potcar(vsp.struct.elem_names, functional=pseudo_functional)
+            potcar = Potcar(elem_list, functional=pseudo_functional)
         except Exception as e:
             logger.error("{}".format(e))
             return None
