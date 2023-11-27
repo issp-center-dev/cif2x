@@ -24,6 +24,8 @@ class Struct2QE:
         #XXX
         self.pseudo_dir = None
         self.pp_list = None
+        self.cutoff_list = None
+
         self.is_col = None
         self.is_noncol = None
         self.is_soc = None
@@ -65,8 +67,41 @@ class Struct2QE:
         return ecutwfc_max, ecutrho_max
 
     def _find_elem_cutoff(self, ename):
+        ecutwfc, ecutrho = None, None
+
+        if ecutwfc is None or ecutrho is None:
+            ecutwfc, ecutrho = self._find_elem_cutoff_from_table(ename)
+
+        if ecutwfc is None or ecutrho is None:
+            ecutwfc, ecutrho = self._find_elem_cutoff_from_file(ename)
+
+        if ecutwfc is None:
+            ecutwfc = 0.0
+        if ecutrho is None:
+            ecutrho = 0.0
+            
+        return ecutwfc, ecutrho
+
+    def _find_elem_cutoff_from_table(self, ename):
+        ecutwfc, ecutrho = None, None
+        if self.cutoff_list is not None and self.pp_list is not None:
+            pseudo_file = "{}.{}.UPF".format(ename, self.pp_list.at[ename, "pseudopotential"])
+            if pseudo_file in self.cutoff_list.index:
+                ecutwfc = self.cutoff_list.at[pseudo_file, "ecutwfc"]
+                ecutrho = self.cutoff_list.at[pseudo_file, "ecutrho"]
+                logger.debug(f"cutoff: from csv: elem={ename}, ecutwfc={ecutwfc}, ecutrho={ecutrho}")
+            else:
+                logger.debug(f"cutoff: from csv: entry not found: {pseudo_file}")
+        return ecutwfc, ecutrho
+
+    def _find_elem_cutoff_from_file(self, ename):
         import xml.etree.ElementTree as ET
-        ecutwfc, ecutrho = 0.0, 0.0
+
+        ecutwfc, ecutrho = None, None
+
+        if self.pp_list is None:
+            return ecutwfc, ecutrho
+
         # pseudo_file = "{}/{}.{}{}.UPF".format(self.pseudo_dir, ename,
         #                                       ("rel-" if self.is_soc else ""),
         #                                       self.pp_list.at[ename, "pseudopotential"])
@@ -96,7 +131,8 @@ class Struct2QE:
             logger.error(f"{pseudo_file}: header not found")
             err += 1
         if err > 0:
-            raise ValueError("cutoff information not found")
+            # raise ValueError("cutoff information not found")
+            logger.error("cutoff information not found")
         return ecutwfc, ecutrho
 
     def _set_nspin_info(self, content):
@@ -120,6 +156,11 @@ class Struct2QE:
                     self.is_soc = self.is_noncol and is_lspinorb
 
     def _find_nbnd_info(self):
+        if self.pp_list is None:
+            logger.error("find_nbnd_info: pp_file not specified")
+            raise RuntimeError("find_nbnd_info: pp_file not specified")
+            return 0
+        
         # determine the number of bands
         spinor_factor = 2 if self.is_col or self.is_noncol else 1
         species = self.struct.structure.species
@@ -216,21 +257,33 @@ class Struct2QE:
         def _find_optional(info, key):
             if key in info:
                 return info[key]
-            elif "optional" in info and key in info["optional"]:
-                return info["optional"][key]
-            else:
-                return None
+            elif "optional" in info:
+                if info["optional"] is not None and key in info["optional"]:
+                    return info["optional"][key]
+            return None
         
         self.pseudo_dir = _find_optional(params, "pseudo_dir")
-        if not Path(self.pseudo_dir).exists():
-            raise FileNotFoundError(f"{self.pseudo_dir} not found")
+        if self.pseudo_dir is None:
+            logger.warning(f"pseudo_dir not specified")
+        elif not Path(self.pseudo_dir).exists():
+            logger.warning(f"pseudo_dir {self.pseudo_dir} not found")
 
         self.pp_file = _find_optional(params, "pp_file")
         if self.pp_file is None:
-            raise RuntimeError(f"pp_file not specified")
-        if not Path(self.pp_file).exists():
-            raise FileNotFoundError(f"{self.pp_file} not found")
-        self.pp_list = read_csv(self.pp_file, index_col=0)
+            # raise FileNotFoundError(f"pp_file not specified or found")
+            logger.warning(f"pp_file not specified")
+        elif not Path(self.pp_file).exists():
+            logger.warning(f"pp_file {self.pp_file} not found")
+        else:
+            self.pp_list = read_csv(self.pp_file, index_col=0)
+
+        self.cutoff_file = _find_optional(params, "cutoff_file")
+        if self.cutoff_file is None:
+            logger.warning(f"cutoff_file not specified")
+        elif not Path(self.cutoff_file).exists():
+            logger.warning(f"cutoff_file {self.cutoff_file} not found")
+        else:
+            self.cutoff_list = read_csv(self.cutoff_file, index_col=0)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

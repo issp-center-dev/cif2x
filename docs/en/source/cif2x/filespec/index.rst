@@ -87,14 +87,26 @@ In the current version, ``scf`` mode and ``nscf`` mode of ``pw.x`` are supported
 optional section
 ------------------
 
-  ``pseudo_dir``
-
-    This parameter specifies the name of the directory that holds pseudo-potential files. When ``pseudo_dir`` is specified as an entry in ``content`` section of each task, the latter is used.
-    
   ``pp_file``
 
-    This parameter specifies the index file in CSV format that relates the element type and the pseudo-potential file.
+    This parameter specifies the index file in CSV format that relates the element type and the pseudo-potential file. This file contains the following columns: element name, type of pseudo-potential, nexclude, orbitals. An example line is given as:
 
+    .. code-block::
+
+      Fe,pbe-spn-rrkjus_psl.0.2.1,4,spd
+
+    The name of the pseudo-potential file corresponding to the above example reads
+    Fe.pbe-spn-rrkjus_psl.0.2.1.UPF .
+      
+  ``cutoff_file``
+
+    This parameter specifies the index file in CSV format that relates the pseudo-potential file and the cutoff values. This file contains the following columns: name of pseudo-potential file, ``ecutwfc`` value, ``ecutrho`` value.
+
+  ``pseudo_dir``
+
+    This parameter specifies the name of the directory that holds pseudo-potential files. It is used when the cutoff values are obtained from the pseudo-potential files.
+    It is indenepent from the ``pseudo_dir`` parameter in the input files for Quantum ESPRESSO.
+    
 
 content
 --------
