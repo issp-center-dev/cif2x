@@ -14,7 +14,7 @@ tasks:
       namelist:
         control:
           prefix: pwscf
-          pseudo_dir: ./pseudo_psl
+          pseudo_dir: ./pseudo
           outdir: ./work
           tstress: true
           tprnfor: true
@@ -27,7 +27,6 @@ tasks:
           occupations: smearing
           smearing: m-p
           degauss: 0.01
-          nspin: 2
         electrons:
           mixing_beta: 0.1
           conv_thr: 1.e-8
@@ -37,51 +36,3 @@ tasks:
         option: crystal
       K_POINTS:
         option: automatic
-
-  - mode: nscf
-    output_file: nscf.in
-    content:
-      namelist:
-        control:
-          prefix: pwscf
-          pseudo_dir: ./pseudo_psl
-          outdir: ./work
-          tstress: true
-          tprnfor: true
-          verbosity: high
-        system:
-          ibrav:
-          nat:
-          ntyp:
-          ecutwfc: 36.0   #fixed
-          ecutrho: 180.0  #fixed
-          occupations: smearing
-          smearing: m-p
-          degauss: 0.01
-          nbnd:
-          noncolin: true
-          #lforcet: true
-        electrons:
-          mising_beta: 0.1
-          conv_thr: 1.e-8
-      CELL_PARAMETERS:
-      ATOMIC_SPECIES:
-      ATOMIC_POSITIONS:
-        option: crystal
-      K_POINTS:
-        option: crystal
-
-  - mode: pw2wan
-    output_file: pw2wan.in
-    content:
-      namelist:
-        inputpp:
-          prefix: pwscf
-          outdir: ./work
-          seedname: pwscf
-          irr_bz: true
-
-  - mode: bands
-    output_file: band.in
-    template: band.in_tmpl
-    #content:
