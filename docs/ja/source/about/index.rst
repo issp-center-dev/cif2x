@@ -17,7 +17,7 @@ HTP-toolsとは?
 
 本ソフトウェアは以下の開発貢献者により開発されています。
 
--  ver.1.0.0 (2023/XX/XXリリース)
+-  ver.1.0-beta (2023/12/08リリース)
 
    -  開発者
 
@@ -45,9 +45,16 @@ HTP-toolsとは?
 コピーライト
 ----------------------------------------------------------------
 
-|copy| *2023- The University of Tokyo. All rights reserved.*
+.. only:: html
 
-.. |copy| unicode:: 0xA9 .. copyright sign
+  |copy| *2023- The University of Tokyo. All rights reserved.*
+
+  .. |copy| unicode:: 0xA9 .. copyright sign
+
+.. only:: latex
+
+  :math:`\copyright` *2023- The University of Tokyo. All rights reserved.*
+
 
 本ソフトウェアは2023年度 東京大学物性研究所 ソフトウェア高度化プロジェクトの支援を受け開発されており、その著作権は東京大学が所持しています。
 

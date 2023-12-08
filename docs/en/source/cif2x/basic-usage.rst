@@ -15,29 +15,25 @@ Installation and basic usage
   - monty module
   - OpenBabel module (optional)
 
-.. **Official pages**
-.. 
-..   - `GitHub repository <https://github.com/issp-center-dev/HTP-tools-dev>`_
-.. 
-.. **Downloads**
-.. 
-..   HTP-tools can be downloaded by the following command with git:
-.. 
-..   .. code-block:: bash
-.. 
-..     $ git clone -b cif2x git@github.com:issp-center-dev/HTP-tools-dev.git
+**Official pages**
+
+  - `GitHub repository <https://github.com/issp-center-dev/cif2x>`_
 
 **Downloads**
 
-  *The source package is not yet publicly available.*
-   
+  HTP-tools can be downloaded by the following command with git:
+
+  .. code-block:: bash
+
+     $ git clone https://github.com/issp-center-dev/cif2x.git
+
 **Installation**
 
   Once the source files are obtained, you can install HTP-tools by running the following command. The required libraries will also be installed automatically at the same time. 
 
   .. code-block:: bash
 
-     $ cd ./HTP-tools-dev
+     $ cd ./cif2x
      $ python3 -m pip install .
 
   The executable file ``cif2x`` will be installed.
