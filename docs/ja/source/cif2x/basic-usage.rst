@@ -16,7 +16,7 @@
 
 **ソースコード配布サイト**
 
-  - `GitHubリポジトリ <https://github.com/issp-center-dev/HTP-tools-dev>`_
+  - `GitHubリポジトリ <https://github.com/issp-center-dev/cif2x>`_
 
 **ダウンロード方法**
 
@@ -24,7 +24,7 @@
 
   .. code-block:: bash
 
-    $ git clone -b cif2x git@github.com:issp-center-dev/HTP-tools-dev.git
+    $ git clone https://github.com/issp-center-dev/cif2x.git
 
 **インストール方法**
 
@@ -32,7 +32,7 @@
 
   .. code-block:: bash
 
-     $ cd ./HTP-tools-dev
+     $ cd ./cif2x
      $ python3 -m pip install .
 
   実行プログラム ``cif2x`` がインストールされます。

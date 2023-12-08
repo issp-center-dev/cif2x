@@ -17,7 +17,7 @@ Contributors
 
 This software was developed by the following contributors.
 
--  ver.1.0.0 (Released on 2023/XX/XX)
+-  ver.1.0-beta (Released on 2023/12/08)
 
    -  Developers
 
@@ -45,9 +45,16 @@ This software was developed by the following contributors.
 Copyright
 ----------------------------------------------------------------
 
-|copy| *2023- The University of Tokyo. All rights reserved.*
+.. only:: html
 
-.. |copy| unicode:: 0xA9 .. copyright sign
+  |copy| *2023- The University of Tokyo. All rights reserved.*
+
+  .. |copy| unicode:: 0xA9 .. copyright sign
+
+.. only:: latex
+
+  :math:`\copyright` *2023- The University of Tokyo. All rights reserved.*
+
 
 This software was developed with the support of "Project for advancement of software usability in materials science" of The Institute for Solid State Physics, The University of Tokyo.
 

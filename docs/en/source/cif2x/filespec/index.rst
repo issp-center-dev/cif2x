@@ -269,8 +269,3 @@ content
 
     This parameter specifies the set of pseudo-atomic orbitals listed in Tables 1 and 2 of Section 10.6 of the OpenMX manual. It is one of ``quick``, ``standard``, or ``precise``. The default value is ``quick``.
 
-Molecules calculations for OpenMX
-==============================================================
-
-When the target option ``-t openmx-mol`` is specified to ``cif2x``, a set of the input files for OpenMX will be generated with the molecular structure data.
-The accepted format of the molecular structure data includes xyz-format and Gaussian format, as well as, if OpenBabel library is available, a numerous types of formats supported by OpenBabel.

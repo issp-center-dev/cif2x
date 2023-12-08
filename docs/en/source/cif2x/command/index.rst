@@ -37,8 +37,6 @@ DESCRIPTION:
 
     - ``OpenMX``: generates input files for OpenMX
 
-    - ``OpenMX-mol``: generates input files for calculation of molecular systems by OpenMX. The molecule structure file (e.g. in xyz format) is to be specified in place of ``material.cif``.
-
   - ``input_yaml``
 
     specifies an input parameter file in YAML format.
