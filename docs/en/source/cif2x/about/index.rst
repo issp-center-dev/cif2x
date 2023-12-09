@@ -1,0 +1,71 @@
+****************************************************************
+Introduction
+****************************************************************
+
+What is cif2x?
+----------------------------------------------------------------
+
+Cif2x is a tool that generates input files for first-principles calculations from cif files.
+It constructs parts that vary depending on the type of material and computational conditions from crystal structure data, using input parameters as a template.
+It is capable of generating multiple input files tailored to specific computational conditions.
+Currently, it supports `VASP <https://www.vasp.at>`, `Quantum ESPRESSO <https://www.quantum-espresso.org>`, and `OpenMX <http://www.openmx-square.org>`,
+with plans to support `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>` in the future.
+
+License
+----------------------------------------------------------------
+
+The distribution of the program package and the source codes for cif2x follow GNU General Public License version 3 (GPL v3) or later.
+
+Contributors
+----------------------------------------------------------------
+
+This software was developed by the following contributors.
+
+-  ver.1.0-beta (Released on 2023/12/08)
+
+   -  Developers
+
+      -  Kazuyoshi Yoshimi (The Instutite for Solid State Physics, The University of Tokyo)
+
+      -  Tatsumi Aoyama (The Instutite for Solid State Physics, The University of Tokyo)
+
+      -  Yuichi Motoyama (The Instutite for Solid State Physics, The University of Tokyo)
+
+      -  Masahiro Fukuda (The Instutite for Solid State Physics, The University of Tokyo)
+
+      -  Tetsuya Fukushima (The National Institute of Advanced Industrial Science and Technology (AIST))
+
+      -  Kota Ido (The Instutite for Solid State Physics, The University of Tokyo)
+
+      -  Shusuke Kasamatsu (Yamagata University)
+
+      -  Takashi Koretsune (Tohoku University)
+
+   -  Project Corrdinator
+
+      -  Taisuke Ozaki (The Instutite for Solid State Physics, The University of Tokyo)
+
+
+Copyright
+----------------------------------------------------------------
+
+.. only:: html
+
+  |copy| *2023- The University of Tokyo. All rights reserved.*
+
+  .. |copy| unicode:: 0xA9 .. copyright sign
+
+.. only:: latex
+
+  :math:`\copyright` *2023- The University of Tokyo. All rights reserved.*
+
+
+This software was developed with the support of "Project for advancement of software usability in materials science" of The Institute for Solid State Physics, The University of Tokyo.
+
+Operating environment
+----------------------------------------------------------------
+
+This tool was tested on the following platforms:
+
+- Ubuntu Linux + python3
+
