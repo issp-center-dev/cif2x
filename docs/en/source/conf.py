@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'HTP-tools cif2x Users Guide'
+project = 'cif2x Users Guide'
 copyright = '2023-, The University of Tokyo'
 author = 'HTP-tools development team'
 
@@ -135,9 +135,9 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index',
-     'HTP-tools-usersguide.tex',
-     'HTP-tools Documentation',
+    ('cif2x/index',
+     'cif2x-usersguide.tex',
+     'Cif2x Documentation',
      'ISSP, University of Tokyo',
      'manual',
      'True'),

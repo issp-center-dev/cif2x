@@ -5,6 +5,10 @@ Introduction
 What is cif2x?
 ----------------------------------------------------------------
 
+In recent years, the use of machine learning for predicting material properties and designing substances (known as materials informatics) has gained considerable attention.
+The accuracy of machine learning depends heavily on the preparation of appropriate training data.
+Therefore, the development of tools and environments for the rapid generation of training data is expected to contribute significantly to the advancement of research in materials informatics.
+
 Cif2x is a tool that generates input files for first-principles calculations from cif files.
 It constructs parts that vary depending on the type of material and computational conditions from crystal structure data, using input parameters as a template.
 It is capable of generating multiple input files tailored to specific computational conditions.
