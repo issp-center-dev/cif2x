@@ -258,9 +258,9 @@ The entries of ``optional`` section and ``content`` part of the ``tasks`` sectio
 optional
 --------
 
-  ``data_dir``
+  ``data_path``
 
-    This parameter specifies the name of directory that holds files for pseudo-atomic orbitals and pseudo-potentials. It corresponds to the ``DATA.DIR`` parameter.
+    This parameter specifies the name of directory that holds files for pseudo-atomic orbitals and pseudo-potentials. It corresponds to the ``DATA.PATH`` parameter.
 
 content
 --------

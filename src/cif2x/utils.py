@@ -57,7 +57,7 @@ def inflate(content):
             return v
         except Exception as e:
             pass
-        return s
+        return s.strip()
 
     def _to_string(x):
         if isinstance(x, (int, float, str)):
