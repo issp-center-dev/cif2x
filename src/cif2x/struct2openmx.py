@@ -143,6 +143,7 @@ class Struct2OpenMX:
     def write_input(self, filename, dirname):
         for key, content in self.contents:
             logger.debug(f"write_input: key=\"{key}\"")
+            os.makedirs(Path(dirname, key), exist_ok=True)
             with open(Path(dirname, key, filename), "w") as fp:
                 fp.write(content.to_str())
 
