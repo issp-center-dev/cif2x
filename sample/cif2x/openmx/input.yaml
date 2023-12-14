@@ -3,7 +3,7 @@ structure:
   tolerance: 0.01
   # supercell: [2,2,2]
 optional:
-  data_dir: /scr/src/openmx/openmx3.9/DFT_DATA19
+  data_path: /scr/src/openmx/openmx3.9/DFT_DATA19
 tasks:
   - output_file: test.in
     template: GaAs.dat

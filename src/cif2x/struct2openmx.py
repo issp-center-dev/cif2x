@@ -153,6 +153,9 @@ class Struct2OpenMX:
             cnt = Content.from_file(self.info["template"])
         else:
             cnt = Content()
+        if "optional" in self.info and self.info["optional"] is not None:
+            if "data_path" in self.info["optional"]:
+                cnt.update({"DATA.PATH": self.info["optional"]["data_path"]})
         if "content" in self.info:
             cnt.update(self.info["content"])
         return cnt
