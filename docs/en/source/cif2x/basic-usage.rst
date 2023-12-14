@@ -21,7 +21,7 @@ Installation and basic usage
 
 **Downloads**
 
-  HTP-tools can be downloaded by the following command with git:
+  cif2x can be downloaded by the following command with git:
 
   .. code-block:: bash
 
@@ -29,7 +29,7 @@ Installation and basic usage
 
 **Installation**
 
-  Once the source files are obtained, you can install HTP-tools by running the following command. The required libraries will also be installed automatically at the same time. 
+  Once the source files are obtained, you can install cif2x by running the following command. The required libraries will also be installed automatically at the same time. 
 
   .. code-block:: bash
 
