@@ -25,7 +25,7 @@ Contributors
 
 This software was developed by the following contributors.
 
--  ver.1.0-beta (Released on 2023/12/08)
+-  ver.1.0-alpha (Released on 2023/12/28)
 
    -  Developers
 
