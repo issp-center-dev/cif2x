@@ -1,19 +1,17 @@
-
 <!DOCTYPE html>
 
-<html lang="ja">
+<html lang="ja" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>5. ファイルフォーマット &#8212; cif2x Users Guide 1.0-alpha ドキュメント</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/translations.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=51c57257" />
+    <script src="../../_static/documentation_options.js?v=8755c3ba"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/translations.js?v=4dbe4bdc"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="検索" href="../../search.html" />
@@ -36,9 +34,9 @@
           <div class="body" role="main">
             
   <section id="sec-cif2x-fileformat">
-<span id="id1"></span><h1><span class="section-number">5. </span>ファイルフォーマット<a class="headerlink" href="#sec-cif2x-fileformat" title="このヘッドラインへのパーマリンク">¶</a></h1>
+<span id="id1"></span><h1><span class="section-number">5. </span>ファイルフォーマット<a class="headerlink" href="#sec-cif2x-fileformat" title="Link to this heading">¶</a></h1>
 <section id="id2">
-<h2><span class="section-number">5.1. </span>入力パラメータファイル<a class="headerlink" href="#id2" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<h2><span class="section-number">5.1. </span>入力パラメータファイル<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
 <p>入力パラメータファイルでは、cif2x で第一原理計算入力ファイルを生成するための設定情報を YAML形式で記述します。本ファイルは以下の部分から構成されます。</p>
 <blockquote>
 <div><ol class="arabic simple">
@@ -48,7 +46,7 @@
 </ol>
 </div></blockquote>
 <section id="structure">
-<h3>structure<a class="headerlink" href="#structure" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>structure<a class="headerlink" href="#structure" title="Link to this heading">¶</a></h3>
 <blockquote>
 <div><p><code class="docutils literal notranslate"><span class="pre">use_ibrav</span></code> (デフォルト値: <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
 <blockquote>
@@ -65,11 +63,11 @@
 </div></blockquote>
 </section>
 <section id="optional">
-<h3>optional<a class="headerlink" href="#optional" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>optional<a class="headerlink" href="#optional" title="Link to this heading">¶</a></h3>
 <p>第一原理計算プログラムごとに必要な global な設定を行います。記述する内容は以下の各節に記述します。</p>
 </section>
 <section id="tasks">
-<h3>tasks<a class="headerlink" href="#tasks" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>tasks<a class="headerlink" href="#tasks" title="Link to this heading">¶</a></h3>
 <p>入力ファイルの内容を記述します。複数の入力ファイルに対応するため、 <code class="docutils literal notranslate"><span class="pre">tasks</span></code> には各入力ファイルごとのブロックからなるリスト形式をとります。各ブロックに記述する項目は以下のとおりです。</p>
 <blockquote>
 <div><p><code class="docutils literal notranslate"><span class="pre">mode</span></code> (Quantum ESPRESSO)</p>
@@ -98,7 +96,7 @@
 </div></blockquote>
 </section>
 <section id="id3">
-<h3>パラメータセット指定<a class="headerlink" href="#id3" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>パラメータセット指定<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
 <p>入力パラメータには値のリストや範囲を指定することができ、値の組み合わせごとに個別のディレクトリを作成して入力ファイルを生成します。パラメータセットの指定には特別な構文 <code class="docutils literal notranslate"><span class="pre">${...}</span></code> を用います。
 指定方法は次の通りです:</p>
 <ul>
@@ -112,11 +110,11 @@
 </section>
 </section>
 <section id="quantum-espresso">
-<h2><span class="section-number">5.2. </span>Quantum ESPRESSO 向けパラメータ<a class="headerlink" href="#quantum-espresso" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<h2><span class="section-number">5.2. </span>Quantum ESPRESSO 向けパラメータ<a class="headerlink" href="#quantum-espresso" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">optional</span></code> セクションおよび <code class="docutils literal notranslate"><span class="pre">tasks</span></code> セクションの <code class="docutils literal notranslate"><span class="pre">content</span></code> に記載する内容について、Quantum ESPRESSO 固有の内容を記述します。
 現時点では pw.x の <code class="docutils literal notranslate"><span class="pre">scf</span></code> および <code class="docutils literal notranslate"><span class="pre">nscf</span></code> に対応しています。</p>
 <section id="id4">
-<h3>optionalセクション<a class="headerlink" href="#id4" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>optionalセクション<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
 <blockquote>
 <div><p><code class="docutils literal notranslate"><span class="pre">pp_file</span></code></p>
 <blockquote>
@@ -139,7 +137,7 @@
 </div></blockquote>
 </section>
 <section id="content">
-<h3>content<a class="headerlink" href="#content" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>content<a class="headerlink" href="#content" title="Link to this heading">¶</a></h3>
 <blockquote>
 <div><p><strong>namelist</strong></p>
 <ul class="simple">
@@ -193,10 +191,10 @@
 </section>
 </section>
 <section id="vasp">
-<h2><span class="section-number">5.3. </span>VASP 向けパラメータ<a class="headerlink" href="#vasp" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<h2><span class="section-number">5.3. </span>VASP 向けパラメータ<a class="headerlink" href="#vasp" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">optional</span></code> セクションおよび <code class="docutils literal notranslate"><span class="pre">tasks</span></code> セクションの <code class="docutils literal notranslate"><span class="pre">content</span></code> に記載する内容について、VASP 固有の内容を記述します。</p>
 <section id="id5">
-<h3>optional<a class="headerlink" href="#id5" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>optional<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
 <p>擬ポテンシャルのタイプや格納場所を指定します。</p>
 <p>pymatgen では、擬ポテンシャルファイルを
 <code class="docutils literal notranslate"><span class="pre">PMG_VASP_PSP_DIR</span></code>/<em>functional</em>/POTCAR. <em>element</em> (.gz) または
@@ -217,11 +215,11 @@
 </div></blockquote>
 </section>
 <section id="id6">
-<h3>tasks<a class="headerlink" href="#id6" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>tasks<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
 <p>テンプレートファイルは、 <code class="docutils literal notranslate"><span class="pre">template_dir</span></code> で指定するディレクトリ内に <code class="docutils literal notranslate"><span class="pre">INCAR</span></code>, <code class="docutils literal notranslate"><span class="pre">KPOINTS</span></code>, <code class="docutils literal notranslate"><span class="pre">POSCAR</span></code>, <code class="docutils literal notranslate"><span class="pre">POTCAR</span></code> ファイルを配置します。ファイルがない項目は無視されます。</p>
 </section>
 <section id="id7">
-<h3>content<a class="headerlink" href="#id7" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>content<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
 <blockquote>
 <div><p><strong>incar</strong></p>
 <ul class="simple">
@@ -263,10 +261,10 @@
 </section>
 </section>
 <section id="openmx">
-<h2><span class="section-number">5.4. </span>OpenMX 向けパラメータ<a class="headerlink" href="#openmx" title="このヘッドラインへのパーマリンク">¶</a></h2>
+<h2><span class="section-number">5.4. </span>OpenMX 向けパラメータ<a class="headerlink" href="#openmx" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">optional</span></code> セクションおよび <code class="docutils literal notranslate"><span class="pre">tasks</span></code> セクションの <code class="docutils literal notranslate"><span class="pre">content</span></code> に記載する内容について、OpenMX 固有の内容を記述します。</p>
 <section id="id8">
-<h3>optional<a class="headerlink" href="#id8" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>optional<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
 <blockquote>
 <div><p><code class="docutils literal notranslate"><span class="pre">data_path</span></code></p>
 <blockquote>
@@ -275,7 +273,7 @@
 </div></blockquote>
 </section>
 <section id="id9">
-<h3>content<a class="headerlink" href="#id9" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<h3>content<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
 <blockquote>
 <div><p><code class="docutils literal notranslate"><span class="pre">precision</span></code></p>
 <blockquote>
@@ -336,7 +334,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -353,8 +351,8 @@
       &copy;2023-, The University of Tokyo.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
       <a href="../../_sources/cif2x/filespec/index.rst.txt"
