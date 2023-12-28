@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>6. Extension guide &#8212; cif2x Users Guide 1.0-alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=51c57257" />
+    <script src="../../_static/documentation_options.js?v=1e4f7814"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="5. File format" href="../filespec/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="extension-guide">
+<span id="sec-cif2x-appendix"></span><h1><span class="section-number">6. </span>Extension guide<a class="headerlink" href="#extension-guide" title="Link to this heading">¶</a></h1>
+<section id="adding-modes-of-quantum-espresso">
+<h2><span class="section-number">6.1. </span>Adding modes of Quantum ESPRESSO<a class="headerlink" href="#adding-modes-of-quantum-espresso" title="Link to this heading">¶</a></h2>
+<p>In order to add supports to modes of Quantum ESPRESSO, the mapping between the modes and the transformation classes should be added to <code class="docutils literal notranslate"><span class="pre">create_modeproc()</span></code> function in <code class="docutils literal notranslate"><span class="pre">src/cif2x/qe/calc_mode.py</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_modeproc</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">qe</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;scf&quot;</span><span class="p">,</span> <span class="s2">&quot;nscf&quot;</span><span class="p">]:</span>
+        <span class="n">modeproc</span> <span class="o">=</span> <span class="n">QEmode_pw</span><span class="p">(</span><span class="n">qe</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">modeproc</span> <span class="o">=</span> <span class="n">QEmode_generic</span><span class="p">(</span><span class="n">qe</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">modeproc</span>
+</pre></div>
+</div>
+<p>The transformation functionality for each mode is provided as a derived class of <code class="docutils literal notranslate"><span class="pre">QEmode_base</span></code> class. This class implements methods <code class="docutils literal notranslate"><span class="pre">update_namelist()</span></code> for updating the namelist block, and <code class="docutils literal notranslate"><span class="pre">update_cards()</span></code> for generating data of card blocks.
+In the current version, two classes are provided: <code class="docutils literal notranslate"><span class="pre">QEmode_pw</span></code> class for scf and nscf calculations of pw.x, and <code class="docutils literal notranslate"><span class="pre">QEmode_generic</span></code> class for generating output as-is.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">QEmode_base</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qe</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">update_namelist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">update_cards</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+</pre></div>
+</div>
+<p>For the namelist, the transformation class generates values for blank entries from crystal structure data and other sources. It may also force to set values such as the lattice parameters that are determined from the crystal structure data, or those that must be specified consistently with other parameters. The functions are provided for each mode separately.</p>
+<p>For card blocks, a function is provided for each card, and the mapping between the card type and the function is given in the <code class="docutils literal notranslate"><span class="pre">card_table</span></code> variable.
+The method <code class="docutils literal notranslate"><span class="pre">update_cards()</span></code> in the base class picks up and runs the function associated to the card, and updates the content of the card. Of course, a new <code class="docutils literal notranslate"><span class="pre">update_cards()</span></code> function may be defined.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">card_table</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;CELL_PARAMETERS&#39;</span><span class="p">:</span> <span class="n">generate_cell_parameters</span><span class="p">,</span>
+    <span class="s1">&#39;ATOMIC_SPECIES&#39;</span><span class="p">:</span> <span class="n">generate_atomic_species</span><span class="p">,</span>
+    <span class="s1">&#39;ATOMIC_POSITIONS&#39;</span><span class="p">:</span> <span class="n">generate_atomic_positions</span><span class="p">,</span>
+    <span class="s1">&#39;K_POINTS&#39;</span><span class="p">:</span> <span class="n">generate_k_points</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The functions for cards are gathered in <code class="docutils literal notranslate"><span class="pre">src/cif2x/qe/cards.py</span></code> with the function names as <code class="docutils literal notranslate"><span class="pre">generate_{card</span> <span class="pre">name}</span></code>. These functions takes parameters for card blocks as argument, and returns a dictionary containing the card name, the options, and the data field.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">cif2x Users Guide</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Input file generator for first-principles calculations (cif2x)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../about/index.html">1. Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basic-usage.html">2. Installation and basic usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/index.html">3. Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../command/index.html">4. Command reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../filespec/index.html">5. File format</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6. Extension guide</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Input file generator for first-principles calculations (cif2x)</a><ul>
+      <li>Previous: <a href="../filespec/index.html" title="previous chapter"><span class="section-number">5. </span>File format</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023-, The University of Tokyo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="../../_sources/cif2x/appendix/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
