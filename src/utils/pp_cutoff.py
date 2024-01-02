@@ -27,36 +27,42 @@ DESCRIPTION
 
 """
 
-import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup
 import csv
 import logging
 logger = logging.getLogger(__name__)
 
 def read_pseudo_cutoff(pp_file):
     try:
-        tree = ET.parse(pp_file)
+        with open(pp_file, "r") as fp:
+            bs = BeautifulSoup(fp, "html.parser")
     except Exception as e:
         logger.error("{}: {}".format(pp_file, e))
         return None
         
-    root = tree.getroot()
+    ecutwfc = None
+    ecutrho = None
 
-    wfc_cutoff = None
-    rho_cutoff = None
+    if bs and bs.upf and bs.upf.pp_header:
+        if bs.upf.pp_header.has_attr("wfc_cutoff"):
+            ecutwfc = float(bs.upf.pp_header["wfc_cutoff"])
+        if bs.upf.pp_header.has_attr("rho_cutoff"):
+            ecutrho = float(bs.upf.pp_header["rho_cutoff"])
+    if ecutwfc is None or ecutrho is None:
+        if bs and bs.upf and bs.upf.pp_info:
+            lines = str(bs.upf.pp_info).splitlines()
+            sg = [s for s in lines if "Suggested" in s]
+            for s in sg:
+                if "wavefunctions" in s:
+                    ecutwfc = float(s.split()[5])
+                elif "charge density" in s:
+                    ecutrho = float(s.split()[6])
 
-    header = root.find("PP_HEADER")
-    if header is not None:
-        attr = header.attrib
-        if "wfc_cutoff" in attr:
-            wfc_cutoff = float(attr["wfc_cutoff"])
-        if "rho_cutoff" in attr:
-            rho_cutoff = float(attr["rho_cutoff"])
-
-    if wfc_cutoff is None or rho_cutoff is None:
+    if ecutwfc is None or ecutrho is None:
         logger.warning("{}: wfc_cutoff or rho_cutoff not found".format(pp_file))
         return None
     else:
-        return [ pp_file, wfc_cutoff, rho_cutoff ]
+        return [ pp_file, ecutwfc, ecutrho ]
 
 def main():
     import argparse
@@ -79,7 +85,7 @@ def main():
     if len(args.pp_file) > 0:
         pp_files += args.pp_file
 
-    tbl = []
+    tbl = [["pseudofile", "ecutwfc", "ecutrho" ]]
     for f in pp_files:
         x = read_pseudo_cutoff(f)
         if x is not None:
