@@ -19,6 +19,7 @@ pandas = ">=1.4"
 pymatgen = ">=2019.12.3"
 f90nml = "^1.4"
 qe-tools = "^1.1"
+beautifulsoup4 = "^4"
 
 [tool.poetry.extras]
 
