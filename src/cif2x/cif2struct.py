@@ -88,14 +88,19 @@ class Cif2Struct:
             self.supercell = params["supercell"]
             self.structure.make_supercell(self.supercell)
 
-        if "magmom" in self.structure.site_properties:
-            logger.info("init: magnetic moment found")
-            self._set_atom_info_mag()
-            self.is_mag = True
+        if self.structure.is_ordered:
+            self.is_composite = False
+            if "magmom" in self.structure.site_properties:
+                logger.info("init: magnetic moment found")
+                self._set_atom_info_mag()
+                self.is_mag = True
+            else:
+                logger.info("init: magnetic moment not found")
+                self._set_atom_info_base()
+                self.is_mag = False
         else:
-            logger.info("init: magnetic moment not found")
-            self._set_atom_info_base()
-            self.is_mag = False
+            self.is_composite = True
+            logger.info("init: composite material")
 
             
     def _set_atom_info_base(self):

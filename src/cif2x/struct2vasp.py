@@ -61,6 +61,10 @@ class Struct2Vasp:
         self.info = info
         self.struct = struct
 
+        if struct.is_composite:
+            logger.error("init: composite material is not supported")
+            raise ValueError("unsupported material type")
+
         # setup content from input params and template
         self.content = self._setup_content()
 
