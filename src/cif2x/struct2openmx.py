@@ -167,7 +167,10 @@ class Struct2OpenMX:
     def _fill_content(self, content):
         self._fill_species(content)
         self._fill_atoms(content)
-        self._fill_unitvectors(content)
+        if self.struct.is_isolated and self.struct.is_cellshape_auto:
+            pass
+        else:
+            self._fill_unitvectors(content)
 
     def _fill_species(self, content):
         prec = { "quick": 3, "standard": 4, "precise": 5 }[self.info.get("precision", "quick")]
