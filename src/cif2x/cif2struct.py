@@ -13,8 +13,9 @@ import numpy as np
 # #from tomli import load
 # import tomli as toml
 # from f90nml.namelist import Namelist
-from pymatgen.core.structure import IStructure, Structure
-from pymatgen.core.composition import Composition
+from pymatgen.core import IStructure, Structure
+from pymatgen.core import Molecule
+from pymatgen.core import Composition
 from pymatgen.core.periodic_table import Element
 from pymatgen.electronic_structure.core import Magmom
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
@@ -24,22 +25,66 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 class Cif2Struct:
     def __init__(self, cif_file, params={}):
+        logger.info(f"init: cif_file={cif_file}, params={params}")
+
+        # store parameters
         self.params = params
         self.use_ibrav = params.get("use_ibrav", False)
-        self.tolerance = params.get("tolerance", 0.01)
 
-        logger.info(f"init: cif_file={cif_file}")
-        logger.info(f"init: use_ibrav={self.use_ibrav}, tolerance={self.tolerance}")
-        
-        structure: IStructure = IStructure.from_file(cif_file)
+        # try read structure data
+        try:
+            structure = Structure.from_file(cif_file)
+            logger.info("init: structure data")
+        except Exception as e:
+            structure = None
+            logger.info("init: not structure data: {}".format(e))
 
-        if self.use_ibrav:
+        # if not, try as molecular data
+        if structure is None:
+            try:
+                mol = Molecule.from_file(cif_file)
+                logger.info("init: molecular data")
+            except Exception as e:
+                mol = None
+                logger.error("init: not structure data nor molecular data: {}".format(e))
+                raise ValueError("not Structure nor Molecule")
+
+            self.molecule = mol
+
+            cellshape = params.get("cell_shape", None)
+            if cellshape is None:
+                logger.error("init: cell_shape is not specified")
+                raise ValueError("cell_shape unspecified")
+
+            elif cellshape == "auto":
+                cellshape = [ 10.0 ] * 3  # tentative value
+
+            elif type(cellshape) in [int, float]:
+                cellshape = [ cellshape ] * 3
+
+            elif type(cellshape) is list and len(cellshape) >= 3 and type(cellshape[0]) in [int, float]:
+                cellshape = cellshape[0:3]
+
+            else:
+                logger.error("init: unknown cell_shape: {}".format(cellshape))
+                raise ValueError("unknown cell_shape")
+
+            structure = mol.get_boxed_structure(*cellshape)
+
+        self.structure = structure
+        self.system = {}
+
+        if params.get("use_ibrav", False):
+            logger.info("init: use_ibrav")
             self.structure, self.system = self._set_ibrav_structure(structure)
-        else:
-            self.structure = structure.get_primitive_structure(tolerance=self.tolerance)
-            self.system = {}
+
+        if params.get("use_primitive", True):
+            tol = params.get("tolerance", 0.01)
+            logger.info("init: use_primitive, tolerance={}".format(tol))
+            self.structure = structure.get_primitive_structure(tolerance=tol)
 
         if "supercell" in params:
+            logger.info("init: supercell {}".format(params["supercell"]))
             self.supercell = params["supercell"]
             self.structure.make_supercell(self.supercell)
 
