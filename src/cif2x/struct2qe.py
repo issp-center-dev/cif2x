@@ -95,7 +95,7 @@ class Struct2QE:
         return ecutwfc, ecutrho
 
     def _find_elem_cutoff_from_file(self, ename):
-        import xml.etree.ElementTree as ET
+        from bs4 import BeautifulSoup
 
         ecutwfc, ecutrho = None, None
 
@@ -107,30 +107,30 @@ class Struct2QE:
         #                                       self.pp_list.at[ename, "pseudopotential"])
         pseudo_file = "{}/{}.{}.UPF".format(self.pseudo_dir, ename,
                                             self.pp_list.at[ename, "pseudopotential"])
+        bs = None
         try:
-            tree = ET.parse(pseudo_file)
+            with open(pseudo_file, "r") as fp:
+                bs = BeautifulSoup(fp, "html.parser")
         except Exception as e:
             logger.error(f"{pseudo_file}: {e}")
             pass
-        err = 0
-        root = tree.getroot()
-        header = root.find("PP_HEADER")
-        if header is not None:
-            attr = header.attrib
-            if "wfc_cutoff" in attr:
-                ecutwfc = float(attr["wfc_cutoff"])
-            else:
-                logger.error(f"{pseudo_file}: wfc_cutoff not found")
-                err += 1
-            if "rho_cutoff" in attr:
-                ecutrho = float(attr["rho_cutoff"])
-            else:
-                logger.error(f"{pseudo_file}: rho_cutoff not found")
-                err += 1
-        else:
-            logger.error(f"{pseudo_file}: header not found")
-            err += 1
-        if err > 0:
+
+        if bs and bs.upf and bs.upf.pp_header:
+            if bs.upf.pp_header.has_attr("wfc_cutoff"):
+                ecutwfc = float(bs.upf.pp_header["wfc_cutoff"])
+            if bs.upf.pp_header.has_attr("rho_cutoff"):
+                ecutrho = float(bs.upf.pp_header["rho_cutoff"])
+        if ecutwfc is None or ecutrho is None:
+            if bs and bs.upf and bs.upf.pp_info:
+                lines = str(bs.upf.pp_info).splitlines()
+                sg = [s for s in lines if "Suggested" in s]
+                for s in sg:
+                    if "wavefunctions" in s:
+                        ecutwfc = float(s.split()[5])
+                    elif "charge density" in s:
+                        ecutrho = float(s.split()[6])
+
+        if ecutwfc is None or ecutrho is None:
             # raise ValueError("cutoff information not found")
             logger.error("cutoff information not found")
         return ecutwfc, ecutrho

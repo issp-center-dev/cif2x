@@ -14,10 +14,17 @@ DESCRIPTION
 
     -f, --filelist list_file
         specify filename that contains list of pseudo-potential files.
+        if "-" is specified, the list is read from standard input.
 
     -o, --output output_csv
         specify filename to store the results in csv format. if omitted, 
         the results are written to standard output.
+
+    --use-suggested
+        use "suggested" values in the text header given in the form, e.g.
+           Suggested minimum cutoff for wavefunctions:  64. Ry
+           Suggested minimum cutoff for charge density: 782. Ry
+        rather than the values in pp_header attributes.
 
     pp_file ...
         filename(s) of pseudo-potential files.
@@ -27,36 +34,52 @@ DESCRIPTION
 
 """
 
-import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup
 import csv
 import logging
 logger = logging.getLogger(__name__)
 
-def read_pseudo_cutoff(pp_file):
+def read_pseudo_cutoff(pp_file, use_header=True):
+    ecutwfc = None
+    ecutrho = None
+
     try:
-        tree = ET.parse(pp_file)
+        with open(pp_file, "r") as fp:
+            bs = BeautifulSoup(fp, "html.parser")
     except Exception as e:
         logger.error("{}: {}".format(pp_file, e))
         return None
         
-    root = tree.getroot()
+    if bs is None or bs.upf is None:
+        logger.error("{}: unknown pseudopotential file format".format(pp_file))
+        return None
 
-    wfc_cutoff = None
-    rho_cutoff = None
+    if use_header:
+        # read cutoff from pp_header attribute
+        if bs.upf.pp_header:
+            if bs.upf.pp_header.has_attr("wfc_cutoff"):
+                ecutwfc = float(bs.upf.pp_header["wfc_cutoff"])
+            if bs.upf.pp_header.has_attr("rho_cutoff"):
+                ecutrho = float(bs.upf.pp_header["rho_cutoff"])
+        if ecutwfc is None or ecutrho is None:
+            logger.warning("{}: cutoff info not found in header".format(pp_file))
 
-    header = root.find("PP_HEADER")
-    if header is not None:
-        attr = header.attrib
-        if "wfc_cutoff" in attr:
-            wfc_cutoff = float(attr["wfc_cutoff"])
-        if "rho_cutoff" in attr:
-            rho_cutoff = float(attr["rho_cutoff"])
+    if ecutwfc is None or ecutrho is None:
+        # read cutoff from pp_info text description
+        if bs.upf.pp_info:
+            lines = str(bs.upf.pp_info).splitlines()
+            sg = [s for s in lines if "Suggested" in s]
+            for s in sg:
+                if "wavefunctions" in s:
+                    ecutwfc = float(s.split()[5])
+                elif "charge density" in s:
+                    ecutrho = float(s.split()[6])
 
-    if wfc_cutoff is None or rho_cutoff is None:
+    if ecutwfc is None or ecutrho is None:
         logger.warning("{}: wfc_cutoff or rho_cutoff not found".format(pp_file))
         return None
     else:
-        return [ pp_file, wfc_cutoff, rho_cutoff ]
+        return [ pp_file, ecutwfc, ecutrho ]
 
 def main():
     import argparse
@@ -65,6 +88,7 @@ def main():
     parser = argparse.ArgumentParser(prog="pp_cutoff")
     parser.add_argument("-f", "--filelist", default=None, metavar="list_file", help="list file that contains list of pseudo-potential files")
     parser.add_argument("-o", "--output", default=None, metavar="output_csv", help="output file to store the result in CSV foramt")
+    parser.add_argument("--use-suggested", action="store_true", help="use suggested cutoff value in text info")
     parser.add_argument("pp_file", nargs="*", default=[], help="pseudo-potential file(s)")
 
     args = parser.parse_args()
@@ -79,9 +103,9 @@ def main():
     if len(args.pp_file) > 0:
         pp_files += args.pp_file
 
-    tbl = []
+    tbl = [[ "pseudofile", "ecutwfc", "ecutrho" ]]
     for f in pp_files:
-        x = read_pseudo_cutoff(f)
+        x = read_pseudo_cutoff(f, (not args.use_suggested))
         if x is not None:
             tbl.append(x)
 
