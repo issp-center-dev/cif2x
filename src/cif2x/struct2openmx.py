@@ -131,6 +131,10 @@ class Struct2OpenMX:
         self.info = info
         self.struct = struct
 
+        if struct.is_composite:
+            logger.error("init: composite material is not supported")
+            raise ValueError("unsupported material type")
+
         # setup content from input params and template
         self.content = self._setup_content()
 
@@ -156,14 +160,24 @@ class Struct2OpenMX:
         if "optional" in self.info and self.info["optional"] is not None:
             if "data_path" in self.info["optional"]:
                 cnt.update({"DATA.PATH": self.info["optional"]["data_path"]})
-        if "content" in self.info:
+        if "content" in self.info and self.info["content"] is not None:
             cnt.update(self.info["content"])
         return cnt
 
     def _fill_content(self, content):
+        self._fill_system_name(content)
         self._fill_species(content)
         self._fill_atoms(content)
-        self._fill_unitvectors(content)
+        if self.struct.is_isolated and self.struct.is_cellshape_auto:
+            pass
+        else:
+            self._fill_unitvectors(content)
+
+    def _fill_system_name(self, content):
+        if "system.name" not in content:
+            basename = os.path.splitext(os.path.basename(self.struct.cif_file))[0]
+            content["system.name"] = basename
+            logger.info("system.name={}".format(basename))
 
     def _fill_species(self, content):
         prec = { "quick": 3, "standard": 4, "precise": 5 }[self.info.get("precision", "quick")]
@@ -189,10 +203,13 @@ class Struct2OpenMX:
         content["Atoms.SpeciesAndCoordinates"] = tbl
 
     def _fill_unitvectors(self, content):
-        content["Atoms.UnitVectors.Unit"] = "Ang"
-        mat = self.struct.structure.lattice.matrix
-        mat = np.where(np.abs(mat) < 1.0e-12, 0.0, mat)
-        content["Atoms.UnitVectors"] = [ list(x) for x in mat ]
+        if self.struct.is_isolated and self.struct.is_cellshape_auto:
+            logger.info("Atoms.UnitVectors omitted: autoshape")
+        else:
+            content["Atoms.UnitVectors.Unit"] = "Ang"
+            mat = self.struct.structure.lattice.matrix
+            mat = np.where(np.abs(mat) < 1.0e-12, 0.0, mat)
+            content["Atoms.UnitVectors"] = [ list(x) for x in mat ]
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
