@@ -1,0 +1,7 @@
+user_id = "add_your_id"
+properties = ["nsites", "unit_cell_formula", "pretty_formula", "band_gap", "e_above_full", "spacegroup", "total_magnetization", "cif"]
+[criteria]
+[criteria.total_magnetization]
+"$eq" = 0
+[criteria.nsites]
+"$lte" = 5
