@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Tuple, Union
 import logging
 logger = logging.getLogger("Cif2Struct")
 
-# import sys,os
+import sys,os
+from pathlib import Path
 
 # #from docopt import docopt
 import numpy as np
@@ -30,6 +31,12 @@ class Cif2Struct:
         # store parameters
         self.params = params
         self.use_ibrav = params.get("use_ibrav", False)
+        self.cif_file = cif_file
+
+        # check if file exists
+        if not Path(cif_file).exists():
+            logger.error("init: file not found: {}".format(cif_file))
+            sys.exit(1)
 
         # try read structure data
         try:
@@ -73,7 +80,8 @@ class Cif2Struct:
                 logger.error("init: unknown cell_shape: {}".format(cellshape))
                 raise ValueError("unknown cell_shape")
 
-            structure = mol.get_boxed_structure(*cellshape)
+            ofs = np.array(cellshape) * -0.5
+            structure = mol.get_boxed_structure(*cellshape, offset=ofs)
 
         self.structure = structure
         self.system = {}
