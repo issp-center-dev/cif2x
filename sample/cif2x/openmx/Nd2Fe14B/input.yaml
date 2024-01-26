@@ -1,0 +1,10 @@
+structure:
+  cell_shape: auto
+optional:
+  data_path: ../openmx3.9/DFT_DATA19
+tasks:
+  - output_file: test.dat
+    template: template.in
+    content:
+      system.name: Nd2Fe14B
+    precision: precise

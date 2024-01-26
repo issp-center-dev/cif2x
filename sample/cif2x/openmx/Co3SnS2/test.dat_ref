@@ -1,0 +1,44 @@
+scf.XcType                     GGA-PBE
+scf.SpinPolarization           off
+scf.ElectronicTemperature      200.000000
+scf.energycutoff               170
+scf.maxIter                    40
+scf.EigenvalueSolver           cluster
+scf.Kgrid                      1 1 1
+scf.Mixing.Type                rmm-diisk
+scf.Init.Mixing.Weight         0.100000
+scf.Min.Mixing.Weight          0.001000
+scf.Max.Mixing.Weight          0.200000
+scf.Mixing.History             10
+scf.Mixing.StartPulay          5
+scf.criterion                  1.000000e-10
+MD.Type                        nomd
+MD.maxIter                     1
+MD.TimeStep                    1.000000
+MD.Opt.criterion               1.000000e-14
+MD.Opt.DIIS_Mixing             0.100000
+DATA.PATH                      ../openmx3.9/DFT_DATA19
+system.name                    Co3SnS2
+Species.Number                 3
+<Definition.of.Atomic.Species
+Co  Co6.0H-s3p2d2f1  Co_PBE19H
+Sn  Sn7.0-s3p2d2f1  Sn_PBE19
+S  S7.0-s3p2d2f1  S_PBE19
+Definition.of.Atomic.Species>
+Atoms.Number                   7
+Atoms.SpeciesAndCoordinates.Unit Ang
+<Atoms.SpeciesAndCoordinates
+1  Co  2.333123  0.000000  1.340085  8.500000  8.500000
+2  Co  0.775697  2.200400  1.340085  8.500000  8.500000
+3  Co  0.000000  0.000000  2.690593  8.500000  8.500000
+4  Sn  3.108820  2.200400  5.370763  7.000000  7.000000
+5  Sn  0.000000  0.000000  0.000000  7.000000  7.000000
+6  S  4.473654  3.166419  7.728635  3.000000  3.000000
+7  S  1.743986  1.234380  3.012891  3.000000  3.000000
+Atoms.SpeciesAndCoordinates>
+Atoms.UnitVectors.Unit         Ang
+<Atoms.UnitVectors
+4.666246  0.000000  2.680170
+1.551393  4.400799  2.680170
+0.000000  0.000000  5.381186
+Atoms.UnitVectors>
