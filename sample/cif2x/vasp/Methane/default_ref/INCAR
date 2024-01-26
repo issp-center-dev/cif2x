@@ -1,0 +1,5 @@
+EDIFF = 1e-05
+ENCUT = 600
+ISMEAR = 0
+LREAL = auto
+PREC = accurate

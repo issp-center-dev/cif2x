@@ -1,0 +1,32 @@
+ Electronic minimisation
+   ENCUT  = 400 eV
+ Spin
+   ICHARG = 1
+   NELM = 200
+   NELMIN = 4
+ MIXING
+   MAXMIX=40
+ Accuracy
+   PREC = Normal
+   EDIFF = 1e-5
+ Smearing
+   ISMEAR = 0 
+   SIGMA = 0.05
+   LREAL = Auto
+   ALGO = Fast
+ Relaxation and MD
+   NSW = 100
+   EDIFFG = -0.04
+   IBRION = 1
+   POTIM = 0.3
+   ISIF=3
+   NEDOS = 1000
+   IBAND = 171 172 173 174 
+   KPUSE = 1 
+   LSEPB = .TRUE.
+   LSEPK = .TRUE.
+   LVTOT = .FALSE.
+   LVHAR = .FALSE.
+   NCORE = 8
+   LWAVE=.FALSE.
+   LCHARG=.FALSE.

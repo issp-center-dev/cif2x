@@ -1,0 +1,24 @@
+structure:
+  use_ibrav: false
+  tolerance: 0.05
+
+optional:
+  pp_file: ../list_PBE.csv
+  pseudo_dir: /home/issp/vasp/vasp5/pot
+  #pseudo_functional: PBE
+  #pseudo_map: ../element_map_PBE.csv
+
+tasks:
+  - output_dir: default
+    #template_dir: base_input
+    content:
+      incar:
+        encut: 600
+        prec: accurate
+        ediff: 1e-5
+        ismear: 0
+        lreal: auto
+      kpoints:
+        type: gamma_automatic
+      #poscar:
+      #potcar:
