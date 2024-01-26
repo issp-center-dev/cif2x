@@ -1,0 +1,37 @@
+structure:
+  use_ibrav: false
+  tolerance: 0.05
+  cell_shape: [10.0, 10.0, 10.0]
+
+optional:
+  pseudo_dir: ../pseudo
+  pp_file: ../pseudo/pp_psl_pbe_rrkjus.csv
+  cutoff_file: ../pseudo/cutoff_psl_pbe_rrkjus.csv
+
+tasks:
+  - mode: scf
+    output_file: scf.in
+    content:
+      namelist:
+        control:
+          prefix: pwscf
+          pseudo_dir: ./pseudo
+          outdir: ./work
+        system:
+          ibrav:
+          nat:
+          ntyp:
+          ecutwfc:
+          ecutrho:
+          occupations: smearing
+          smearing: m-p
+          degauss: 0.01
+        electrons:
+          mixing_beta: 0.1
+          conv_thr: 1.e-8
+      CELL_PARAMETERS:
+      ATOMIC_SPECIES:
+      ATOMIC_POSITIONS:
+        option: crystal
+      K_POINTS:
+        option: automatic
