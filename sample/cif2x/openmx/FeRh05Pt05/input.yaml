@@ -1,5 +1,11 @@
 structure:
   cell_shape: auto
+  sqs_transformation:
+    enable: true
+    scaling: 8
+    option:
+      instances: 4
+    output_cif: structure_sqs.cif
 optional:
   data_path: ../openmx3.9/DFT_DATA19
 tasks:

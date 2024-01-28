@@ -1,6 +1,12 @@
 structure:
   use_ibrav: false
   tolerance: 0.05
+  sqs_transformation:
+    enable: true
+    scaling: 8
+    option:
+      instances: 4
+    output_cif: structure_sqs.cif
 
 optional:
   pp_file: ../list_PBE.csv

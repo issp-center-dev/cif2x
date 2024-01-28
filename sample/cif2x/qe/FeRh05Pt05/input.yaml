@@ -1,6 +1,12 @@
 structure:
   use_ibrav: false
   tolerance: 0.05
+  sqs_transformation:
+    enable: true
+    scaling: 8
+    option:
+      instances: 4
+    output_cif: structure_sqs.cif
 
 optional:
   pseudo_dir: ../pseudo
@@ -27,7 +33,7 @@ tasks:
           degauss: 0.01
         electrons:
           mixing_beta: 0.1
-          conv_thr: 1.e-8
+          conv_thr: 1.e-5
       CELL_PARAMETERS:
       ATOMIC_SPECIES:
       ATOMIC_POSITIONS:
