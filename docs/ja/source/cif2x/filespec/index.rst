@@ -19,17 +19,51 @@
 structure
 ---------
 
-  ``use_ibrav`` (デフォルト値: ``false``)
+  ``use_ibrav`` (Quantum ESPRESSO)
 
     結晶構造の入力に Quantum ESPRESSO の ``ibrav`` パラメータを利用します。 ``true`` の場合、格子のとり方を Quantum ESPRESSO の convention に合うように変換します。入力ファイルにはあわせて格子に関するパラメータ ``a``, ``b``, ``c``, ``cosab``, ``cosac``, ``cosbc`` が(必要に応じて)書き出されます。
+    (デフォルト値: ``false``)
 
-  ``tolerance`` (デフォルト値: 0.01)
+  ``tolerance``
 
     ``use_ibrav = true`` の場合に、再構成した Structure データと元データとの一致を評価する際の許容度を指定します。
+    (デフォルト値: 0.01)
 
-  ``supercell`` (デフォルト値: なし)
+  ``supercell``
 
     supercell を設定する場合に supercell のサイズを [:math:`n_x`, :math:`n_y`, :math:`n_z`] で指定します。
+    (デフォルト値: なし)
+
+  ``sqs_transformation`` ブロック
+
+    Special Quasi-random Structure (SQS) 法を用いて合金や混晶の元素配置を求めます。この機能を利用するには `Alloy Theoretic Automated Toolkit (ATAT) <https://www.brown.edu/Departments/Engineering/Labs/avdw/atat/>`_ が必要です。
+
+    以下のパラメータを指定できます。パラメータの詳細は `pymatgen のマニュアル <https://pymatgen.org/pymatgen.transformations.html#pymatgen.transformations.advanced_transformations.SQSTransformation>`_ を参照してください。
+
+      ``enable``
+
+        SQS transformation を適用します。(デフォルト値: False)
+
+      ``scaling``
+
+        スーパーセルのサイズを整数値または整数のリストで指定します。整数値の場合、スーパーセル内の単位胞の数です。整数のリストの場合は、a, b, c 軸に沿った単位胞の数です。指定しない場合はエラーとして SQS transformation を適用しません。
+
+      ``cluster_size_and_shell``
+
+        クラスター法のパラメータをセットします。パラメータの詳細は pymatgen のマニュアルを参照してください。
+
+      ``option``
+
+        pymatgen の SQSTransformation のパラメータをテーブル形式で指定します。以下のパラメータが指定できます。デフォルト値は pymatgen に準拠します。
+	``search_time``, ``directory``, ``instances``, ``temperature``, ``wr``, ``wn``, ``wd``, ``tol``, ``best_only``, ``remove_duplicate_structures``, ``reduction_algo``
+
+	``search_time`` は探索の打ち切り時間を分単位で指定します。デフォルト値は 1分です。
+
+	``instances`` は ATAT の mcsqs プログラムを並列実行する際の並列度を指定します。デフォルト値は 1 です。 ``all`` を指定すると実行環境のコア数と同数になります。 ``env`` を指定すると環境変数 ``OMP_NUM_THREADS`` の値を使用します。環境変数がセットされていない場合は 1 になります。
+
+      ``output_cif``
+
+        SQS transformation 後の構造データを CIF 形式で出力します。出力ファイル名を ``output_cif`` に指定します。
 
 optional
 --------

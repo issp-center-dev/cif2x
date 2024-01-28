@@ -19,17 +19,51 @@ An input parameter file describes information necessary to generate input files 
 structure
 ---------
 
-  ``use_ibrav`` (default value: ``false``)
+  ``use_ibrav`` (Quantum ESPRESSO)
 
-    This parameter specifies whether ``ibrav`` parameter is used for Quantum ESPRESSO as the input of the crystal structure. When it is set to ``true``, the lattice is transformed to match the convention of Quantum ESPRESSO, and the lattice parameters ``a``, ``b``, ``c``, ``cosab``, ``cosac``, and ``cosbc`` are written to the input file as needed.
+    This parameter specifies whether ``ibrav`` parameter is used for Quantum ESPRESSO as the input of the crystal structure. When it is set to ``true``, the lattice is transformed to match the convention of Quantum ESPRESSO, and the lattice parameters ``a``, ``b``, ``c``, ``cosab``, ``cosac``, and ``cosbc`` are written to the input file as needed. (default value: ``false``)
 
-  ``tolerance`` (default value: 0.01)
+  ``tolerance``
 
-    This parameter specifies the tolerance in the difference between the reconstructed Structure data and the original data when ``use_ibrav`` is set to ``true``.
+    This parameter specifies the tolerance in the difference between the reconstructed Structure data and the original data when ``use_ibrav`` is set to ``true``. (default value: 0.01)
 
-  ``supercell`` (default value: none)
+  ``supercell``
 
-    This parameter specifies the size of supercell, when it is adopted, in the form of  [:math:`n_x`, :math:`n_y`, :math:`n_z`].
+    This parameter specifies the size of supercell, when it is adopted, in the form of  [:math:`n_x`, :math:`n_y`, :math:`n_z`]. (default value: none)
+
+  ``sqs_transformation`` block
+
+    The configuration of elements of alloys and solid solutions is obtained using Special Quasi-random Structure (SQS) method. The `Alloy Theoretic Automated Toolkit (ATAT) <https://www.brown.edu/Departments/Engineering/Labs/avdw/atat/>`_ is required to use this feature.
+
+    The available parameters in this block are listed below. The details will be found in the `pymatgen manual <https://pymatgen.org/pymatgen.transformations.html#pymatgen.transformations.advanced_transformations.SQSTransformation>`_.
+
+      ``enable``
+
+        This parameter specifies whether SQS transformation is applied or not. (The default value is false.)
+
+      ``scaling``
+
+        This parameter specifies the size of the supercell by an integer or a list of integers.
+	An integer means the number of unit cells within the supercell.
+	A list of integers means the numbers of unit cells along the a, b, and c axes, respectively.
+	If the scaling parameter is not specified, it is regarded as an error and the SQS transformation will not be applied.
+
+      ``cluster_size_and_shell``
+
+        This parameter specifies the settings of the cluster algorithm. The details will be found in pymatgen manual.
+      
+      ``option``
+
+        The parameters for SQSTransformation of pymatgen are given in table format. The following keys are accepted with their default values mostly according to pymatgen:
+	``search_time``, ``directory``, ``instances``, ``temperature``, ``wr``, ``wn``, ``wd``, ``tol``, ``best_only``, ``remove_duplicate_structures``, ``reduction_algo``
+
+	``search_time`` specifies the maximum duration of mcsqs in unit of minutes. The default value is 1 minute.
+
+	``instances`` specifies the number of parallel runs of mcsqs. The default value is 1. When it is set to ``all``, all cores of the present platform are used. When it is set to ``env``, the number of cores to be used will be taken from the environment variable ``OMP_NUM_THREADS``. It the environment variable is not set, the value of ``instances`` will be 1.
+
+      ``output_cif``
+
+        The structure data after the SQS transformation is stored to a file in CIF format, the file name of which is specified by this parameter.
     
 
 optional
