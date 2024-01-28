@@ -184,9 +184,10 @@ class Cif2Struct:
             os.chdir(cwd_save)
 
             if isinstance(st, list):
-                return st[0]["structure"]
-            else:
-                return st
+                st = st[0]["structure"]
+            st.sort()
+            return st
+
         except RuntimeError as e:
             logger.warning("SQSTransformation failed: {}".format(e))
 
