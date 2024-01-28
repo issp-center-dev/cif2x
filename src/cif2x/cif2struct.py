@@ -83,6 +83,15 @@ class Cif2Struct:
             ofs = np.array(cellshape) * -0.5
             structure = mol.get_boxed_structure(*cellshape, offset=ofs)
 
+
+        # SQSTransformation for Alloy-type structure
+        if (not self.is_isolated) and (not structure.is_ordered):
+            if "sqs_transformation" in self.params and self.params["sqs_transformation"].get("enable", False) is True:
+                structure = self._apply_sqs_transformation(structure)
+
+                if self.params["sqs_transformation"].get("output_cif", None):
+                    structure.to(self.params["sqs_transformation"]["output_cif"], fmt="cif")
+
         self.structure = structure
         self.system = {}
 
@@ -114,6 +123,76 @@ class Cif2Struct:
             self.is_composite = True
             logger.info("init: composite material")
 
+
+    def _apply_sqs_transformation(self, structure):
+        logger.info("apply SQSTransformation")
+
+        from pymatgen.transformations.advanced_transformations import SQSTransformation
+
+        #XXX workaround: SQSTransf changes current directory!
+        cwd_save = os.getcwd()
+
+        params_sqs = self.params["sqs_transformation"]
+
+        scaling = params_sqs.get("scaling", None)
+        if scaling is None:
+            logger.error("SQSTransformation: scaling is not specified")
+            return structure
+        clusters = params_sqs.get("cluster_size_and_shell", None)
+        return_list = params_sqs.get("return_ranked_list", False)
+
+        sqs_opts = {  # default values
+            "search_time": 1,  # min
+            "instances": 1,
+        }
+        if "option" in params_sqs and params_sqs["option"] is not None:
+            for k,v in params_sqs["option"].items():
+                if k in ["search_time",
+                         "directory",
+                         "instances",
+                         "temperature",
+                         "wr",
+                         "wn",
+                         "wd",
+                         "tol",
+                         "best_only",
+                         "remove_duplicate_structures",
+                         "reduction_algo",
+                ]:
+                    sqs_opts[k] = v
+                else:
+                    logger.warning("SQSTransformation: unrecognized option: {}".format(k))
+
+        if isinstance(sqs_opts["instances"], str):
+            if sqs_opts["instances"] == "all":
+                sqs_opts.pop("instances", None)
+            elif sqs_opts["instances"] == "env":
+                if os.environ.get("OMP_NUM_THREADS"):
+                    sqs_opts["instances"] = int(os.environ.get("OMP_NUM_THREADS"))
+                else:
+                    sqs_opts["instances"] = 1
+            else:
+                sqs_opts["instances"] = 1
+
+        logger.debug("SQSTransformation: scaling={}, clusters={}, opts={}".format(scaling, clusters, sqs_opts))
+
+        sqs = SQSTransformation(scaling, clusters, **sqs_opts)
+        try:
+            st = sqs.apply_transformation(structure, return_ranked_list=return_list)
+
+            #XXX
+            os.chdir(cwd_save)
+
+            if isinstance(st, list):
+                return st[0]["structure"]
+            else:
+                return st
+        except RuntimeError as e:
+            logger.warning("SQSTransformation failed: {}".format(e))
+
+        #XXX
+        os.chdir(cwd_save)
+        return structure
             
     def _set_atom_info_base(self):
         """
