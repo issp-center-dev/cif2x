@@ -137,7 +137,7 @@ class Cif2Struct:
         scaling = params_sqs.get("scaling", None)
         if scaling is None:
             logger.error("SQSTransformation: scaling is not specified")
-            return structure
+            raise RuntimeError("SQSTransformation: scaling is not specified")
         clusters = params_sqs.get("cluster_size_and_shell", None)
         return_list = params_sqs.get("return_ranked_list", False)
 
@@ -189,7 +189,8 @@ class Cif2Struct:
             return st
 
         except RuntimeError as e:
-            logger.warning("SQSTransformation failed: {}".format(e))
+            logger.error("SQSTransformation failed: {}".format(e))
+            raise RuntimeError("SQSTransformation failed: {}".format(e))
 
         #XXX
         os.chdir(cwd_save)
