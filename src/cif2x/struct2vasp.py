@@ -109,6 +109,58 @@ class Struct2Vasp:
         if content and _is_valid(content, "INCAR"):
             tbl["incar"].update(content["INCAR"])
 
+        # check incar tags
+        incar_params_list_type = [
+           "CMBJ",
+           "DIPOL",
+           "EFIELD_PEAD",
+           "EINT",
+           "FERDO",
+           "FERWE",
+           "IBAND",
+           "INCREM",
+           "KPOINT_BSE",
+           "KPUSE",
+           "LANGEVIN_GAMMA",
+           "LATTICE_CONSTRAINTS",
+           "LDAUJ",
+           "LDAUL",
+           "LDAUU",
+           "M_CONSTR",
+           "MAGMOM",
+           "ML_EATOM_REF",
+           "ML_ICOUPLE",
+           "NCRPA_BANDS",
+           "NGYROMAG",
+           "NSUBSYS",
+           "NTARGET_STATES",
+           "PHON_BORN_CHARGES",
+           "PHON_DIELECTRIC",
+           "PHON_TLIST",
+           "PSUBSYS",
+           "QMAXFOCKAE",
+           "QSPIRAL",
+           "QUAD_EFG",
+           "RANDOM_SEED",
+           "ROPT",
+           "RWIGS",
+           "SAXIS",
+           "SMEARINGS",
+           "TSUBSYS",
+           "VALUE_MAX",
+           "VALUE_MIN",
+           "VDW_ALPHA",
+           "VDW_C6",
+           "VDW_C6AU",
+           "VDW_R0",
+           "VDW_R0AU",
+        ]
+        for tag in incar_params_list_type:
+            if tag in tbl["incar"]:
+                # logger.debug("INCAR list tag: {}".format(tag))
+                if isinstance(tbl["incar"][tag], str):
+                    tbl["incar"][tag] = tbl["incar"][tag].split()
+
         # KPOINTS: content field, or template
         if content and _is_valid(content, "KPOINTS"):
             tbl["kpoints"] = { "@optional": content["KPOINTS"] }
