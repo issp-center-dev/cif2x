@@ -186,49 +186,55 @@ class Struct2Vasp:
 def generate_kpoints(vsp, params):
     logger.debug("generate_kpoints")
 
-    mode = params.get("type", "gamma_automatic")
+    mode = params.get("TYPE", "gamma_automatic")
 
     if mode == "automatic":
-        grid = params.get("grid", 1)
+        grid = params.get("GRID", 1)
         kpt = Kpoints.automatic(grid)
 
     elif mode == "gamma_automatic":
-        grid = params.get("kpoints", [1,1,1])
-        shift = params.get("shift", [0.,0.,0.])
+        grid = params.get("KPOINTS", [1,1,1])
+        shift = params.get("SHIFT", [0.,0.,0.])
         logger.debug(f"mode={mode}, grid={tuple(grid)}, shift={tuple(shift)}")
         kpt = Kpoints.gamma_automatic(tuple(grid), tuple(shift))
 
     elif mode == "monkhorst_automatic":
-        grid = params.get("kpoints", [2,2,2])
-        shift = params.get("shift", [0.,0.,0.])
+        grid = params.get("KPOINTS", [2,2,2])
+        shift = params.get("SHIFT", [0.,0.,0.])
+        logger.debug(f"mode={mode}, grid={tuple(grid)}, shift={tuple(shift)}")
         kpt = Kpoints.monkhorst_automatic(tuple(grid), tuple(shift))
 
     elif mode == "automatic_density":
-        kppa = params.get("grid_density", 0.1)
-        force_gamma = params.get("force_gamma", False)
+        kppa = params.get("GRID_DENSITY", 0.1)
+        force_gamma = params.get("FORCE_GAMMA", False)
+        logger.debug(f"mode={mode}, kppa={kppa}, force_gamma={force_gamma}")
         kpt = Kpoints.automatic_density(vsp.struct.structure, kppa, force_gamma)
 
     elif mode == "automatic_gamma_density":
-        kppa = params.get("grid_density", 0.1)
+        kppa = params.get("GRID_DENSITY", 0.1)
+        logger.debug(f"mode={mode}, kppa={kppa}")
         kpt = Kpoints.automatic_gamma_density(vsp.struct.structure, kppa)
 
     elif mode == "automatic_density_by_vol":
-        kppvol = params.get("grid_density", 1)
-        force_gamma = params.get("force_gamma", False)
+        kppvol = params.get("GRID_DENSITY", 1)
+        force_gamma = params.get("FORCE_GAMMA", False)
+        logger.debug(f"mode={mode}, kppvol={kppvol}, force_gamma={force_gamma}")
         kpt = Kpoints.automatic_density_by_vol(vsp.struct.structure, kppvol, force_gamma)
 
     elif mode == "automatic_density_by_lengths":
-        length_density = params.get("length_density", [10.0, 10.0, 10.0])
-        force_gamma = params.get("force_gamma", False)
+        length_density = params.get("LENGTH_DENSITY", [10.0, 10.0, 10.0])
+        force_gamma = params.get("FORCE_GAMMA", False)
+        logger.debug(f"mode={mode}, length_density={tuple(length_density)}, force_gamma={force_gamma}")
         kpt = Kpoints.automatic_density_by_lengths(vsp.struct.structure, length_density, force_gamma)
 
     elif mode == "automatic_linemode":
-        div = params.get("division", 1)
-        path_type = params.get("path_type", None)
+        div = params.get("DIVISION", 1)
+        path_type = params.get("PATH_TYPE", None)
         if path_type:
             ibz = HighSymmKpath(vsp.struct.structure, path_type=path_type)
         else:
             ibz = HighSymmKpath(vsp.struct.structure)
+        logger.debug(f"mode={mode}, division={division}, path_type={path_type}")
         kpt = Kpoints.automatic_linemode(div, ibz)
 
     else:
@@ -241,7 +247,7 @@ def generate_kpoints(vsp, params):
 def generate_poscar(vsp, params):
     logger.debug("generate_poscar")
 
-    fix_species = params.get("fix_species", None)
+    fix_species = params.get("FIX_SPECIES", None)
 
     if fix_species is not None:
         if not isinstance(fix_species, list):
