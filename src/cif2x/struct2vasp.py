@@ -78,6 +78,38 @@ class Struct2Vasp:
             logger.debug(f"write_input: key=\"{key}\"")
             write_content(self, content, Path(dirname, key))
 
+    def _read_input(self, dirname):
+        sub_d = {}
+        # INCAR
+        try:
+            fullzpath = zpath(Path(dirname, "INCAR"))
+            # workaround pymatgen Incar input: handle multiline with escape character
+            with zopen(fullzpath, "rt") as f:
+                content = f.read()
+                sub_d["incar"] = Incar.from_string(content.replace("\\\n", ""))
+            logger.info("read_input: read {} from {}".format("INCAR", fullzpath))
+        except FileNotFoundError:
+            sub_d["incar"] = None
+
+        # POSCAR
+        try:
+            fullzpath = zpath(Path(dirname, "POSCAR"))
+            sub_d["poscar"] = Poscar.from_file(fullzpath, check_for_POTCAR=False)
+            logger.info("read_input: read {} from {}".format("POSCAR", fullzpath))
+        except FileNotFoundError:
+            sub_d["poscar"] = None
+
+        # KPOINTS, POTCAR
+        for fname, ftype in [("KPOINTS", Kpoints),("POTCAR", Potcar)]:
+            try:
+                fullzpath = zpath(Path(dirname, fname))
+                sub_d[fname.lower()] = ftype.from_file(fullzpath)
+                logger.info("read_input: read {} from {}".format(fname, fullzpath))
+            except FileNotFoundError:
+                sub_d[fname.lower()] = None
+
+        return VaspInput(**sub_d)
+
     def _setup_content(self):
         logger.debug("_setup_template")
 
@@ -85,7 +117,8 @@ class Struct2Vasp:
             return t in cnt and cnt[t] is not None
 
         if "template_dir" in self.info:
-            infile = VaspInput.from_directory(Path(self.info["template_dir"]))
+            # infile = VaspInput.from_directory(Path(self.info["template_dir"]))
+            infile = self._read_input(Path(self.info["template_dir"]))
         else:
             infile = None
 
