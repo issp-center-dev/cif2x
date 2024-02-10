@@ -1,0 +1,17 @@
+database:
+  target: materials project
+
+option:
+  output_dir: result
+  # dry_run: true
+
+properties:
+  formula: "**O3"
+  # elements: Sr Ti
+  # elements: Sr V
+  elements: Sr Co 
+
+fields: |
+  structure
+  band_gap
+  symmetry

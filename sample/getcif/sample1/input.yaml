@@ -1,0 +1,14 @@
+database:
+  target: materials project
+
+option:
+  output_dir: result
+
+properties:
+  elements: [ Si, O ]
+  band_gap: [ 0.5, 0.6 ]
+
+fields: |
+  structure
+  band_gap
+  symmetry
