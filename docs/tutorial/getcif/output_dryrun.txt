@@ -1,0 +1,2 @@
+$ getcif --dry-run input.yaml
+{'band_gap': (None, 1.0), 'is_stable': True, 'is_metal': False, 'formula': '**O3', 'spacegroup_symbol': 'Pm-3m', 'fields': ['structure', 'band_gap', 'symmetry', 'material_id', 'formula_pretty']}
