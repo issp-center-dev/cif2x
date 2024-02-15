@@ -86,7 +86,7 @@ class Struct2Vasp:
             # workaround pymatgen Incar input: handle multiline with escape character
             with zopen(fullzpath, "rt") as f:
                 content = f.read()
-                sub_d["incar"] = Incar.from_string(content.replace("\\\n", ""))
+                sub_d["incar"] = Incar.from_str(content.replace("\\\n", ""))
             logger.info("read_input: read {} from {}".format("INCAR", fullzpath))
         except FileNotFoundError:
             sub_d["incar"] = None
@@ -192,7 +192,32 @@ class Struct2Vasp:
             if tag in tbl["incar"]:
                 # logger.debug("INCAR list tag: {}".format(tag))
                 if isinstance(tbl["incar"][tag], str):
-                    tbl["incar"][tag] = tbl["incar"][tag].split()
+
+                    def _as_number(s):
+                        try:
+                            return int(s)
+                        except ValueError as e:
+                            pass
+                        try:
+                            return float(s)
+                        except ValueError as e:
+                            pass
+                        return s
+
+                    retv = []
+                    terms = tbl["incar"][tag].split()
+                    for term in terms:
+                        if "*" in term:
+                            token = term.split("*")
+                            if len(token) > 2:
+                                retv.extend([_as_number(token[2])] * int(token[1]) * int(token[0]))
+                            elif len(token) > 1:
+                                retv.extend([_as_number(token[1])] * int(token[0]))
+                            else:
+                                retv.extend([_as_number(token[0])])
+                        else:
+                            retv.extend([_as_number(term)])
+                    tbl["incar"][tag] = retv
 
         # KPOINTS: content field, or template
         if content and _is_valid(content, "KPOINTS"):
