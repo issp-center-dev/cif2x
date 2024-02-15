@@ -75,14 +75,29 @@ The format of the parameter values is shown below. It follows the YAML specifica
 
     described as a list of two numbers such as ``[ min, max ]``, or a pair of two numbers separated by a space as ``min max``. The following formats are also available.
 
-    ``< max``
+    ``<= max``
       less than or equal to ``max``.
 
-    ``> min``
+    ``< max``
+      less than ``max``. (For a real number, it is equivalent to ``<= max``. For an integer, it is treated as ``<= max-1``.)
+
+    ``>= min``
       more than or equal to ``min``.
+
+    ``> min``
+      more than ``min``. (For a real number, it is equivalent to ``>= min``. For an integer, it is treated as ``>= min+1``.)
 
     ``min ~ max``
       between ``min`` and ``max``.
+
+    N.B.:
+
+      - A space must be placed between the symbol and the number.
+
+      - Due to the YAML syntax that the symbol ``">"`` at the beginning of a term is treated as a special character, ``> min`` and ``>= min`` should be enclosed by quotes as ``"> min"`` and ``">= min"``, respectively.
+
+      - In list notations, ``<= max`` and ``>= min`` are denoted as ``[ None, max ]`` and ``[ min, None ]``, respectively.
+
 
 - wild card symbols
 
