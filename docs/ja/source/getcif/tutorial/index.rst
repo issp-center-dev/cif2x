@@ -81,7 +81,7 @@ YAMLフォーマットでは、 ``keyword: value`` の辞書形式でパラメ�
 ``getcif`` を実行すると Materials Project のデータベースに接続し、検索条件に合致するデータを取得します。標準出力には、以下のように、物質の material ID と組成式、データ項目のサマリーが出力されます。
 
 .. literalinclude:: ../../../../tutorial/getcif/output_log.txt
-   :language: plain
+   :language: text
 
 取得したデータは、 ``output_dir`` で指定した result ディレクトリ内に物質ごとに格納されます。この例では、 result 以下に mp-3163 から mp-977455 までの 7つのディレクトリが作成され、各ディレクトリには次のファイルが書き込まれます。
 
@@ -104,4 +104,4 @@ YAMLフォーマットでは、 ``keyword: value`` の辞書形式でパラメ�
 ``getcif`` の実行に ``--dry-run`` オプションを付けると、以下のように検索条件を出力して終了します。データベースに実際に接続する前に検索項目を確認できます。
 
 .. literalinclude:: ../../../../tutorial/getcif/output_dryrun.txt
-   :language: bash
+   :language: text
