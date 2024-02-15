@@ -201,6 +201,12 @@ class QueryMaterialsProject:
     def _find_properties(self, info):
         props = info
 
+        def _find_val_or_none(val, typ=float):
+            if isinstance(val, str):
+                if val.lower() == "none":
+                    return None
+            return typ(val)
+
         def _find_range(val, typ=float):
             """
             accepted patterns
@@ -217,10 +223,20 @@ class QueryMaterialsProject:
             if any([symbol in val for symbol in ("<",">","=","~")]):
                 w = [s.strip() for s in val.split()]
                 if len(w) == 2:
-                    if w[0] == "<" or w[0] == "<=":
+                    if w[0] == "<=":
                         return (None, typ(w[1]))
-                    elif w[0] == ">" or w[0] == ">=":
+                    elif w[0] == "<":
+                        if typ == int:
+                            return (None, typ(w[1])-1)
+                        else:
+                            return (None, typ(w[1]))
+                    elif w[0] == ">=":
                         return (typ(w[1]), None)
+                    elif w[0] == ">":
+                        if typ == int:
+                            return (typ(w[1])+1, None)
+                        else:
+                            return (typ(w[1]), None)
                     elif w[0] == "=":
                         return (typ(w[1]), typ(w[1]))
                     else:
@@ -234,7 +250,7 @@ class QueryMaterialsProject:
                     pass
             else:
                 w = [typ(s) for s in val.split()]
-                if len(w) >= 2:
+                if len(w) == 2:
                     return tuple(w[0:2])
                 else:
                     pass
@@ -264,15 +280,13 @@ class QueryMaterialsProject:
                     props[prop] = v if len(v) > 1 else v[0]
             elif typ == "tuple[int,int]":
                 if isinstance(value, list):
-                    props[prop] = tuple(value[0:2])
+                    props[prop] = tuple([_find_val_or_none(s, int) for s in value[0:2]])
                 elif isinstance(value, str):
-                    #props[prop] = tuple([int(v) for v in value.split()[0:2]])
                     props[prop] = _find_range(value, int)
             elif typ == "tuple[float,float]":
                 if isinstance(value, list):
-                    props[prop] = tuple(value[0:2])
+                    props[prop] = tuple([_find_val_or_none(s) for s in value[0:2]])
                 elif isinstance(value, str):
-                    #props[prop] = tuple([float(v) for v in value.split()[0:2]])
                     props[prop] = _find_range(value)
             elif typ == "list[HasProps]":  # for has_props
                 if isinstance(value, list):
