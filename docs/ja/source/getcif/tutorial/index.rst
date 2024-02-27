@@ -8,7 +8,7 @@
 APIキーを取得する
 ----------------------------------------------------------------
 
-Materials Project のデータベースをプログラムから検索するには、予め Materials Project にユーザ登録し、APIキーを取得する必要があります。
+Materials Project のデータベースをプログラムから検索するには、あらかじめ Materials Project にユーザ登録し、APIキーを取得する必要があります。
 Materials Project の公式サイト `https://next-gen.materialsproject.org <https://next-gen.materialsproject.org>`_ にアクセスし、Login します。APIキーはユーザ登録時に自動的生成され、ユーザのダッシュボードから確認できます。取得した APIキーは安全に保管し、他人に知られないようにしましょう。
 
 APIキーを getcif にセットするには、以下のいずれかを実行します。
@@ -36,14 +36,16 @@ APIキーを getcif にセットするには、以下のいずれかを実行し
 
       を実行します。
 
-  (c) 入力パラメータファイルに記載する
+  (c) ファイルに格納する
+
+      APIキーをファイルに書き込み、getcif を実行するディレクトリに配置します。ファイル名のデフォルトは ``materials_project.key`` です。異なるファイル名を使う場合は、入力パラメータファイル (input.yaml) の api_key_file にファイル名を指定します。ファイル名は ``.key`` の拡張子が必要です。
 
         .. code:: yaml
 
           database:
-	    api_key: <API_KEY>
+	    api_key_file: materials_project.key
 
-      上記のように入力パラメータファイル (input.yaml) に APIキーを書き込みます。
+      註: バージョン管理ツールを使っている場合は、 ``.key`` の拡張子を持つファイルを管理から除外するとよいでしょう。(Git の場合は ``.gitignore`` ファイルに ``*.key`` を追加します。)
 
 
 入力パラメータファイルを作成する

@@ -25,10 +25,13 @@ database
 
   This parameter specifies the database to connected to. At present this parameter is ignored.
 
-``api_key`` (default value: None)
+``api_key_file`` (default value: ``materials_project.key``)
 
-  This parameter specifies the API key to access to the database. It is obtained from Materials Project as a registered user.
-  If api_key is not specified or the value is empty, the API key is obtained from the environment variable ``MP_API_KEY``, or from the parameter ``PMG_MAPI_KEY`` of the pymatgen configuration file in ``~/.config/.pmgrc``.
+  This parameter specifies a name of a file that contains the API key to access to the database.
+  The suffix of the file name must be ``.key``.
+  If the file does not exist or it does not contain a valid value, the API key is obtained from the environment variable ``MP_API_KEY``, or from the parameter ``PMG_MAPI_KEY`` of the pymatgen configuration file in ``~/.config/.pmgrc``.
+
+  The API key file is a text file. A line starting with ``#`` is regarded as a comment. The heading and trailing spaces are ignored. When the file contains more than one line, the API key is taken from the first valid line.
     
 
 option

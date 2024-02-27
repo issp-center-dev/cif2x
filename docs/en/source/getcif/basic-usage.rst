@@ -61,7 +61,7 @@ Installation and basic usage
   #. Getting an API key for Materials Project
 
      First, you need to register to Materials Project at their `website <https://next-gen.materialsproject.org/>`_ and obtain an API key to access the database.
-     The API key (string) is stored in the configuration file using pymatgen tool, or set to an environment variable.
+     The API key (string) is stored in the configuration file using pymatgen tool, or set to an environment variable. It can be stored in a file specified in the input parameter file.
 
   #. Preparing an input parameter file
 

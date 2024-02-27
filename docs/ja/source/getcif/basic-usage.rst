@@ -58,7 +58,7 @@
 
   #. APIキーの取得
 
-      Materials Project のデータを利用するには `Materials Project のウェブサイト <https://next-gen.materialsproject.org/>`_ でユーザ登録が必要です。登録すると、プログラム等からデータを検索するための APIキーを取得できます。APIキー(文字列)は、pymatgen のツールを用いて設定ファイルにセットするか、環境変数にセットします。
+      Materials Project のデータを利用するには `Materials Project のウェブサイト <https://next-gen.materialsproject.org/>`_ でユーザ登録が必要です。登録すると、プログラム等からデータを検索するための APIキーを取得できます。APIキー(文字列)は、pymatgen のツールを用いて設定ファイルにセットするか、環境変数に設定します。あるいは、入力パラメータファイルで指定したファイルに APIキーを書き込みます。
 
   #. 入力パラメータファイルの作成
 

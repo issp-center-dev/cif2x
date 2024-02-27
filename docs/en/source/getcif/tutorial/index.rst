@@ -34,12 +34,15 @@ The API key is made available to getcif by one of the following ways:
           $ MP_API_KEY="<API_KEY>"
 	  $ export MP_API_KEY
 
-  (c) including in the input parameter file (input.yaml) as:
+  (c) storing the API key to a file located in the directory where getcif is run.
+      The default value of the file name is ``materials_project.key``. Otherwise, it is given in the input parameter file. The file name must end with ``.key``.
 
         .. code:: yaml
 
           database:
-	    api_key: <API_KEY>
+	    api_key_file: materials_project.key
+
+      Comment: it will be recommended to exclude files with ``.key`` as a suffix from version control system. (e.g. for Git, add ``*.key`` in ``.gitignore`` file.)
 
 
 Prepare an input parameter file
