@@ -15,9 +15,9 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.9"
 pymatgen = ">=2019.12.3"
-mp_api = "*"
+mp_api = ">=0.40"
 phonopy = "*"
-"ruamel.yaml" = "*"
+"ruamel.yaml" = ">=0.17"
 
 [tool.poetry.extras]
 
