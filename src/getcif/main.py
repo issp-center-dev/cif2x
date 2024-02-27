@@ -157,7 +157,23 @@ class QueryMaterialsProject:
 
     def _setup_dbinfo(self, info):
         self.dbinfo = info
-        self.api_key = info.get("api_key", None)
+
+        # setup api key
+        # 1. read from api_key_file (default "materials_project.key") if exists
+        # 2. taken from environment variable or pymetgen settings (leave api_key None)
+
+        api_key = None
+        
+        api_key_file = info.get("api_key_file", "materials_project.key")
+        if api_key_file.endswith(".key") and Path(api_key_file).exists():
+            with open(Path(api_key_file), "r") as fp:
+                data = [s.strip() for s in fp.readlines() if not s.strip().startswith("#")]
+                if data:
+                    api_key = data[0]
+        if not api_key:
+            logger.debug("api_key not set. use environment variable or pymatgen settings")
+
+        self.api_key = api_key
 
     def _setup_option(self, info):
         self.output_dir = info.get("output_dir", "")
