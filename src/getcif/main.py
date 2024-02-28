@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 
-import os,sys
-from pathlib import Path
-from ruamel.yaml import YAML
-from mp_api.client import MPRester
-from importlib.metadata import PackageNotFoundError, version
+import os
+import sys
 import copy
+import io
+import csv
+import json
+import argparse
+import logging
+
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
+from ruamel.yaml import YAML, YAMLError
+from mp_api.client import MPRester
 
 # enum parameters
 from emmet.core.symmetry import CrystalSystem
 from emmet.core.summary import HasProps
 from pymatgen.analysis.magnetism import Ordering
 
-import io
-import json
-
-import logging
 logger = logging.getLogger("getcif")
 
 try:
@@ -149,7 +152,7 @@ class QueryMaterialsProject:
         "weighted_work_function",
         "xas",
     ]
-    
+
     def __init__(self, info):
         self.info = copy.deepcopy(info)
         self._setup_dbinfo(self.info.get("database", {}))
@@ -163,10 +166,10 @@ class QueryMaterialsProject:
         # 2. taken from environment variable or pymetgen settings (leave api_key None)
 
         api_key = None
-        
+
         api_key_file = info.get("api_key_file", "materials_project.key")
         if api_key_file.endswith(".key") and Path(api_key_file).exists():
-            with open(Path(api_key_file), "r") as fp:
+            with open(Path(api_key_file), "r", encoding="utf-8") as fp:
                 data = [s.strip() for s in fp.readlines() if not s.strip().startswith("#")]
                 if data:
                     api_key = data[0]
@@ -186,7 +189,7 @@ class QueryMaterialsProject:
 
         props.update({"fields": fields})
         return props
-    
+
     def _find_fields(self, info):
         if isinstance(info, str):
             fields = info.split()
@@ -236,40 +239,32 @@ class QueryMaterialsProject:
             not accepted
             keyword: 1.0 <  #NG
             """
-            if any([symbol in val for symbol in ("<",">","=","~")]):
+            if any(symbol in val for symbol in ("<",">","=","~")):
                 w = [s.strip() for s in val.split()]
                 if len(w) == 2:
                     if w[0] == "<=":
                         return (None, typ(w[1]))
-                    elif w[0] == "<":
+                    if w[0] == "<":
                         if typ == int:
                             return (None, typ(w[1])-1)
                         else:
                             return (None, typ(w[1]))
-                    elif w[0] == ">=":
+                    if w[0] == ">=":
                         return (typ(w[1]), None)
-                    elif w[0] == ">":
+                    if w[0] == ">":
                         if typ == int:
                             return (typ(w[1])+1, None)
                         else:
                             return (typ(w[1]), None)
-                    elif w[0] == "=":
+                    if w[0] == "=":
                         return (typ(w[1]), typ(w[1]))
-                    else:
-                        pass
                 elif len(w) == 3:
                     if w[1] == "~":
                         return (typ(w[0]), typ(w[2]))
-                    else:
-                        pass
-                else:
-                    pass
             else:
                 w = [typ(s) for s in val.split()]
                 if len(w) == 2:
                     return tuple(w[0:2])
-                else:
-                    pass
             raise ValueError("illegal string: {}".format(val))
 
         # format and check
@@ -296,12 +291,12 @@ class QueryMaterialsProject:
                     props[prop] = v if len(v) > 1 else v[0]
             elif typ == "tuple[int,int]":
                 if isinstance(value, list):
-                    props[prop] = tuple([_find_val_or_none(s, int) for s in value[0:2]])
+                    props[prop] = tuple(_find_val_or_none(s, int) for s in value[0:2])
                 elif isinstance(value, str):
                     props[prop] = _find_range(value, int)
             elif typ == "tuple[float,float]":
                 if isinstance(value, list):
-                    props[prop] = tuple([_find_val_or_none(s) for s in value[0:2]])
+                    props[prop] = tuple(_find_val_or_none(s) for s in value[0:2])
                 elif isinstance(value, str):
                     props[prop] = _find_range(value)
             elif typ == "list[HasProps]":  # for has_props
@@ -347,7 +342,7 @@ class QueryMaterialsProject:
             m_id = str(doc.material_id)
             m_formula = doc.formula_pretty
             d = dict(doc)
-            
+
             data = { "material_id": m_id, "formula": m_formula }
 
             data_dir = Path(self.output_dir, m_id)
@@ -359,23 +354,23 @@ class QueryMaterialsProject:
                 elif field == "structure":
                     doc.structure.to(Path(data_dir, "structure.cif"), fmt="cif")
                 elif field == "formula_pretty":
-                    with open(Path(data_dir, "formula"), "w") as fp:
+                    with open(Path(data_dir, "formula"), "w", encoding="utf-8") as fp:
                         fp.write(str(d[field]) + "\n")
                 else:
-                    with open(Path(data_dir, field), "w") as fp:
+                    with open(Path(data_dir, field), "w", encoding="utf-8") as fp:
                         fp.write(str(d[field]) + "\n")
                     data.update({field: d[field]})
 
             # # export summary in json format
             # with open(Path(data_dir, "summary.json"), "w") as fp:
             #     fp.write(json.dumps(data))
-                    
+
             results.append(data)
         return results
 
     def _do_report(self, results, output_file=None, fmt="text"):
         if len(results) < 1:
-            return
+            return None
 
         if fmt == "text":
             fields = results[0].keys()
@@ -383,9 +378,6 @@ class QueryMaterialsProject:
             for result in results:
                 retv += "  ".join([str(result[field]) for field in fields]) + "\n"
         elif fmt == "csv":
-            import csv
-            import io
-
             output = io.StringIO()
 
             writer = csv.DictWriter(output, fieldnames=results[0].keys())
@@ -395,7 +387,6 @@ class QueryMaterialsProject:
 
             retv = output.getvalue()
         elif fmt == "json":
-            import json
             retv = json.dumps(results)
         else:
             logger.error("unknown format {}".format(fmt))
@@ -404,7 +395,7 @@ class QueryMaterialsProject:
         if output_file is None:
             print(retv)
         else:
-            with open(output_file, "w") as fp:
+            with open(output_file, "w", encoding="utf-8") as fp:
                 fp.write(retv)
         return None
 
@@ -416,49 +407,54 @@ class QueryMaterialsProject:
         return results
 
     @classmethod
-    def show_info(cls):
-        print("Query parameters:")
-        print("  Properties:")
+    def show_info(cls, file=None):
+        if file is None:
+            file = sys.stdout
+        file.write("Query parameters:\n")
+        file.write("  Properties:\n")
         for k, v in QueryMaterialsProject.query_table.items():
-            print("    {:24s} {}".format(k, v))
-        print()
-        print("  Fields:")
+            file.write("    {:24s} {}\n".format(k, v))
+        file.write("\n")
+        file.write("  Fields:\n")
         for k in QueryMaterialsProject.available_fields:
-            print("    {}".format(k))
-        pass
+            file.write("    {}\n".format(k))
 
 def main():
-    import argparse
-
     class ArgumentParser(argparse.ArgumentParser):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-        def print_help(self):
-            super().print_help()
-            print()
-            QueryMaterialsProject.show_info()
+        def print_help(self, file=None):
+            if file is None:
+                file = sys.stdout
+            super().print_help(file)
+            file.write("\n")
+            QueryMaterialsProject.show_info(file)
 
     parser = ArgumentParser(prog="getcif")
-    parser.add_argument("input_file", action="store", help="input parameter file (input.yaml)")
-    parser.add_argument("-v", "--verbose", action="count", default=0, help="increase output verbosity")
-    parser.add_argument("-q", "--quiet", action="count", default=0, help="decrease output verbosity")
-    parser.add_argument("--dry-run", action="store_true", default=False, help="dry run")
-    parser.add_argument("--version", action="version", version="%(prog)s version {}".format(__version__))
-    
+    parser.add_argument("input_file", action="store",
+                        help="input parameter file (input.yaml)")
+    parser.add_argument("-v", "--verbose", action="count", default=0,
+                        help="increase output verbosity")
+    parser.add_argument("-q", "--quiet", action="count", default=0,
+                        help="decrease output verbosity")
+    parser.add_argument("--dry-run", action="store_true", default=False,
+                        help="dry run")
+    parser.add_argument("--version", action="version",
+                        version="%(prog)s version {}".format(__version__))
+
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.WARNING-(args.verbose-args.quiet)*10)
 
     try:
         yaml = YAML(typ="safe")
-        with open(Path(args.input_file), mode="r") as fp:
+        with open(Path(args.input_file), mode="r", encoding="utf-8") as fp:
             info_dict = yaml.load(fp)
     except FileNotFoundError as e:
         logger.error("{}".format(e))
         sys.exit(1)
-    except Exception as e:
+    except YAMLError as e:
         logger.error("{}".format(e))
-        # raise
         sys.exit(1)
 
     if info_dict is None:
@@ -477,7 +473,6 @@ def main():
     #except Exception as e:
     #    logger.error("{}".format(e))
     #    sys.exit(1)
-    return
 
 if __name__ == "__main__":
     main()
