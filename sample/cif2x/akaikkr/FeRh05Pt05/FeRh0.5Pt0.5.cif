@@ -1,0 +1,48 @@
+
+#======================================================================
+# CRYSTAL DATA
+#----------------------------------------------------------------------
+data_VESTA_phase_1
+
+_chemical_name_common                  'Fe Pt0.5 Rh0.5'
+_cell_length_a                         2.754000
+_cell_length_b                         2.754000
+_cell_length_c                         3.530000
+_cell_angle_alpha                      90.000000
+_cell_angle_beta                       90.000000
+_cell_angle_gamma                      90.000000
+_cell_volume                           26.773340
+_space_group_name_H-M_alt              'P 4/m m m'
+_space_group_IT_number                 123
+
+loop_
+_space_group_symop_operation_xyz
+   'x, y, z'
+   '-x, -y, -z'
+   '-x, -y, z'
+   'x, y, -z'
+   '-y, x, z'
+   'y, -x, -z'
+   'y, -x, z'
+   '-y, x, -z'
+   '-x, y, -z'
+   'x, -y, z'
+   'x, -y, -z'
+   '-x, y, z'
+   'y, x, -z'
+   '-y, -x, z'
+   '-y, -x, -z'
+   'y, x, z'
+
+loop_
+   _atom_site_label
+   _atom_site_occupancy
+   _atom_site_fract_x
+   _atom_site_fract_y
+   _atom_site_fract_z
+   _atom_site_adp_type
+   _atom_site_U_iso_or_equiv
+   _atom_site_type_symbol
+   M           0.5000  0.500000     0.500000     0.500000    Uiso  1.000000 Rh
+   M           0.5000  0.500000     0.500000     0.500000    Uiso  1.000000 Pt
+   Fe          1.0     0.000000     0.000000     0.000000    Uiso  1.000000 Fe
