@@ -1,0 +1,12 @@
+structure:
+  use_ibrav: false
+  tolerance: 0.05
+
+optional:
+
+tasks:
+  - output_file: test.in
+    template: test.in_tmpl
+    content:
+      go: go
+      potentialfile: pot.dat

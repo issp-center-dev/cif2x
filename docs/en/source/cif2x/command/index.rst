@@ -35,7 +35,9 @@ DESCRIPTION:
 
     - ``VASP``: generates input files for VASP.
 
-    - ``OpenMX``: generates input files for OpenMX
+    - ``OpenMX``: generates input files for OpenMX.
+
+    - ``AkaiKKR``: generates input files for AkaiKKR.
 
   - ``input_yaml``
 

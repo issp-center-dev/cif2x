@@ -14,6 +14,7 @@ Installation and basic usage
   - pandas module
   - monty module
   - OpenBabel module (optional)
+  - AkaiKKRPythonUtil module
 
 **Official pages**
 
@@ -38,6 +39,15 @@ Installation and basic usage
 
   The executable file ``cif2x`` will be installed.
   You may need to add ``--user`` option next to ``install`` keyword above in case you are not allowed to install packages system-wide.
+
+  AkaiKKRPythonUtil module need to be installed separately. The source package is available from `the repository <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_. Then follow the steps below to install the module along with the required seaborn module:
+
+  .. code-block:: bash
+
+     $ git clone https://github.com/AkaiKKRteam/AkaiKKRPythonUtil.git
+     $ cd ./AkaiKKRPythonUtil/library/PyAkaiKKR
+     $ python3 -m pip install .
+     $ python3 -m pip install seaborn
 
 
 **Directory structure**
@@ -70,13 +80,18 @@ Installation and basic usage
      |       |-- openmx/
      |       |   |-- __init__.py
      |       |   |-- vps_table.py
+     |       |-- struct2akaikkr.py
+     |       |-- akaikkr/
+     |       |   |-- make_input.py
+     |       |   |-- read_input.py
+     |       |   |-- run_cif2kkr.py
      |       |-- utils.py
      |-- sample/
 
 
 **Basic usage**
 
-  ``cif2x`` is a tool to generate a set of input files for first-principles calculation software. It takes an input parameter file as a template, and generates parameter items that may vary by materials and calculation conditions from crystallographic data. In the present version, ``cif2x`` supports Quantum ESPRESSO, VASP, and OpenMX.
+  ``cif2x`` is a tool to generate a set of input files for first-principles calculation software. It takes an input parameter file as a template, and generates parameter items that may vary by materials and calculation conditions from crystallographic data. In the present version, ``cif2x`` supports Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
 
   #. Prepare input parameter file
 
@@ -92,7 +107,7 @@ Installation and basic usage
 
   #. Run command
 
-      Run ``cif2x`` command with the input parameter file and the crystal structure data as arguments. To generate input files for Quantum ESPRESSO, the target option ``-t QE`` should be specified. The option turns to ``-t VASP`` for VASP, and ``-t OpenMX`` for OpenMX.
+      Run ``cif2x`` command with the input parameter file and the crystal structure data as arguments. To generate input files for Quantum ESPRESSO, the target option ``-t QE`` should be specified. The option turns to ``-t VASP`` for VASP, ``-t OpenMX`` for OpenMX, and ``-t AkaiKKR`` for AkaiKKR.
 
       .. code-block:: bash
 

@@ -18,6 +18,7 @@ from cif2x.cif2struct import Cif2Struct
 from cif2x.struct2qe  import Struct2QE
 from cif2x.struct2vasp  import Struct2Vasp
 from cif2x.struct2openmx  import Struct2OpenMX
+from cif2x.struct2akaikkr  import Struct2AkaiKKR
 
 def main():
     import argparse
@@ -119,6 +120,26 @@ def main():
             output_dir = info.get("output_dir", ".")
 
             vsp.write_input(output_file, output_dir)
+
+    elif target.lower() in ["akaikkr"]:
+
+        info_optional = info_dict.get("optional", {})
+
+        info_tasks = info_dict.get("tasks", [])
+        for idx, info in enumerate(info_tasks):
+            taskid = idx + 1
+            logger.info(f"start task {taskid}")
+
+            params = {}
+            params.update(info)
+            deepupdate(params, {'optional': info_optional})
+
+            kkr = Struct2AkaiKKR(params, struct)
+
+            output_file = info.get("output_file")
+            output_dir = info.get("output_dir", ".")
+
+            kkr.write_input(output_file, output_dir)
 
     else:
         logger.error("unsupported target {}".format(target))
