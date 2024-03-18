@@ -38,9 +38,9 @@ This software was developed by the following contributors.
 
       -  Masahiro Fukuda (The Instutite for Solid State Physics, The University of Tokyo)
 
-      -  Tetsuya Fukushima (The National Institute of Advanced Industrial Science and Technology (AIST))
-
       -  Kota Ido (The Instutite for Solid State Physics, The University of Tokyo)
+
+      -  Tetsuya Fukushima (The National Institute of Advanced Industrial Science and Technology (AIST))
 
       -  Shusuke Kasamatsu (Yamagata University)
 
