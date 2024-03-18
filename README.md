@@ -4,15 +4,11 @@ In recent years, the use of machine learning for predicting material properties 
 The accuracy of machine learning depends heavily on the preparation of appropriate training data.
 Therefore, the development of tools and environments for the rapid generation of training data is expected to contribute significantly to the advancement of research in materials informatics.
 
-Cif2x is a tool that generates input files for first-principles calculations from cif files.
-It constructs parts that vary depending on the type of material and computational conditions from crystal structure data, using input parameters as a template.
-It is capable of generating multiple input files tailored to specific computational conditions.
-Currently, it supports `VASP <https://www.vasp.at>`, `Quantum ESPRESSO <https://www.quantum-espresso.org>`, and `OpenMX <http://www.openmx-square.org>`,
-with plans to support `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>` in the future.
+Cif2x is a tool to generate input files for first-principles calculation software. It takes crystal structure data in CIF format and input parameters as a template, and constructs the parts that vary depending on the type of material and conditions. It is capable of generating multiple input files tailored to specific computational conditions. Currently, it supports [VASP](https://www.vasp.at), [Quantum ESPRESSO](https://www.quantum-espresso.org), [OpenMX](http://www.openmx-square.org), and [AkaiKKR](http://kkr.issp.u-tokyo.ac.jp).
 
 ## Target applications
 
-Quantum ESPRESSO, VASP, and OpenMX
+Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
 
 ## Requirement
 
