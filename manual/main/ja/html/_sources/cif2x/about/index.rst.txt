@@ -13,8 +13,8 @@ cif2xとは?
 cif2xは、cifファイルから第一原理計算用の入力ファイルを生成するツールです。
 入力パラメータを雛形として、物質の種類や計算条件によって変わる箇所を結晶構造データなどから構成します。
 特定の計算条件に応じた複数の入力ファイルを生成することが可能です。
-現在は、 `VASP <https://www.vasp.at>`_ 、`Quantum ESPRESSO  <https://www.quantum-espresso.org>`_ 、`OpenMX <http://www.openmx-square.org>`_ に対応し、
-将来的には `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>`_ にも対応する予定です。
+現在は、
+`VASP <https://www.vasp.at>`_, `Quantum ESPRESSO  <https://www.quantum-espresso.org>`_, `OpenMX <http://www.openmx-square.org>`_, `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>`_ に対応しています。
 
 
 ライセンス
@@ -26,6 +26,8 @@ cif2xは、cifファイルから第一原理計算用の入力ファイルを生
 ----------------------------------------------------------------
 
 本ソフトウェアは以下の開発貢献者により開発されています。
+
+-  ver.1.0.0 (2024/03/XXリリース)
 
 -  ver.1.0-alpha (2023/12/28リリース)
 
@@ -39,9 +41,9 @@ cif2xは、cifファイルから第一原理計算用の入力ファイルを生
 
       -  福田 将大 (東京大学 物性研究所)
 
-      -  福島 鉄也 (産業技術総合研究所)
-
       -  井戸 康太 (東京大学 物性研究所)
+
+      -  福島 鉄也 (産業技術総合研究所)
 
       -  笠松 秀輔 (山形大学 学術研究院(理学部主担当))
 

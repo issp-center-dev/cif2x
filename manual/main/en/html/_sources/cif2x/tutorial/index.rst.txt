@@ -4,7 +4,7 @@ Tutorial
 ================================================================
 
 The procedure to use the input file generator ``cif2x`` for first-principles calculation software consists of preparing an input parameter file, crystal structure data, and pseudo-potential files, and running the program ``cif2x``.
-In the current version, the supported software includes Quantum ESPRESSO, VASP, and OpenMX.
+In the current version, the supported software includes Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
 In this tutorial, we will explain the steps along a sample for Quantum ESPRESSO in ``docs/tutorial/cif2x``.
 
 

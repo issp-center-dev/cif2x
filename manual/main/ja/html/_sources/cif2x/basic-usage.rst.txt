@@ -13,6 +13,8 @@
   - numpy モジュール
   - pandas モジュール
   - monty モジュール
+  - OpenBabel モジュール (オプション)
+  - AkaiKKRPythonUtil モジュール
 
 **ソースコード配布サイト**
 
@@ -36,6 +38,17 @@
      $ python3 -m pip install .
 
   実行プログラム ``cif2x`` がインストールされます。
+
+  なお、AkaiKKRPythonUtil モジュールは別途インストールが必要です。
+  以下の手順で `配布サイト <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_ からソースコードを取得しインストールします。また、必要な seaborn モジュールもインストールしておきます。
+
+  .. code-block:: bash
+
+     $ git clone https://github.com/AkaiKKRteam/AkaiKKRPythonUtil.git
+     $ cd ./AkaiKKRPythonUtil/library/PyAkaiKKR
+     $ python3 -m pip install .
+     $ python3 -m pip install seaborn
+
 
 **ディレクトリ構成**
 
@@ -66,13 +79,18 @@
      |       |-- openmx/
      |       |   |-- __init__.py
      |       |   |-- vps_table.py
+     |       |-- struct2akaikkr.py
+     |       |-- akaikkr/
+     |       |   |-- make_input.py
+     |       |   |-- read_input.py
+     |       |   |-- run_cif2kkr.py
      |       |-- utils.py
      |-- sample/
 
 
 **基本的な使用方法**
 
-  cif2xは第一原理計算プログラムのための入力ファイルを生成するツールです。入力パラメータを雛形として、物質の種類や計算条件によって変わる箇所を結晶構造データなどから構成します。現在は Quantum ESPRESSO, VASP, および OpenMX の入力ファイル形式に対応しています。
+  cif2xは第一原理計算プログラムのための入力ファイルを生成するツールです。入力パラメータを雛形として、物質の種類や計算条件によって変わる箇所を結晶構造データなどから構成します。現在は Quantum ESPRESSO, VASP, OpenMX, および AkaiKKR の入力ファイル形式に対応しています。
 
   #. 入力パラメータファイルの作成
 
@@ -88,7 +106,7 @@
 
   #. コマンドの実行
 
-      作成した入力パラメータファイルおよび結晶構造データファイルを入力としてcif2xプログラムを実行します。Quantum ESPRESSO用の入力ファイルを生成する場合はターゲットオプションに ``-t QE`` を指定します。VASPの場合は ``-t VASP``, OpenMX の場合は ``-t OpenMX`` を指定します。
+      作成した入力パラメータファイルおよび結晶構造データファイルを入力としてcif2xプログラムを実行します。Quantum ESPRESSO用の入力ファイルを生成する場合はターゲットオプションに ``-t QE`` を指定します。VASPの場合は ``-t VASP``, OpenMX の場合は ``-t OpenMX``, AkaiKKR の場合は ``-t akaikkr`` を指定します。
 
       .. code-block:: bash
 

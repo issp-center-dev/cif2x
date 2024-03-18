@@ -12,8 +12,7 @@ Therefore, the development of tools and environments for the rapid generation of
 Cif2x is a tool that generates input files for first-principles calculations from cif files.
 It constructs parts that vary depending on the type of material and computational conditions from crystal structure data, using input parameters as a template.
 It is capable of generating multiple input files tailored to specific computational conditions.
-Currently, it supports `VASP <https://www.vasp.at>`, `Quantum ESPRESSO <https://www.quantum-espresso.org>`, and `OpenMX <http://www.openmx-square.org>`,
-with plans to support `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>` in the future.
+Currently, it supports `VASP <https://www.vasp.at>`_, `Quantum ESPRESSO <https://www.quantum-espresso.org>`_, `OpenMX <http://www.openmx-square.org>`_, and `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>`_.
 
 License
 ----------------------------------------------------------------
@@ -24,6 +23,8 @@ Contributors
 ----------------------------------------------------------------
 
 This software was developed by the following contributors.
+
+-  ver.1.0.0 (Released on 2024/03/XX)
 
 -  ver.1.0-alpha (Released on 2023/12/28)
 
@@ -37,9 +38,9 @@ This software was developed by the following contributors.
 
       -  Masahiro Fukuda (The Instutite for Solid State Physics, The University of Tokyo)
 
-      -  Tetsuya Fukushima (The National Institute of Advanced Industrial Science and Technology (AIST))
-
       -  Kota Ido (The Instutite for Solid State Physics, The University of Tokyo)
+
+      -  Tetsuya Fukushima (The National Institute of Advanced Industrial Science and Technology (AIST))
 
       -  Shusuke Kasamatsu (Yamagata University)
 
