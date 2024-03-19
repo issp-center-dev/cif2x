@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html lang="ja" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>2. インストールと基本的な使い方 &#8212; cif2x Users Guide 1.0.0 ドキュメント</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=94bc0932" />
+    <script src="../_static/documentation_options.js?v=144c8c96"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/translations.js?v=4dbe4bdc"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="3. チュートリアル" href="tutorial/index.html" />
+    <link rel="prev" title="1. 概要" href="about/index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1><span class="section-number">2. </span>インストールと基本的な使い方<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+<p><strong>必要なライブラリ・環境</strong></p>
+<blockquote>
+<div><p>HTP-tools に含まれる第一原理計算入力ファイル生成ツール cif2x を利用するには、以下のプログラムとライブラリが必要です。</p>
+<ul class="simple">
+<li><p>python 3.x</p></li>
+<li><p>pymatgen モジュール</p></li>
+<li><p>ruamel.yaml モジュール</p></li>
+<li><p>f90nml モジュール</p></li>
+<li><p>qe-tools モジュール</p></li>
+<li><p>numpy モジュール</p></li>
+<li><p>pandas モジュール</p></li>
+<li><p>monty モジュール</p></li>
+<li><p>OpenBabel モジュール (オプション)</p></li>
+<li><p>AkaiKKRPythonUtil モジュール</p></li>
+</ul>
+</div></blockquote>
+<p><strong>ソースコード配布サイト</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://github.com/issp-center-dev/cif2x">GitHubリポジトリ</a></p></li>
+</ul>
+</div></blockquote>
+<p><strong>ダウンロード方法</strong></p>
+<blockquote>
+<div><p>gitを利用できる場合は、以下のコマンドでcif2xをダウンロードできます。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/issp-center-dev/cif2x.git
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>インストール方法</strong></p>
+<blockquote>
+<div><p>cif2xをダウンロード後、以下のコマンドを実行してインストールします。cif2xが利用するライブラリも必要に応じてインストールされます。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>./cif2x
+$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+</pre></div>
+</div>
+<p>実行プログラム <code class="docutils literal notranslate"><span class="pre">cif2x</span></code> がインストールされます。</p>
+<p>なお、AkaiKKRPythonUtil モジュールは別途インストールが必要です。
+以下の手順で <a class="reference external" href="https://github.com/AkaiKKRteam/AkaiKKRPythonUtil">配布サイト</a> からソースコードを取得しインストールします。また、必要な seaborn モジュールもインストールしておきます。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/AkaiKKRteam/AkaiKKRPythonUtil.git
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>./AkaiKKRPythonUtil/library/PyAkaiKKR
+$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>seaborn
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>ディレクトリ構成</strong></p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">.</span>
+<span class="o">|--</span> <span class="n">LICENSE</span>
+<span class="o">|--</span> <span class="n">README</span><span class="o">.</span><span class="n">md</span>
+<span class="o">|--</span> <span class="n">pyproject</span><span class="o">.</span><span class="n">toml</span>
+<span class="o">|--</span> <span class="n">docs</span><span class="o">/</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">ja</span><span class="o">/</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">tutorial</span><span class="o">/</span>
+<span class="o">|--</span> <span class="n">src</span><span class="o">/</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">cif2x</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">cif2struct</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">struct2qe</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">qe</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">calc_mode</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">cards</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">content</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">qeutils</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">tools</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">struct2vasp</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">struct2openmx</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">openmx</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">vps_table</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">struct2akaikkr</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">akaikkr</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">make_input</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">read_input</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">run_cif2kkr</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">utils</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|--</span> <span class="n">sample</span><span class="o">/</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>基本的な使用方法</strong></p>
+<blockquote>
+<div><p>cif2xは第一原理計算プログラムのための入力ファイルを生成するツールです。入力パラメータを雛形として、物質の種類や計算条件によって変わる箇所を結晶構造データなどから構成します。現在は Quantum ESPRESSO, VASP, OpenMX, および AkaiKKR の入力ファイル形式に対応しています。</p>
+<ol class="arabic">
+<li><p>入力パラメータファイルの作成</p>
+<blockquote>
+<div><p>cif2xを使用するには、まず、生成する入力ファイルの内容を記述したパラメータファイルをYAML形式で作成します。詳細についてはファイルフォーマットの章を参照してください。</p>
+</div></blockquote>
+</li>
+<li><p>結晶構造ファイルと擬ポテンシャルファイルの配置</p>
+<blockquote>
+<div><p>対象となる物質の結晶構造を記述したファイルを用意します。ファイル形式は CIF または pymatgen が扱える POSCAR や xfs 形式に対応しています。</p>
+<p>Quantum ESPRESSO の場合、利用する擬ポテンシャルファイルと、CSV形式のインデックスファイルを配置します。擬ポテンシャルファイルの配置先などは入力パラメータファイル内に指定します。</p>
+<p>VASP の場合、擬ポテンシャルファイルの格納場所を <code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc.yaml</span></code> ファイルに記述するか環境変数にセットします。入力パラメータファイル内で指定することもできます。</p>
+</div></blockquote>
+</li>
+<li><p>コマンドの実行</p>
+<blockquote>
+<div><p>作成した入力パラメータファイルおよび結晶構造データファイルを入力としてcif2xプログラムを実行します。Quantum ESPRESSO用の入力ファイルを生成する場合はターゲットオプションに <code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">QE</span></code> を指定します。VASPの場合は <code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">VASP</span></code>, OpenMX の場合は <code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">OpenMX</span></code>, AkaiKKR の場合は <code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">akaikkr</span></code> を指定します。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>cif2x<span class="w"> </span>-t<span class="w"> </span>QE<span class="w"> </span>input.yaml<span class="w"> </span>material.cif
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ol>
+</div></blockquote>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">cif2x Users Guide</a></h1>
+
+
+
+
+
+
+
+
+<h3>ナビゲーション</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">第一原理計算入力ファイル生成ツール (cif2x)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="about/index.html">1. 概要</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">2. インストールと基本的な使い方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/index.html">3. チュートリアル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command/index.html">4. コマンドリファレンス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filespec/index.html">5. ファイルフォーマット</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix/index.html">6. 拡張ガイド</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">第一原理計算入力ファイル生成ツール (cif2x)</a><ul>
+      <li>Previous: <a href="about/index.html" title="前の章へ"><span class="section-number">1. </span>概要</a></li>
+      <li>Next: <a href="tutorial/index.html" title="次の章へ"><span class="section-number">3. </span>チュートリアル</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023-, The University of Tokyo.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/cif2x/basic-usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

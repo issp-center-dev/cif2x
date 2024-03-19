@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="ja" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>6. 拡張ガイド &#8212; cif2x Users Guide 1.0.0 ドキュメント</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
+    <script src="../../_static/documentation_options.js?v=144c8c96"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/translations.js?v=4dbe4bdc"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="検索" href="../../search.html" />
+    <link rel="prev" title="5. ファイルフォーマット" href="../filespec/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="sec-cif2x-appendix">
+<span id="id1"></span><h1><span class="section-number">6. </span>拡張ガイド<a class="headerlink" href="#sec-cif2x-appendix" title="Link to this heading">¶</a></h1>
+<section id="quantum-espresso-mode">
+<h2><span class="section-number">6.1. </span>Quantum ESPRESSO の mode を追加する<a class="headerlink" href="#quantum-espresso-mode" title="Link to this heading">¶</a></h2>
+<p>Quantum ESPRESSO の計算モードへの対応を追加するには、 <code class="docutils literal notranslate"><span class="pre">src/cif2x/qe/calc_mode.py</span></code> の <code class="docutils literal notranslate"><span class="pre">create_modeproc()</span></code> 関数に mode と変換クラスの対応付けを記述します。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_modeproc</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">qe</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;scf&quot;</span><span class="p">,</span> <span class="s2">&quot;nscf&quot;</span><span class="p">]:</span>
+        <span class="n">modeproc</span> <span class="o">=</span> <span class="n">QEmode_pw</span><span class="p">(</span><span class="n">qe</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">modeproc</span> <span class="o">=</span> <span class="n">QEmode_generic</span><span class="p">(</span><span class="n">qe</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">modeproc</span>
+</pre></div>
+</div>
+<p>modeごとの変換機能は <code class="docutils literal notranslate"><span class="pre">QEmode_base</span></code> の派生クラスとしてまとめられています。
+このクラスは
+<code class="docutils literal notranslate"><span class="pre">update_namelist()</span></code> で namelist ブロックの更新と、
+<code class="docutils literal notranslate"><span class="pre">update_cards()</span></code> で cards ブロックのデータ生成を行います。
+現在は pw.x の scf および nscf に対応する <code class="docutils literal notranslate"><span class="pre">QEmode_pw</span></code> クラスと、変換せずそのまま出力する <code class="docutils literal notranslate"><span class="pre">QEmode_generic</span></code> クラスが用意されています。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">QEmode_base</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qe</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">update_namelist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">update_cards</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+</pre></div>
+</div>
+<p>namelist については、空欄の値を結晶構造データ等から生成して代入するほか、格子パラメータなど Structure から決まる値や、他のパラメータとの整合性をとる必要のある値を強制的にセットする場合があります。処理内容はモードごとに個別に対応します。</p>
+<p>cards ブロックについては、card の種類ごとに関数を用意し、card名と関数の対応付けを <code class="docutils literal notranslate"><span class="pre">card_table</span></code> 変数に列挙します。
+基底クラスの <code class="docutils literal notranslate"><span class="pre">update_cards()</span></code> では、card名から対応する関数を取得して実行し、card の情報を更新します。もちろん、全く独自に <code class="docutils literal notranslate"><span class="pre">update_cards()</span></code> 関数を作成することもできます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">card_table</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;CELL_PARAMETERS&#39;</span><span class="p">:</span> <span class="n">generate_cell_parameters</span><span class="p">,</span>
+    <span class="s1">&#39;ATOMIC_SPECIES&#39;</span><span class="p">:</span> <span class="n">generate_atomic_species</span><span class="p">,</span>
+    <span class="s1">&#39;ATOMIC_POSITIONS&#39;</span><span class="p">:</span> <span class="n">generate_atomic_positions</span><span class="p">,</span>
+    <span class="s1">&#39;K_POINTS&#39;</span><span class="p">:</span> <span class="n">generate_k_points</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>cardごとの関数は <code class="docutils literal notranslate"><span class="pre">scr/cif2x/qe/cards.py</span></code> にまとめられており、関数名は <code class="docutils literal notranslate"><span class="pre">generate_{card名}</span></code> としています。この関数は card ブロックのパラメータを引数に取り、card名、option、dataフィールドからなる辞書データを返します。</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">cif2x Users Guide</a></h1>
+
+
+
+
+
+
+
+
+<h3>ナビゲーション</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">第一原理計算入力ファイル生成ツール (cif2x)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../about/index.html">1. 概要</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basic-usage.html">2. インストールと基本的な使い方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/index.html">3. チュートリアル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../command/index.html">4. コマンドリファレンス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../filespec/index.html">5. ファイルフォーマット</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6. 拡張ガイド</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">第一原理計算入力ファイル生成ツール (cif2x)</a><ul>
+      <li>Previous: <a href="../filespec/index.html" title="前の章へ"><span class="section-number">5. </span>ファイルフォーマット</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023-, The University of Tokyo.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/cif2x/appendix/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
