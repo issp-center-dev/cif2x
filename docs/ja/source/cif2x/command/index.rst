@@ -37,6 +37,8 @@ cif2x
 
     - ``OpenMX``: OpenMX向け入力ファイルを生成します。
 
+    - ``AkaiKKR``: AkaiKKR向け入力ファイルを生成します。
+
   - ``input_yaml``
 
     入力パラメータファイルを指定します。形式は YAML format です。

@@ -78,6 +78,38 @@ class Struct2Vasp:
             logger.debug(f"write_input: key=\"{key}\"")
             write_content(self, content, Path(dirname, key))
 
+    def _read_input(self, dirname):
+        sub_d = {}
+        # INCAR
+        try:
+            fullzpath = zpath(Path(dirname, "INCAR"))
+            # workaround pymatgen Incar input: handle multiline with escape character
+            with zopen(fullzpath, "rt") as f:
+                content = f.read()
+                sub_d["incar"] = Incar.from_str(content.replace("\\\n", ""))
+            logger.info("read_input: read {} from {}".format("INCAR", fullzpath))
+        except FileNotFoundError:
+            sub_d["incar"] = None
+
+        # POSCAR
+        try:
+            fullzpath = zpath(Path(dirname, "POSCAR"))
+            sub_d["poscar"] = Poscar.from_file(fullzpath, check_for_POTCAR=False)
+            logger.info("read_input: read {} from {}".format("POSCAR", fullzpath))
+        except FileNotFoundError:
+            sub_d["poscar"] = None
+
+        # KPOINTS, POTCAR
+        for fname, ftype in [("KPOINTS", Kpoints),("POTCAR", Potcar)]:
+            try:
+                fullzpath = zpath(Path(dirname, fname))
+                sub_d[fname.lower()] = ftype.from_file(fullzpath)
+                logger.info("read_input: read {} from {}".format(fname, fullzpath))
+            except FileNotFoundError:
+                sub_d[fname.lower()] = None
+
+        return VaspInput(**sub_d)
+
     def _setup_content(self):
         logger.debug("_setup_template")
 
@@ -85,7 +117,8 @@ class Struct2Vasp:
             return t in cnt and cnt[t] is not None
 
         if "template_dir" in self.info:
-            infile = VaspInput.from_directory(Path(self.info["template_dir"]))
+            # infile = VaspInput.from_directory(Path(self.info["template_dir"]))
+            infile = self._read_input(Path(self.info["template_dir"]))
         else:
             infile = None
 
@@ -108,6 +141,83 @@ class Struct2Vasp:
             tbl["incar"] = {}
         if content and _is_valid(content, "INCAR"):
             tbl["incar"].update(content["INCAR"])
+
+        # check incar tags
+        incar_params_list_type = [
+           "CMBJ",
+           "DIPOL",
+           "EFIELD_PEAD",
+           "EINT",
+           "FERDO",
+           "FERWE",
+           "IBAND",
+           "INCREM",
+           "KPOINT_BSE",
+           "KPUSE",
+           "LANGEVIN_GAMMA",
+           "LATTICE_CONSTRAINTS",
+           "LDAUJ",
+           "LDAUL",
+           "LDAUU",
+           "M_CONSTR",
+           "MAGMOM",
+           "ML_EATOM_REF",
+           "ML_ICOUPLE",
+           "NCRPA_BANDS",
+           "NGYROMAG",
+           "NSUBSYS",
+           "NTARGET_STATES",
+           "PHON_BORN_CHARGES",
+           "PHON_DIELECTRIC",
+           "PHON_TLIST",
+           "PSUBSYS",
+           "QMAXFOCKAE",
+           "QSPIRAL",
+           "QUAD_EFG",
+           "RANDOM_SEED",
+           "ROPT",
+           "RWIGS",
+           "SAXIS",
+           "SMEARINGS",
+           "TSUBSYS",
+           "VALUE_MAX",
+           "VALUE_MIN",
+           "VDW_ALPHA",
+           "VDW_C6",
+           "VDW_C6AU",
+           "VDW_R0",
+           "VDW_R0AU",
+        ]
+        for tag in incar_params_list_type:
+            if tag in tbl["incar"]:
+                # logger.debug("INCAR list tag: {}".format(tag))
+                if isinstance(tbl["incar"][tag], str):
+
+                    def _as_number(s):
+                        try:
+                            return int(s)
+                        except ValueError as e:
+                            pass
+                        try:
+                            return float(s)
+                        except ValueError as e:
+                            pass
+                        return s
+
+                    retv = []
+                    terms = tbl["incar"][tag].split()
+                    for term in terms:
+                        if "*" in term:
+                            token = term.split("*")
+                            if len(token) > 2:
+                                retv.extend([_as_number(token[2])] * int(token[1]) * int(token[0]))
+                            elif len(token) > 1:
+                                retv.extend([_as_number(token[1])] * int(token[0]))
+                            else:
+                                retv.extend([_as_number(token[0])])
+                        else:
+                            retv.extend([_as_number(term)])
+                    tbl["incar"][tag] = retv
 
         # KPOINTS: content field, or template
         if content and _is_valid(content, "KPOINTS"):
@@ -134,49 +244,55 @@ class Struct2Vasp:
 def generate_kpoints(vsp, params):
     logger.debug("generate_kpoints")
 
-    mode = params.get("type", "gamma_automatic")
+    mode = params.get("TYPE", "gamma_automatic")
 
     if mode == "automatic":
-        grid = params.get("grid", 1)
+        grid = params.get("GRID", 1)
         kpt = Kpoints.automatic(grid)
 
     elif mode == "gamma_automatic":
-        grid = params.get("kpoints", [1,1,1])
-        shift = params.get("shift", [0.,0.,0.])
+        grid = params.get("KPOINTS", [1,1,1])
+        shift = params.get("SHIFT", [0.,0.,0.])
         logger.debug(f"mode={mode}, grid={tuple(grid)}, shift={tuple(shift)}")
         kpt = Kpoints.gamma_automatic(tuple(grid), tuple(shift))
 
     elif mode == "monkhorst_automatic":
-        grid = params.get("kpoints", [2,2,2])
-        shift = params.get("shift", [0.,0.,0.])
+        grid = params.get("KPOINTS", [2,2,2])
+        shift = params.get("SHIFT", [0.,0.,0.])
+        logger.debug(f"mode={mode}, grid={tuple(grid)}, shift={tuple(shift)}")
         kpt = Kpoints.monkhorst_automatic(tuple(grid), tuple(shift))
 
     elif mode == "automatic_density":
-        kppa = params.get("grid_density", 0.1)
-        force_gamma = params.get("force_gamma", False)
+        kppa = params.get("GRID_DENSITY", 0.1)
+        force_gamma = params.get("FORCE_GAMMA", False)
+        logger.debug(f"mode={mode}, kppa={kppa}, force_gamma={force_gamma}")
         kpt = Kpoints.automatic_density(vsp.struct.structure, kppa, force_gamma)
 
     elif mode == "automatic_gamma_density":
-        kppa = params.get("grid_density", 0.1)
+        kppa = params.get("GRID_DENSITY", 0.1)
+        logger.debug(f"mode={mode}, kppa={kppa}")
         kpt = Kpoints.automatic_gamma_density(vsp.struct.structure, kppa)
 
     elif mode == "automatic_density_by_vol":
-        kppvol = params.get("grid_density", 1)
-        force_gamma = params.get("force_gamma", False)
+        kppvol = params.get("GRID_DENSITY", 1)
+        force_gamma = params.get("FORCE_GAMMA", False)
+        logger.debug(f"mode={mode}, kppvol={kppvol}, force_gamma={force_gamma}")
         kpt = Kpoints.automatic_density_by_vol(vsp.struct.structure, kppvol, force_gamma)
 
     elif mode == "automatic_density_by_lengths":
-        length_density = params.get("length_density", [10.0, 10.0, 10.0])
-        force_gamma = params.get("force_gamma", False)
+        length_density = params.get("LENGTH_DENSITY", [10.0, 10.0, 10.0])
+        force_gamma = params.get("FORCE_GAMMA", False)
+        logger.debug(f"mode={mode}, length_density={tuple(length_density)}, force_gamma={force_gamma}")
         kpt = Kpoints.automatic_density_by_lengths(vsp.struct.structure, length_density, force_gamma)
 
     elif mode == "automatic_linemode":
-        div = params.get("division", 1)
-        path_type = params.get("path_type", None)
+        div = params.get("DIVISION", 1)
+        path_type = params.get("PATH_TYPE", None)
         if path_type:
             ibz = HighSymmKpath(vsp.struct.structure, path_type=path_type)
         else:
             ibz = HighSymmKpath(vsp.struct.structure)
+        logger.debug(f"mode={mode}, division={division}, path_type={path_type}")
         kpt = Kpoints.automatic_linemode(div, ibz)
 
     else:
@@ -189,7 +305,7 @@ def generate_kpoints(vsp, params):
 def generate_poscar(vsp, params):
     logger.debug("generate_poscar")
 
-    fix_species = params.get("fix_species", None)
+    fix_species = params.get("FIX_SPECIES", None)
 
     if fix_species is not None:
         if not isinstance(fix_species, list):

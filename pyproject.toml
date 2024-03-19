@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "HTP-tools-cif2x"
-version = "1.0-beta"
+version = "1.0.0"
 description = "High-ThroughtPut calculation tools"
 authors = ["HTP-tools developers <htp-tools-dev@issp.u-tokyo.ac.jp>"]
 license = "GPL-3.0-or-later"

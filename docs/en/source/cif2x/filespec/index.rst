@@ -303,3 +303,32 @@ content
 
     This parameter specifies the set of pseudo-atomic orbitals listed in Tables 1 and 2 of Section 10.6 of the OpenMX manual. It is one of ``quick``, ``standard``, or ``precise``. The default value is ``quick``.
 
+Parameters for AkaiKKR
+===============================
+
+The entries of ``optional`` section and ``content`` part of the ``tasks`` section specific to AkaiKKR are explained below.
+
+optional
+--------
+
+  ``workdir``
+
+    This parameter specifies the directory in which temporal files are stored. If it is not given, ``/tmp`` or the value of the environment variable ``TMPDIR`` is used.
+
+
+content
+--------
+
+The ``content`` part contains the input parameters of AkaiKKR.
+A blank is written to the input file for an unspecified parameter, to which the default value defined in AkaiKKR will be assumed.
+The parameter values listed below are replaced by the values obtained from the crystal structure data.
+
+- ``brvtyp``, except when it is set to ``aux`` (or a string that contains ``aux``).
+
+- lattice parameters, ``a``, ``c/a``, ``b/a``, ``alpha``, ``beta``, ``gamma``, ``r1``, ``r2``, ``r3``.
+
+- type information, ``ntyp``, ``type``, ``ncmp``, ``rmt``, ``field``, ``mxl``, ``anclr``, ``conc``.
+
+- element information, ``natm``, ``atmicx``, ``atmtyp``.
+
+For ``rmt`` and ``field``, the values specified in the input parameter file will be used only when they are lists having the same number of elements as ``ntyp``.

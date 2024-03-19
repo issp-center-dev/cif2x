@@ -26,9 +26,9 @@ author = 'HTP-tools development team'
 # built documents.
 #
 # The short X.Y version.
-version = '1.0-alpha'
+version = '1.0'
 # The full version, including alpha/beta/rc tags
-release = '1.0-alpha'
+release = '1.0.0'
 
 
 # -- General configuration ---------------------------------------------------
