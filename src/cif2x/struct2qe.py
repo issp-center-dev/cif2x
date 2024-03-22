@@ -49,6 +49,7 @@ class Struct2QE:
             struct, system = self._set_ibrav_structure(self.struct.structure)
             self.struct.structure = struct
             self.struct.system = system
+            self.struct._atom_info()
 
         # setup content from input params and template
         self.content = self._setup_content()

@@ -100,6 +100,9 @@ class Cif2Struct:
             self.supercell = params["supercell"]
             self.structure.make_supercell(self.supercell)
 
+        self._atom_info()
+
+    def _atom_info(self):
         if self.structure.is_ordered:
             self.is_composite = False
             if "magmom" in self.structure.site_properties:
@@ -113,7 +116,6 @@ class Cif2Struct:
         else:
             self.is_composite = True
             logger.info("init: composite material")
-
             
     def _set_atom_info_base(self):
         """
