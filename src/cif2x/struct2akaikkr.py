@@ -12,7 +12,6 @@ import copy
 from cif2x.cif2struct import Cif2Struct
 from cif2x.utils import *
 
-#from cif2x.akaikkr.Cif2Kkr import ak_cif2struct, ak_struct2kkr
 from cif2x.akaikkr.run_cif2kkr import ak_struct2kkr
 from cif2x.akaikkr.read_input import read_input_file
 from cif2x.akaikkr.make_input import make_inputcard

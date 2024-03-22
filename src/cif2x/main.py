@@ -29,7 +29,7 @@ def main():
     parser.add_argument("--version", action="version", version="%(prog)s version {}".format(__version__))
     parser.add_argument("-v", "--verbose", action="count", default=0, help="increase output verbosity")
     parser.add_argument("-q", "--quiet", action="count", default=0, help="increase output verbosity")
-    parser.add_argument("-t", "--target", action="store", required=True, help="target application")
+    parser.add_argument("-t", "--target", action="store", required=True, help="target application. Supported targets: quantum_espresso (qe, espresso), vasp, openmx, akaikkr. (case-insensitive)")
 
     args = parser.parse_args()
 
