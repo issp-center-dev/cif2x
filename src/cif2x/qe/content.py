@@ -33,7 +33,19 @@ class Content:
             for key, tbl in self.namelist.items():
                 _ = [ logger.warning(f"{key}.{k} is empty") for k, v in tbl.items() if v is None ]
                 tbl = { k: v for k, v in tbl.items() if v is not None }
-            Namelist(self.namelist).write(fp)
+
+            # contents in this order
+            contents = ["control", "system", "electrons", "ions", "cell", "fcp", "rism"]
+
+            nml = {}
+            for content in contents:
+                if content in self.namelist.keys():
+                    nml.update({content: self.namelist[content]})
+            for key in self.namelist.keys():
+                if key not in contents:
+                    nml.update({key: self.namelist[key]})
+
+            Namelist(nml).write(fp)
 
     def _write_cards(self, fp):
         logger.debug("_write_cards")
