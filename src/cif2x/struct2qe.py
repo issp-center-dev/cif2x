@@ -6,6 +6,7 @@ from pandas import read_csv, DataFrame
 from pymatgen.core import Structure
 from pymatgen.core.periodic_table import Element
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+import copy
 
 from cif2x.cif2struct import Cif2Struct
 from cif2x.qe.tools import *
@@ -21,7 +22,7 @@ class Struct2QE:
     def __init__(self, info, struct):
         logger.debug("__init__")
         self.info = info
-        self.struct = struct
+        self.struct = copy.deepcopy(struct)
 
         if struct.is_composite:
             logger.error("init: composite material is not supported")
