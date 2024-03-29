@@ -1,4 +1,3 @@
-from pyakaikkr import ak_cif2kkrparam
 import tempfile
 import sys
 from pathlib import Path
@@ -7,6 +6,8 @@ import logging
 logger = logging.getLogger("run_cif2kkr")
 
 def ak_struct2kkr(struct, workdir=None):
+    from pyakaikkr import ak_cif2kkrparam
+
     if workdir and not Path(workdir).exists():
         logger.error("workdir {} not found".format(workdir))
         #raise RuntimeError("workdir {} not found".format(workdir))
