@@ -24,10 +24,6 @@ Contributors
 
 This software was developed by the following contributors.
 
--  ver.1.0.0 (Released on 2024/03/19)
-
--  ver.1.0-alpha (Released on 2023/12/28)
-
    -  Developers
 
       -  Kazuyoshi Yoshimi (The Instutite for Solid State Physics, The University of Tokyo)
@@ -50,6 +46,14 @@ This software was developed by the following contributors.
 
       -  Taisuke Ozaki (The Instutite for Solid State Physics, The University of Tokyo)
 
+Release history
+----------------------------------------------------------------
+
+  ver.1.0.0
+    Released on 2024/03/19
+
+  ver.1.0-alpha
+    Released on 2023/12/28
 
 Copyright
 ----------------------------------------------------------------
