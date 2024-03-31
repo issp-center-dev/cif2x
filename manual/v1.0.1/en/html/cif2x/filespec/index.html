@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>5. File format &#8212; cif2x Users Guide 1.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
+    <script src="../../_static/documentation_options.js?v=292eb321"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="6. Extension guide" href="../appendix/index.html" />
+    <link rel="prev" title="4. Command reference" href="../command/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="file-format">
+<span id="sec-cif2x-fileformat"></span><h1><span class="section-number">5. </span>File format<a class="headerlink" href="#file-format" title="Link to this heading">¶</a></h1>
+<section id="input-parameter-file">
+<h2><span class="section-number">5.1. </span>Input parameter file<a class="headerlink" href="#input-parameter-file" title="Link to this heading">¶</a></h2>
+<p>An input parameter file describes information necessary to generate input files for first-principles calculation software by <code class="docutils literal notranslate"><span class="pre">cif2x</span></code>. It should be given in YAML format, and consist of the following sections.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>structure section: describes how to handle crystal structure data.</p></li>
+<li><p>optional section: describes pseudo-potential files, and symbol definitions for reference feature of YAML.</p></li>
+<li><p>tasks section: describes contents of input files.</p></li>
+</ol>
+</div></blockquote>
+<section id="structure">
+<h3>structure<a class="headerlink" href="#structure" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">use_ibrav</span></code> (default value: <code class="docutils literal notranslate"><span class="pre">false</span></code>)</p>
+<blockquote>
+<div><p>This parameter specifies whether <code class="docutils literal notranslate"><span class="pre">ibrav</span></code> parameter is used for Quantum ESPRESSO as the input of the crystal structure. When it is set to <code class="docutils literal notranslate"><span class="pre">true</span></code>, the lattice is transformed to match the convention of Quantum ESPRESSO, and the lattice parameters <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span></code>, <code class="docutils literal notranslate"><span class="pre">c</span></code>, <code class="docutils literal notranslate"><span class="pre">cosab</span></code>, <code class="docutils literal notranslate"><span class="pre">cosac</span></code>, and <code class="docutils literal notranslate"><span class="pre">cosbc</span></code> are written to the input file as needed.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">tolerance</span></code> (default value: 0.01)</p>
+<blockquote>
+<div><p>This parameter specifies the tolerance in the difference between the reconstructed Structure data and the original data when <code class="docutils literal notranslate"><span class="pre">use_ibrav</span></code> is set to <code class="docutils literal notranslate"><span class="pre">true</span></code>.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">supercell</span></code> (default value: none)</p>
+<blockquote>
+<div><p>This parameter specifies the size of supercell, when it is adopted, in the form of  [<span class="math notranslate nohighlight">\(n_x\)</span>, <span class="math notranslate nohighlight">\(n_y\)</span>, <span class="math notranslate nohighlight">\(n_z\)</span>].</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="optional">
+<h3>optional<a class="headerlink" href="#optional" title="Link to this heading">¶</a></h3>
+<p>This section contains global settings needed for the first-principles calculation software. The available parameters are described in the corresponding sections below.</p>
+</section>
+<section id="tasks">
+<h3>tasks<a class="headerlink" href="#tasks" title="Link to this heading">¶</a></h3>
+<p>This section defines contents of the input files. It is organized as a list of blocks, each corresponding to an input file, to allow for generating a set of input files for an input. The terms described in each block are explained in the following.</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">mode</span></code> (Quantum ESPRESSO)</p>
+<blockquote>
+<div><p>This parameter specifies the type of calculation. In the current version, the supported mode includes <code class="docutils literal notranslate"><span class="pre">scf</span></code> and <code class="docutils literal notranslate"><span class="pre">nscf</span></code> for pw.x of Quantum ESPRESSO. If an unsupported mode is specified, the settings in <code class="docutils literal notranslate"><span class="pre">content</span></code> will be exported as is.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">output_file</span></code> (Quantum ESPRESSO)</p>
+<blockquote>
+<div><p>This parameter specifies the file name of the output.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">output_dir</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the directory name of the output. The default value is the current directory.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">content</span></code></p>
+<blockquote>
+<div><p>This parameter describes the content of the output.
+For Quantum ESPRESSO, it contains the namelist data (blocks starting from <code class="docutils literal notranslate"><span class="pre">&amp;system</span></code>, <code class="docutils literal notranslate"><span class="pre">&amp;control</span></code>, etc.) in <code class="docutils literal notranslate"><span class="pre">namelist</span></code> block, and other card data (such as <code class="docutils literal notranslate"><span class="pre">K_POINTS</span></code>) as individual blocks. Some card data may take parameters.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">template</span></code> (Quantum ESPRESSO)</p>
+<p><code class="docutils literal notranslate"><span class="pre">template_dir</span></code> (VASP)</p>
+<blockquote>
+<div><p>These parameters specifies the template file and the template directory for the input files, respectively. If they are not given, templates will not be used. The content of the template file is merged with those of <code class="docutils literal notranslate"><span class="pre">content</span></code>. The entries in the template file will be superseded by those of <code class="docutils literal notranslate"><span class="pre">content</span></code> if the entries of the same keys appear both.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="specifying-parameter-set">
+<h3>Specifying parameter set<a class="headerlink" href="#specifying-parameter-set" title="Link to this heading">¶</a></h3>
+<p>An input parameter may be given a list or range of parameters. In this case, a separate directory is created for every combination of parameters to store the generated input files. A special syntax <code class="docutils literal notranslate"><span class="pre">${...}</span></code> is used to specify the parameter set as follows:</p>
+<ul>
+<li><p>a list: <code class="docutils literal notranslate"><span class="pre">${[</span> <span class="pre">A,</span> <span class="pre">B,</span> <span class="pre">...</span> <span class="pre">]}</span></code></p>
+<p>a set of parameter values is described as a Python list. Each entry may be a scalar value, or a list of values.</p>
+</li>
+<li><p>a range: <code class="docutils literal notranslate"><span class="pre">${range(N)}</span></code>, <code class="docutils literal notranslate"><span class="pre">${range(start,</span> <span class="pre">end,</span> <span class="pre">step)}</span></code></p>
+<p>a range of parameter is given by the keyword <code class="docutils literal notranslate"><span class="pre">range</span></code>. The former specifies the values from <code class="docutils literal notranslate"><span class="pre">0</span></code> to <code class="docutils literal notranslate"><span class="pre">N-1</span></code>, and the latter from <code class="docutils literal notranslate"><span class="pre">start</span></code> to <code class="docutils literal notranslate"><span class="pre">end</span></code> with every <code class="docutils literal notranslate"><span class="pre">step</span></code>. (If <code class="docutils literal notranslate"><span class="pre">step</span></code> is omitted, it is assumed to be <code class="docutils literal notranslate"><span class="pre">1</span></code>.)</p>
+</li>
+</ul>
+</section>
+</section>
+<section id="parameters-for-quantum-espresso">
+<h2><span class="section-number">5.2. </span>Parameters for Quantum ESPRESSO<a class="headerlink" href="#parameters-for-quantum-espresso" title="Link to this heading">¶</a></h2>
+<p>The entries of <code class="docutils literal notranslate"><span class="pre">optional</span></code> section and <code class="docutils literal notranslate"><span class="pre">content</span></code> part of the <code class="docutils literal notranslate"><span class="pre">tasks</span></code> section specific to Quantum ESPRESSO are explained below.
+In the current version, <code class="docutils literal notranslate"><span class="pre">scf</span></code> mode and <code class="docutils literal notranslate"><span class="pre">nscf</span></code> mode of <code class="docutils literal notranslate"><span class="pre">pw.x</span></code> are supported.</p>
+<section id="optional-section">
+<h3>optional section<a class="headerlink" href="#optional-section" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">pp_file</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the index file in CSV format that relates the element type and the pseudo-potential file. This file contains the following columns: element name, type of pseudo-potential, nexclude, orbitals. An example line is given as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Fe</span><span class="p">,</span><span class="n">pbe</span><span class="o">-</span><span class="n">spn</span><span class="o">-</span><span class="n">rrkjus_psl</span><span class="mf">.0.2.1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="n">spd</span>
+</pre></div>
+</div>
+<p>The name of the pseudo-potential file corresponding to the above example reads
+Fe.pbe-spn-rrkjus_psl.0.2.1.UPF .</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">cutoff_file</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the index file in CSV format that relates the pseudo-potential file and the cutoff values. This file contains the following columns: name of pseudo-potential file, <code class="docutils literal notranslate"><span class="pre">ecutwfc</span></code> value, <code class="docutils literal notranslate"><span class="pre">ecutrho</span></code> value.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the name of the directory that holds pseudo-potential files. It is used when the cutoff values are obtained from the pseudo-potential files.
+It is indenepent from the <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code> parameter in the input files for Quantum ESPRESSO.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="content">
+<h3>content<a class="headerlink" href="#content" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><strong>namelist</strong></p>
+<ul class="simple">
+<li><p>The lattice specifications in <code class="docutils literal notranslate"><span class="pre">&amp;system</span></code> block will be superseded according to <code class="docutils literal notranslate"><span class="pre">use_ibrav</span></code> parameter in the <code class="docutils literal notranslate"><span class="pre">structure</span></code> section.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">use_ibrav</span> <span class="pre">=</span> <span class="pre">false</span></code>:
+<code class="docutils literal notranslate"><span class="pre">ibrav</span></code> is set to <code class="docutils literal notranslate"><span class="pre">0</span></code>, and the lattice parameters including <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span></code>, <code class="docutils literal notranslate"><span class="pre">c</span></code>, <code class="docutils literal notranslate"><span class="pre">cosab</span></code>, <code class="docutils literal notranslate"><span class="pre">cosac</span></code>, <code class="docutils literal notranslate"><span class="pre">cosbc</span></code>, <code class="docutils literal notranslate"><span class="pre">celldm</span></code> are removed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">use_ibrav</span> <span class="pre">=</span> <span class="pre">true</span></code>:
+<code class="docutils literal notranslate"><span class="pre">ibrab</span></code> is set to the index of Bravais lattices obtained from the crystal structure data. The Structure data will be reconstructed to match the convention of Quantum ESPRESSO.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nat</span></code> (the number of atoms) and <code class="docutils literal notranslate"><span class="pre">ntyp</span></code> (the number of element types) will be superseded by the values obtained from the crystal structure data.</p></li>
+<li><p>The cutoff values <code class="docutils literal notranslate"><span class="pre">ecutwfc</span></code> and <code class="docutils literal notranslate"><span class="pre">ecutrho</span></code> are obtained from the pseudo-potential files if these parameters are left blank.</p></li>
+</ul>
+<p><strong>CELL_PARAMETERS</strong></p>
+<ul class="simple">
+<li><p>This block will not be generated if <code class="docutils literal notranslate"><span class="pre">use_ibrav</span></code> is set to <code class="docutils literal notranslate"><span class="pre">true</span></code>. Otherwise, the lattice vectors are exported in units of angstrom.</p></li>
+<li><p>The information of the lattice vectors are obtained from the crystal structure data. When the <code class="docutils literal notranslate"><span class="pre">data</span></code> field is defined and contains a 3x3 matrix, that value will be used for the set of lattice vectors instead.</p></li>
+</ul>
+<p><strong>ATOMIC_SPECIES</strong></p>
+<ul class="simple">
+<li><p>This block exports a list of atom species, atomic mass, and the file name of the pseudo-potential data.</p></li>
+<li><p>The information of the atoms are obtained from the crystal structure data. The file names of the pseudo-potential data are referred from the CSV-formatted index file specified by <code class="docutils literal notranslate"><span class="pre">pp_list</span></code> parameter.</p></li>
+<li><p>When the <code class="docutils literal notranslate"><span class="pre">data</span></code> field is defined and contains the required data, these values will be used instead.</p></li>
+</ul>
+<p><strong>ATOMIC_POSITIONS</strong></p>
+<ul class="simple">
+<li><p>This block exports the atomic species and their fractional coordinates.</p></li>
+<li><p>When <code class="docutils literal notranslate"><span class="pre">ignore_species</span></code> is given to specify an atomic species or a list of species, the values of <code class="docutils literal notranslate"><span class="pre">if_pos</span></code> for these species will be set to <code class="docutils literal notranslate"><span class="pre">0</span></code>. It is used for MD or structure relaxations.</p></li>
+<li><p>When the <code class="docutils literal notranslate"><span class="pre">data</span></code> field is defined and contains the required data, these values will be used instead.</p></li>
+</ul>
+<p><strong>K_POINTS</strong></p>
+<ul class="simple">
+<li><p>This block exports the information of k points. The type of the output is specified by the <code class="docutils literal notranslate"><span class="pre">option</span></code> parameter that takes one of the following:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code>: uses <span class="math notranslate nohighlight">\(\Gamma\)</span> point.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">crystal</span></code>: generates a list of k points in mesh pattern. The mesh width is given by the <code class="docutils literal notranslate"><span class="pre">grid</span></code> parameter, or derived from the <code class="docutils literal notranslate"><span class="pre">vol_density</span></code> or <code class="docutils literal notranslate"><span class="pre">k_resolution</span></code> parameters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">automatic</span></code>: generates a mesh of k points. It is given by the <code class="docutils literal notranslate"><span class="pre">grid</span></code> parameter, or derived from the <code class="docutils literal notranslate"><span class="pre">vol_density</span></code> or <code class="docutils literal notranslate"><span class="pre">k_resolution</span></code> parameters. The shift is obtained from the <code class="docutils literal notranslate"><span class="pre">kshifts</span></code> parameter.</p></li>
+</ul>
+</li>
+<li><p>The mesh width is determined in the following order:</p>
+<ul>
+<li><p>the <code class="docutils literal notranslate"><span class="pre">grid</span></code> parameter, specified by a list of <span class="math notranslate nohighlight">\(n_x, n_y, n_z\)</span>, or a scalar value <span class="math notranslate nohighlight">\(n\)</span>. For the latter, <span class="math notranslate nohighlight">\(n_x = n_y = n_z = n\)</span> is assumed.</p></li>
+<li><p>derived from the <code class="docutils literal notranslate"><span class="pre">vol_density</span></code> parameter.</p></li>
+<li><p>derived from the <code class="docutils literal notranslate"><span class="pre">k_resolution</span></code> parameter, whose default value is 0.15.</p></li>
+</ul>
+</li>
+<li><p>When the <code class="docutils literal notranslate"><span class="pre">data</span></code> field is defined and contains the required data, these values will be used.</p></li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+<section id="parameters-for-vasp">
+<h2><span class="section-number">5.3. </span>Parameters for VASP<a class="headerlink" href="#parameters-for-vasp" title="Link to this heading">¶</a></h2>
+<p>The entries of <code class="docutils literal notranslate"><span class="pre">optional</span></code> section and <code class="docutils literal notranslate"><span class="pre">content</span></code> part of the <code class="docutils literal notranslate"><span class="pre">tasks</span></code> section specific to VASP are explained below.</p>
+<section id="id1">
+<h3>optional<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<p>The type and the location of pseudo-potential files are specified.</p>
+<p>According to pymatgen, the pseudo-potential files are obtained from
+<code class="docutils literal notranslate"><span class="pre">PMG_VASP_PSP_DIR</span></code>/<em>functional</em>/POTCAR.{element}(.gz) or
+<code class="docutils literal notranslate"><span class="pre">PMG_VASP_PSP_DIR</span></code>/<em>functional</em>/{element}/POTCAR,
+where
+<code class="docutils literal notranslate"><span class="pre">PMG_VASP_PSP_DIR</span></code> points to the directory and it is given in the configuration file
+<code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc.yaml</span></code> or by the environment variable of the same name.
+<em>functional</em> refers to the type of the pseudo-potential, whose value is predefined as
+<code class="docutils literal notranslate"><span class="pre">POT_GGA_PAW_PBE</span></code>, <code class="docutils literal notranslate"><span class="pre">POT_LDA_PAW</span></code>, etc.</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">pseudo_functional</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the type of the pseudo-potential. The relation to the <em>functional</em> value above is defined in the table of pymatgen, for example, by <code class="docutils literal notranslate"><span class="pre">PBE</span></code> to <code class="docutils literal notranslate"><span class="pre">POT_GGA_PAW_PBE</span></code>, or by <code class="docutils literal notranslate"><span class="pre">LDA</span></code> to <code class="docutils literal notranslate"><span class="pre">POT_LDA_PAW</span></code>, or in a similar manner.</p>
+</div></blockquote>
+</div></blockquote>
+<p>When the <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code> parameter is specified, it is used as the directory that holds the pseudo-potential files, ignoring the convention of pymatgen.</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">psuedo_dir</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the directory that holds the pseudo-potential files. The paths to the pseudo-potential file turn to <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code>/POTCAR.{element}(.gz), or <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code>/{element}/POTCAR.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="id2">
+<h3>tasks<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<p>The template files are assumed to be placed in the directory specified by the <code class="docutils literal notranslate"><span class="pre">template_dir</span></code> parameter by the names <code class="docutils literal notranslate"><span class="pre">INCAR</span></code>, <code class="docutils literal notranslate"><span class="pre">KPOINTS</span></code>, <code class="docutils literal notranslate"><span class="pre">POSCAR</span></code>, and <code class="docutils literal notranslate"><span class="pre">POTCAR</span></code>. The missing files will be ignored.</p>
+</section>
+<section id="id3">
+<h3>content<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><strong>incar</strong></p>
+<ul class="simple">
+<li><p>This block contains parameters described in the INCAR file</p></li>
+</ul>
+<p><strong>kpoints</strong></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">type</span></code> parameter describes how KPOINTS are specified. The following values are allowed, with some types accepting parameters. See pymatgen.io.vasp manual for further details.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">automatic</span></code></p>
+<p>parameter: <code class="docutils literal notranslate"><span class="pre">grid</span></code></p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gamma_automatic</span></code></p>
+<p>parameter: <code class="docutils literal notranslate"><span class="pre">grid</span></code>, <code class="docutils literal notranslate"><span class="pre">shift</span></code></p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">monkhorst_automatic</span></code></p>
+<p>parameter: <code class="docutils literal notranslate"><span class="pre">grid</span></code>, <code class="docutils literal notranslate"><span class="pre">shift</span></code></p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">automatic_density</span></code></p>
+<p>parameter: <code class="docutils literal notranslate"><span class="pre">kppa</span></code>, <code class="docutils literal notranslate"><span class="pre">force_gamma</span></code></p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">automatic_gamma_density</span></code></p>
+<p>parameter: <code class="docutils literal notranslate"><span class="pre">grid_density</span></code></p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">automatic_density_by_vol</span></code></p>
+<p>parameter: <code class="docutils literal notranslate"><span class="pre">grid_density</span></code>, <code class="docutils literal notranslate"><span class="pre">force_gamma</span></code></p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">automatic_density_by_lengths</span></code></p>
+<p>parameter: <code class="docutils literal notranslate"><span class="pre">length_density</span></code>, <code class="docutils literal notranslate"><span class="pre">force_gamma</span></code></p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">automatic_linemode</span></code></p>
+<p>parameter: <code class="docutils literal notranslate"><span class="pre">division</span></code>, <code class="docutils literal notranslate"><span class="pre">path_type</span></code> (corresponding to the <code class="docutils literal notranslate"><span class="pre">path_type</span></code> parameter of HighSymmKpath.)</p>
+</li>
+</ul>
+</li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+<section id="parameters-for-openmx">
+<h2><span class="section-number">5.4. </span>Parameters for OpenMX<a class="headerlink" href="#parameters-for-openmx" title="Link to this heading">¶</a></h2>
+<p>The entries of <code class="docutils literal notranslate"><span class="pre">optional</span></code> section and <code class="docutils literal notranslate"><span class="pre">content</span></code> part of the <code class="docutils literal notranslate"><span class="pre">tasks</span></code> section specific to OpenMX are explained below.</p>
+<section id="id4">
+<h3>optional<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">data_path</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the name of directory that holds files for pseudo-atomic orbitals and pseudo-potentials. It corresponds to the <code class="docutils literal notranslate"><span class="pre">DATA.PATH</span></code> parameter.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="id5">
+<h3>content<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">precision</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the set of pseudo-atomic orbitals listed in Tables 1 and 2 of Section 10.6 of the OpenMX manual. It is one of <code class="docutils literal notranslate"><span class="pre">quick</span></code>, <code class="docutils literal notranslate"><span class="pre">standard</span></code>, or <code class="docutils literal notranslate"><span class="pre">precise</span></code>. The default value is <code class="docutils literal notranslate"><span class="pre">quick</span></code>.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+</section>
+<section id="parameters-for-akaikkr">
+<h2><span class="section-number">5.5. </span>Parameters for AkaiKKR<a class="headerlink" href="#parameters-for-akaikkr" title="Link to this heading">¶</a></h2>
+<p>The entries of <code class="docutils literal notranslate"><span class="pre">optional</span></code> section and <code class="docutils literal notranslate"><span class="pre">content</span></code> part of the <code class="docutils literal notranslate"><span class="pre">tasks</span></code> section specific to AkaiKKR are explained below.</p>
+<section id="id6">
+<h3>optional<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">workdir</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the directory in which temporal files are stored. If it is not given, <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> or the value of the environment variable <code class="docutils literal notranslate"><span class="pre">TMPDIR</span></code> is used.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="id7">
+<h3>content<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">content</span></code> part contains the input parameters of AkaiKKR.
+A blank is written to the input file for an unspecified parameter, to which the default value defined in AkaiKKR will be assumed.
+The parameter values listed below are replaced by the values obtained from the crystal structure data.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">brvtyp</span></code>, except when it is set to <code class="docutils literal notranslate"><span class="pre">aux</span></code> (or a string that contains <code class="docutils literal notranslate"><span class="pre">aux</span></code>).</p></li>
+<li><p>lattice parameters, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">c/a</span></code>, <code class="docutils literal notranslate"><span class="pre">b/a</span></code>, <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">beta</span></code>, <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">r1</span></code>, <code class="docutils literal notranslate"><span class="pre">r2</span></code>, <code class="docutils literal notranslate"><span class="pre">r3</span></code>.</p></li>
+<li><p>type information, <code class="docutils literal notranslate"><span class="pre">ntyp</span></code>, <code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">ncmp</span></code>, <code class="docutils literal notranslate"><span class="pre">rmt</span></code>, <code class="docutils literal notranslate"><span class="pre">field</span></code>, <code class="docutils literal notranslate"><span class="pre">mxl</span></code>, <code class="docutils literal notranslate"><span class="pre">anclr</span></code>, <code class="docutils literal notranslate"><span class="pre">conc</span></code>.</p></li>
+<li><p>element information, <code class="docutils literal notranslate"><span class="pre">natm</span></code>, <code class="docutils literal notranslate"><span class="pre">atmicx</span></code>, <code class="docutils literal notranslate"><span class="pre">atmtyp</span></code>.</p></li>
+</ul>
+<p>For <code class="docutils literal notranslate"><span class="pre">rmt</span></code> and <code class="docutils literal notranslate"><span class="pre">field</span></code>, the values specified in the input parameter file will be used only when they are lists having the same number of elements as <code class="docutils literal notranslate"><span class="pre">ntyp</span></code>.</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">cif2x Users Guide</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Input file generator for first-principles calculations (cif2x)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../about/index.html">1. Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basic-usage.html">2. Installation and basic usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/index.html">3. Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../command/index.html">4. Command reference</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">5. File format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/index.html">6. Extension guide</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Input file generator for first-principles calculations (cif2x)</a><ul>
+      <li>Previous: <a href="../command/index.html" title="previous chapter"><span class="section-number">4. </span>Command reference</a></li>
+      <li>Next: <a href="../appendix/index.html" title="next chapter"><span class="section-number">6. </span>Extension guide</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023-, The University of Tokyo.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/cif2x/filespec/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
