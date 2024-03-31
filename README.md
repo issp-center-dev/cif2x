@@ -12,7 +12,7 @@ Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
 
 ## Requirement
 
-Python3 with pymatgen, qe-tools and other library packages
+Python3 with pymatgen, qe-tools, AkaiKKRPythonUtil, and other library packages.
 
 ## Install
 
