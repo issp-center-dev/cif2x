@@ -181,6 +181,7 @@ class QueryMaterialsProject:
     def _setup_option(self, info):
         self.output_dir = info.get("output_dir", "")
         self.dry_run = info.get("dry_run", False)
+        self.symprec = info.get("symprec", None)
 
     def _find_query(self, info):
         props = self._find_properties(info.get("properties", {}))
@@ -338,6 +339,8 @@ class QueryMaterialsProject:
 
     def _do_summary(self, docs, fields):
         results = []
+        symprec = self.symprec
+
         for idx, doc in enumerate(docs):
             m_id = str(doc.material_id)
             m_formula = doc.formula_pretty
@@ -349,10 +352,13 @@ class QueryMaterialsProject:
             os.makedirs(data_dir, exist_ok=True)
 
             for field in fields:
-                if field == "material_id":
+                if field == "material_id":                    
                     pass
                 elif field == "structure":
-                    doc.structure.to(Path(data_dir, "structure.cif"), fmt="cif", symprec=0.01)
+                    if symprec is not None:
+                        doc.structure.to(Path(data_dir, "structure.cif"), fmt="cif", symprec=symprec)
+                    else:
+                        doc.structure.to(Path(data_dir, "structure.cif"), fmt="cif")
                 elif field == "formula_pretty":
                     with open(Path(data_dir, "formula"), "w", encoding="utf-8") as fp:
                         fp.write(str(d[field]) + "\n")
