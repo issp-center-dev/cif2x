@@ -352,7 +352,7 @@ class QueryMaterialsProject:
                 if field == "material_id":
                     pass
                 elif field == "structure":
-                    doc.structure.to(Path(data_dir, "structure.cif"), fmt="cif")
+                    doc.structure.to(Path(data_dir, "structure.cif"), fmt="cif", symprec=0.01)
                 elif field == "formula_pretty":
                     with open(Path(data_dir, "formula"), "w", encoding="utf-8") as fp:
                         fp.write(str(d[field]) + "\n")
