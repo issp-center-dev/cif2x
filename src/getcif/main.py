@@ -181,7 +181,10 @@ class QueryMaterialsProject:
     def _setup_option(self, info):
         self.output_dir = info.get("output_dir", "")
         self.dry_run = info.get("dry_run", False)
-        self.symprec = info.get("symprec", None)
+        # symprec: default value 0.1 used in Materials Project to determine symmetry
+        self.symprec = info.get("symprec", 0.1)
+        if self.symprec == 0:
+            self.symprec = None
 
     def _find_query(self, info):
         props = self._find_properties(info.get("properties", {}))
