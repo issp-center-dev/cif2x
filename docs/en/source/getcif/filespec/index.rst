@@ -49,7 +49,7 @@ This section contains global settings needed for the first-principles calculatio
 
 ``symprec`` (default value: 0.1)
 
-  This parameter specifies the tolerance in calculating the symmetry of a crystal structure when the structure data are written to a CIF file. By default, 0.1 is specified. When ``symprec`` is set to 0.0, it is treated as ``symprec=None``, in which case a CIF file is generated without considering symmetry.
+  This parameter specifies the tolerance in calculating the symmetry of a crystal structure when the structure data are written to a CIF file. By default, 0.1 is specified. When ``symprec`` is set to 0.0, it is treated as if ``symprec`` is unspecified, in which case a CIF file is generated without considering symmetry.
 
   ``symprec`` is a parameter that specifies the tolerance used to determine the symmetry of a crystal structure. When calculating the symmetry of a crystal structure, it is essential to consider the slight displacements of atomic positions and the precision of numerical calculations. ``symprec`` controls the allowable range of these displacements and serves as a threshold for deciding whether a symmetry operation should be applied.
 

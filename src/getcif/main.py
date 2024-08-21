@@ -355,7 +355,7 @@ class QueryMaterialsProject:
             os.makedirs(data_dir, exist_ok=True)
 
             for field in fields:
-                if field == "material_id":                    
+                if field == "material_id":
                     pass
                 elif field == "structure":
                     if symprec is not None:
