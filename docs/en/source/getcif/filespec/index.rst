@@ -47,6 +47,17 @@ This section contains global settings needed for the first-principles calculatio
 
   When this parameter is set to True, getcif prints the search conditions and exists without connecting to the database. It is useful to check the content of the query.
 
+``symprec`` (default value: 0.1)
+
+  This parameter specifies the tolerance in calculating the symmetry of a crystal structure when the structure data are written to a CIF file. By default, 0.1 is specified. When ``symprec`` is set to 0.0, it is treated as if ``symprec`` is unspecified, in which case a CIF file is generated without considering symmetry.
+
+  ``symprec`` is a parameter that specifies the tolerance used to determine the symmetry of a crystal structure. When calculating the symmetry of a crystal structure, it is essential to consider the slight displacements of atomic positions and the precision of numerical calculations. ``symprec`` controls the allowable range of these displacements and serves as a threshold for deciding whether a symmetry operation should be applied.
+
+  If ``symprec`` is set to a smaller value (e.g., 0.01), the symmetry determination becomes more stringent, and even minor displacements in the crystal structure may prevent the application of symmetry operations. This can result in the identification of a lower-symmetry space group. Conversely, if ``symprec`` is set to a larger value (e.g., 1.0), the symmetry determination is more lenient, allowing small displacements to be ignored, which may lead to the recognition of a higher-symmetry space group.
+
+  When the ``symmetry`` field is specified in the fields section, the symmetry information determined using the default ``symprec=0.1`` in the Materials Project is obtained and written to a text file (``symmetry``).
+
+
 properties
 --------------------------------
 
