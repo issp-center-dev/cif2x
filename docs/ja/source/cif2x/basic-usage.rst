@@ -16,6 +16,10 @@
   - OpenBabel モジュール (オプション)
   - AkaiKKRPythonUtil モジュール
 
+  CIFデータ取得ツール getcif を利用するには、上記に加えて以下のライブラリが必要です。
+
+  - mp-api モジュール
+
 **ソースコード配布サイト**
 
   - `GitHubリポジトリ <https://github.com/issp-center-dev/cif2x>`_
@@ -37,7 +41,7 @@
      $ cd ./cif2x
      $ python3 -m pip install .
 
-  実行プログラム ``cif2x`` がインストールされます。
+  実行プログラム ``cif2x``, ``getcif`` がインストールされます。
 
   なお、AkaiKKRPythonUtil モジュールは別途インストールが必要です。
   以下の手順で `配布サイト <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_ からソースコードを取得しインストールします。また、必要な seaborn モジュールもインストールしておきます。
@@ -85,6 +89,9 @@
      |       |   |-- read_input.py
      |       |   |-- run_cif2kkr.py
      |       |-- utils.py
+     |   |-- getcif/
+     |       |-- __init__.py
+     |       |-- main.py
      |-- sample/
 
 

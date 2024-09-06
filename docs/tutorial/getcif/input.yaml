@@ -1,0 +1,18 @@
+database:
+  target: materials project
+
+option:
+  output_dir: result
+  # dry_run: false
+
+properties:
+  band_gap: < 1.0
+  is_stable: true
+  is_metal: false
+  formula: "**O3"
+  spacegroup_symbol: Pm-3m
+
+fields: |
+  structure
+  band_gap
+  symmetry
