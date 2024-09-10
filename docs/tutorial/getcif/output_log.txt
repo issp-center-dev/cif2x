@@ -1,0 +1,9 @@
+material_id  formula  band_gap  symmetry  formula_pretty
+mp-861502  AcFeO3  0.9887999999999995  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  AcFeO3
+mp-977455  PaAgO3  0.915  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  PaAgO3
+mp-11775  RbUO3  0.45420000000000016  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  RbUO3
+mp-3163  BaSnO3  0.37239999999999984  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  BaSnO3
+mp-4126  KUO3  0.44540000000000024  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  KUO3
+mp-865322  UTlO3  0.27360000000000007  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  UTlO3
+mp-753781  EuHfO3  0.4795999999999996  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  EuHfO3
+

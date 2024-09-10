@@ -1,0 +1,19 @@
+material_id  formula  band_gap  symmetry
+mp-1283849  SrCoO3  0.0  crystal_system=<CrystalSystem.tet: 'Tetragonal'> symbol='P4/mbm' number=127 point_group='4/mmm' symprec=0.1 version='2.0.2'
+mp-505766  SrCoO3  0.0  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
+mp-1273854  SrCoO3  0.0  crystal_system=<CrystalSystem.tet: 'Tetragonal'> symbol='P4/mmm' number=123 point_group='4/mmm' symprec=0.1 version='2.0.2'
+mp-1272815  SrCoO3  0.0  crystal_system=<CrystalSystem.ortho: 'Orthorhombic'> symbol='Amm2' number=38 point_group='mm2' symprec=0.1 version='2.0.2'
+mp-562466  SrCoO3  0.0  crystal_system=<CrystalSystem.tri: 'Triclinic'> symbol='P-1' number=2 point_group='-1' symprec=0.1 version='2.0.2'
+mp-550781  SrCoO3  0.0  crystal_system=<CrystalSystem.mono: 'Monoclinic'> symbol='P2_1/m' number=11 point_group='2/m' symprec=0.1 version='2.0.2'
+
+material_id  formula  band_gap  symmetry
+mp-5229  SrTiO3  1.7719999999999998  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
+mp-4651  SrTiO3  1.8487999999999998  crystal_system=<CrystalSystem.tet: 'Tetragonal'> symbol='I4/mcm' number=140 point_group='4/mmm' symprec=0.1 version='2.0.2'
+mp-551830  SrTiO3  1.7869999999999995  crystal_system=<CrystalSystem.tet: 'Tetragonal'> symbol='I4/mcm' number=140 point_group='4/mmm' symprec=0.1 version='2.0.2'
+mp-776018  SrTiO3  1.7362000000000002  crystal_system=<CrystalSystem.hex_: 'Hexagonal'> symbol='P6_3/mmc' number=194 point_group='6/mmm' symprec=0.1 version='2.0.2'
+
+material_id  formula  band_gap  symmetry
+mp-18717  SrVO3  0.0  crystal_system=<CrystalSystem.cubic: 'Cubic'> symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
+
+[[1, 'mp-1283849', 'SrCoO3'], [2, 'mp-505766', 'SrCoO3'], [3, 'mp-1273854', 'SrCoO3'], [4, 'mp-1272815', 'SrCoO3'], [5, 'mp-562466', 'SrCoO3'], [6, 'mp-550781', 'SrCoO3'], [7, 'mp-5229', 'SrTiO3'], [8, 'mp-4651', 'SrTiO3'], [9, 'mp-551830', 'SrTiO3'], [10, 'mp-776018', 'SrTiO3'], [11, 'mp-18717', 'SrVO3']]
+done.

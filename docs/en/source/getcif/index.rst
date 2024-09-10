@@ -1,5 +1,5 @@
 ****************************************************************
-第一原理計算入力ファイル生成ツール (cif2x)
+A tool to retrieve crystallographic data from databases (getcif)
 ****************************************************************
 
 
@@ -8,9 +8,7 @@
    :numbered: 2
 
    about/index
-   basic-usage
    tutorial/index
    command/index
    filespec/index
    appendix/index
-   ../getcif/index

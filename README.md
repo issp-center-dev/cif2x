@@ -6,6 +6,9 @@ Therefore, the development of tools and environments for the rapid generation of
 
 Cif2x is a tool to generate input files for first-principles calculation software. It takes crystal structure data in CIF format and input parameters as a template, and constructs the parts that vary depending on the type of material and conditions. It is capable of generating multiple input files tailored to specific computational conditions. Currently, it supports [VASP](https://www.vasp.at), [Quantum ESPRESSO](https://www.quantum-espresso.org), [OpenMX](http://www.openmx-square.org), and [AkaiKKR](http://kkr.issp.u-tokyo.ac.jp).
 
+getcif is a tool to retrieve crystallographic information and other properties of materials from databases. The latest version of getcif provides access to Materials Project database. Users can search database and obtain information by specifying symmetry, composition, or physical properties of materials.
+
+
 ## Target applications
 
 Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
@@ -13,6 +16,8 @@ Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
 ## Requirement
 
 Python3 with pymatgen, qe-tools, AkaiKKRPythonUtil, and other library packages.
+
+getcif requires mp-api, pymatgen, and other library packages.
 
 ## Install
 
