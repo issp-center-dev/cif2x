@@ -16,6 +16,11 @@ Installation and basic usage
   - OpenBabel module (optional)
   - AkaiKKRPythonUtil module
 
+  For A tool to retrieve crystallographic data from databases ``getcif``, the additional library is required:
+
+  - mp-api module
+
+
 **Official pages**
 
   - `GitHub repository <https://github.com/issp-center-dev/cif2x>`_
@@ -37,7 +42,7 @@ Installation and basic usage
      $ cd ./cif2x
      $ python3 -m pip install .
 
-  The executable file ``cif2x`` will be installed.
+  The executable files ``cif2x`` and ``getcif`` will be installed.
   You may need to add ``--user`` option next to ``install`` keyword above in case you are not allowed to install packages system-wide.
 
   AkaiKKRPythonUtil module need to be installed separately. The source package is available from `the repository <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_. Then follow the steps below to install the module along with the required seaborn module:
@@ -86,6 +91,9 @@ Installation and basic usage
      |       |   |-- read_input.py
      |       |   |-- run_cif2kkr.py
      |       |-- utils.py
+     |   |-- getcif/
+     |       |-- __init__.py
+     |       |-- main.py
      |-- sample/
 
 

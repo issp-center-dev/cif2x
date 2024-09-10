@@ -13,3 +13,4 @@
    command/index
    filespec/index
    appendix/index
+   ../getcif/index

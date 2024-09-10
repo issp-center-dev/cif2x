@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>7.4. File format &#8212; cif2x Users Guide 1.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
+    <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="7.5. Parameter List" href="../appendix/index.html" />
+    <link rel="prev" title="7.3. Command reference" href="../command/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="file-format">
+<span id="sec-getcif-fileformat"></span><h1><span class="section-number">7.4. </span>File format<a class="headerlink" href="#file-format" title="Link to this heading">¶</a></h1>
+<section id="input-parameter-file">
+<h2>Input parameter file<a class="headerlink" href="#input-parameter-file" title="Link to this heading">¶</a></h2>
+<p>An input parameter file describes information to search for crystallographic and other data from Materials Project database by getcif. It should be given in YAML format, and consist of the following sections.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>database section: describes information on the database to connect.</p></li>
+<li><p>option section: describes output directory and other parameters for command execution.</p></li>
+<li><p>properties section: describes search conditions.</p></li>
+<li><p>fields section: describes types of data to be retrieved.</p></li>
+</ol>
+</div></blockquote>
+<section id="database">
+<h3>database<a class="headerlink" href="#database" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">target</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the database to connected to. At present this parameter is ignored.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> (default value: <code class="docutils literal notranslate"><span class="pre">materials_project.key</span></code>)</p>
+<blockquote>
+<div><p>This parameter specifies a name of a file that contains the API key to access to the database.
+The suffix of the file name must be <code class="docutils literal notranslate"><span class="pre">.key</span></code>.
+If the file does not exist or it does not contain a valid value, the API key is obtained from the environment variable <code class="docutils literal notranslate"><span class="pre">MP_API_KEY</span></code>, or from the parameter <code class="docutils literal notranslate"><span class="pre">PMG_MAPI_KEY</span></code> of the pymatgen configuration file in <code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc</span></code>.</p>
+<p>The API key file is a text file. A line starting with <code class="docutils literal notranslate"><span class="pre">#</span></code> is regarded as a comment. The heading and trailing spaces are ignored. When the file contains more than one line, the API key is taken from the first valid line.</p>
+</div></blockquote>
+</section>
+<section id="option">
+<h3>option<a class="headerlink" href="#option" title="Link to this heading">¶</a></h3>
+<p>This section contains global settings needed for the first-principles calculation software. The available parameters are described in the corresponding sections below.</p>
+<p><code class="docutils literal notranslate"><span class="pre">output_dir</span></code> (default value: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>)</p>
+<blockquote>
+<div><p>This parameter specifies the directory name to store the data. The retrieved data are placed in this directory under the subdirectories by the material ID for each material. The default value is the current directory.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">dry_run</span></code> (default value: <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p>
+<blockquote>
+<div><p>When this parameter is set to True, getcif prints the search conditions and exists without connecting to the database. It is useful to check the content of the query.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">symprec</span></code> (default value: 0.1)</p>
+<blockquote>
+<div><p>This parameter specifies the tolerance in calculating the symmetry of a crystal structure when the structure data are written to a CIF file. By default, 0.1 is specified. When <code class="docutils literal notranslate"><span class="pre">symprec</span></code> is set to 0.0, it is treated as if <code class="docutils literal notranslate"><span class="pre">symprec</span></code> is unspecified, in which case a CIF file is generated without considering symmetry.</p>
+<p><code class="docutils literal notranslate"><span class="pre">symprec</span></code> is a parameter that specifies the tolerance used to determine the symmetry of a crystal structure. When calculating the symmetry of a crystal structure, it is essential to consider the slight displacements of atomic positions and the precision of numerical calculations. <code class="docutils literal notranslate"><span class="pre">symprec</span></code> controls the allowable range of these displacements and serves as a threshold for deciding whether a symmetry operation should be applied.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">symprec</span></code> is set to a smaller value (e.g., 0.01), the symmetry determination becomes more stringent, and even minor displacements in the crystal structure may prevent the application of symmetry operations. This can result in the identification of a lower-symmetry space group. Conversely, if <code class="docutils literal notranslate"><span class="pre">symprec</span></code> is set to a larger value (e.g., 1.0), the symmetry determination is more lenient, allowing small displacements to be ignored, which may lead to the recognition of a higher-symmetry space group.</p>
+<p>When the <code class="docutils literal notranslate"><span class="pre">symmetry</span></code> field is specified in the fields section, the symmetry information determined using the default <code class="docutils literal notranslate"><span class="pre">symprec=0.1</span></code> in the Materials Project is obtained and written to a text file (<code class="docutils literal notranslate"><span class="pre">symmetry</span></code>).</p>
+</div></blockquote>
+</section>
+<section id="properties">
+<h3>properties<a class="headerlink" href="#properties" title="Link to this heading">¶</a></h3>
+<p>This section defines the search conditions.
+The conditions such as the element types, the crystal symmetry, or the values of physical properties are specified in the <code class="docutils literal notranslate"><span class="pre">keyword:</span> <span class="pre">value</span></code> format. They are treated as AND condition.
+The available terms, based on the Materials Project API, conform to the parameters of
+the <code class="docutils literal notranslate"><span class="pre">materials.summary.search</span></code> method in the mp-api library. The list of terms are summarized in the Appendix, and can be seen by <code class="docutils literal notranslate"><span class="pre">getcif</span> <span class="pre">--help</span></code>.</p>
+<p>The format of the parameter values is shown below. It follows the YAML specification with several extension for brief description.</p>
+<ul>
+<li><p>a number, a string</p>
+<blockquote>
+<div><p>describe as-is.</p>
+</div></blockquote>
+</li>
+<li><p>a boolean value</p>
+<blockquote>
+<div><p>describe as <code class="docutils literal notranslate"><span class="pre">true</span></code> or <code class="docutils literal notranslate"><span class="pre">false</span></code>.</p>
+</div></blockquote>
+</li>
+<li><p>a list of numbers or strings</p>
+<blockquote>
+<div><p>describe in the indented style (block style) or in the comma-separated list enclosed by the bracket (flow style) in YAML notation.
+It is also available that it is described as a space-separated list, for example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">element</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Sr Ti</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>a range of numerical value</p>
+<blockquote>
+<div><p>described as a list of two numbers such as <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">min,</span> <span class="pre">max</span> <span class="pre">]</span></code>, or a pair of two numbers separated by a space as <code class="docutils literal notranslate"><span class="pre">min</span> <span class="pre">max</span></code>. The following formats are also available.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">max</span></code></dt><dd><p>less than or equal to <code class="docutils literal notranslate"><span class="pre">max</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">max</span></code></dt><dd><p>less than <code class="docutils literal notranslate"><span class="pre">max</span></code>. (For a real number, it is equivalent to <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">max</span></code>. For an integer, it is treated as <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">max-1</span></code>.)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">min</span></code></dt><dd><p>more than or equal to <code class="docutils literal notranslate"><span class="pre">min</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">min</span></code></dt><dd><p>more than <code class="docutils literal notranslate"><span class="pre">min</span></code>. (For a real number, it is equivalent to <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">min</span></code>. For an integer, it is treated as <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">min+1</span></code>.)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">min</span> <span class="pre">~</span> <span class="pre">max</span></code></dt><dd><p>between <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code>.</p>
+</dd>
+</dl>
+<p>N.B.:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>A space must be placed between the symbol and the number.</p></li>
+<li><p>Due to the YAML syntax that the symbol <code class="docutils literal notranslate"><span class="pre">&quot;&gt;&quot;</span></code> at the beginning of a term is treated as a special character, <code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">min</span></code> should be enclosed by quotes as <code class="docutils literal notranslate"><span class="pre">&quot;&gt;</span> <span class="pre">min&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;&gt;=</span> <span class="pre">min&quot;</span></code>, respectively.</p></li>
+<li><p>In list notations, <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">max</span></code> and <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">min</span></code> are denoted as <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">None,</span> <span class="pre">max</span> <span class="pre">]</span></code> and <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">min,</span> <span class="pre">None</span> <span class="pre">]</span></code>, respectively.</p></li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+</li>
+<li><p>wild card symbols</p>
+<blockquote>
+<div><p>The term <code class="docutils literal notranslate"><span class="pre">formula</span></code> accepts wild card symbols <code class="docutils literal notranslate"><span class="pre">*</span></code> for elements. In this case, the whole value is enclosed by <code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">&quot;</span></code>. For example,</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">formula</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**O3&quot;</span>
+</pre></div>
+</div>
+<p>for <span class="math notranslate nohighlight">\(ABO_3\)</span>-type materials.</p>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="fields">
+<h3>fields<a class="headerlink" href="#fields" title="Link to this heading">¶</a></h3>
+<p>This section defines the types of data to be retrieved.
+A list of types is described in the YAML format, or as a space-sparated strings. In the latter format, it can be given in multiple-line format using the “|” notation of YAML.</p>
+<p>The available types of data conform to the <code class="docutils literal notranslate"><span class="pre">field</span></code> parameter of the Materials Project API. They are listed in the Appendix, and can be viewd by <code class="docutils literal notranslate"><span class="pre">getcif</span> <span class="pre">--help</span></code>.</p>
+<p>The types <code class="docutils literal notranslate"><span class="pre">material_id</span></code> and <code class="docutils literal notranslate"><span class="pre">formula_pretty</span></code> are retrieved automatically.</p>
+<p>The obtained data are placed in the directory specified by <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> parameter under the subdirectories of the material_id for each material. Each item is stored as a separate file of the item name. The crystal structure data (<code class="docutils literal notranslate"><span class="pre">structure</span></code>) is stored in a file <code class="docutils literal notranslate"><span class="pre">structure.cif</span></code> in CIF format.</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">cif2x Users Guide</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../cif2x/index.html">Input file generator for first-principles calculations (cif2x)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/about/index.html">1. Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/basic-usage.html">2. Installation and basic usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/tutorial/index.html">3. Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/command/index.html">4. Command reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/filespec/index.html">5. File format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/appendix/index.html">6. Extension guide</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">7. A tool to retrieve crystallographic data from databases (getcif)</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../../cif2x/index.html">Input file generator for first-principles calculations (cif2x)</a><ul>
+  <li><a href="../index.html"><span class="section-number">7. </span>A tool to retrieve crystallographic data from databases (getcif)</a><ul>
+      <li>Previous: <a href="../command/index.html" title="previous chapter"><span class="section-number">7.3. </span>Command reference</a></li>
+      <li>Next: <a href="../appendix/index.html" title="next chapter"><span class="section-number">7.5. </span>Parameter List</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023-, The University of Tokyo.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/getcif/filespec/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

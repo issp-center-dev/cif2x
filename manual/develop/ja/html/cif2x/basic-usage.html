@@ -5,10 +5,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>2. インストールと基本的な使い方 &#8212; cif2x Users Guide 1.0.1 ドキュメント</title>
+    <title>2. インストールと基本的な使い方 &#8212; cif2x Users Guide 1.1.0 ドキュメント</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=94bc0932" />
-    <script src="../_static/documentation_options.js?v=b034088f"></script>
+    <script src="../_static/documentation_options.js?v=6599c6cf"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/translations.js?v=91613774"></script>
@@ -50,6 +50,10 @@
 <li><p>OpenBabel モジュール (オプション)</p></li>
 <li><p>AkaiKKRPythonUtil モジュール</p></li>
 </ul>
+<p>CIFデータ取得ツール getcif を利用するには、上記に加えて以下のライブラリが必要です。</p>
+<ul class="simple">
+<li><p>mp-api モジュール</p></li>
+</ul>
 </div></blockquote>
 <p><strong>ソースコード配布サイト</strong></p>
 <blockquote>
@@ -71,7 +75,7 @@
 $<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
 </pre></div>
 </div>
-<p>実行プログラム <code class="docutils literal notranslate"><span class="pre">cif2x</span></code> がインストールされます。</p>
+<p>実行プログラム <code class="docutils literal notranslate"><span class="pre">cif2x</span></code>, <code class="docutils literal notranslate"><span class="pre">getcif</span></code> がインストールされます。</p>
 <p>なお、AkaiKKRPythonUtil モジュールは別途インストールが必要です。
 以下の手順で <a class="reference external" href="https://github.com/AkaiKKRteam/AkaiKKRPythonUtil">配布サイト</a> からソースコードを取得しインストールします。また、必要な seaborn モジュールもインストールしておきます。</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/AkaiKKRteam/AkaiKKRPythonUtil.git
@@ -114,6 +118,9 @@ $<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </spa
 <span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">read_input</span><span class="o">.</span><span class="n">py</span>
 <span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">run_cif2kkr</span><span class="o">.</span><span class="n">py</span>
 <span class="o">|</span>       <span class="o">|--</span> <span class="n">utils</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">getcif</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span>
 <span class="o">|--</span> <span class="n">sample</span><span class="o">/</span>
 </pre></div>
 </div>
@@ -172,6 +179,7 @@ $<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </spa
 <li class="toctree-l2"><a class="reference internal" href="command/index.html">4. コマンドリファレンス</a></li>
 <li class="toctree-l2"><a class="reference internal" href="filespec/index.html">5. ファイルフォーマット</a></li>
 <li class="toctree-l2"><a class="reference internal" href="appendix/index.html">6. 拡張ガイド</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getcif/index.html">CIFデータ取得ツール (getcif)</a></li>
 </ul>
 </li>
 </ul>
