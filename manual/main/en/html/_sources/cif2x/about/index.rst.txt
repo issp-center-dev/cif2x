@@ -49,6 +49,9 @@ This software was developed by the following contributors.
 Release history
 ----------------------------------------------------------------
 
+  ver.1.1.0
+    Released on 2024/09/14
+
   ver.1.0.1
     Released on 2024/03/31
 

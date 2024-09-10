@@ -13,3 +13,4 @@ Input file generator for first-principles calculations (cif2x)
    command/index
    filespec/index
    appendix/index
+   ../getcif/index
