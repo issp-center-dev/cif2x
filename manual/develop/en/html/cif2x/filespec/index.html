@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>5. File format &#8212; cif2x Users Guide 1.0-dev documentation</title>
+    <title>5. File format &#8212; cif2x Users Guide 1.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=51c57257" />
-    <script src="../../_static/documentation_options.js?v=a2628a1b"></script>
-    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
+    <script src="../../_static/documentation_options.js?v=292eb321"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -19,8 +19,9 @@
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   
@@ -283,6 +284,32 @@ where
 </div></blockquote>
 </section>
 </section>
+<section id="parameters-for-akaikkr">
+<h2><span class="section-number">5.5. </span>Parameters for AkaiKKR<a class="headerlink" href="#parameters-for-akaikkr" title="Link to this heading">¶</a></h2>
+<p>The entries of <code class="docutils literal notranslate"><span class="pre">optional</span></code> section and <code class="docutils literal notranslate"><span class="pre">content</span></code> part of the <code class="docutils literal notranslate"><span class="pre">tasks</span></code> section specific to AkaiKKR are explained below.</p>
+<section id="id6">
+<h3>optional<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">workdir</span></code></p>
+<blockquote>
+<div><p>This parameter specifies the directory in which temporal files are stored. If it is not given, <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> or the value of the environment variable <code class="docutils literal notranslate"><span class="pre">TMPDIR</span></code> is used.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="id7">
+<h3>content<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">content</span></code> part contains the input parameters of AkaiKKR.
+A blank is written to the input file for an unspecified parameter, to which the default value defined in AkaiKKR will be assumed.
+The parameter values listed below are replaced by the values obtained from the crystal structure data.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">brvtyp</span></code>, except when it is set to <code class="docutils literal notranslate"><span class="pre">aux</span></code> (or a string that contains <code class="docutils literal notranslate"><span class="pre">aux</span></code>).</p></li>
+<li><p>lattice parameters, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">c/a</span></code>, <code class="docutils literal notranslate"><span class="pre">b/a</span></code>, <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">beta</span></code>, <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">r1</span></code>, <code class="docutils literal notranslate"><span class="pre">r2</span></code>, <code class="docutils literal notranslate"><span class="pre">r3</span></code>.</p></li>
+<li><p>type information, <code class="docutils literal notranslate"><span class="pre">ntyp</span></code>, <code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">ncmp</span></code>, <code class="docutils literal notranslate"><span class="pre">rmt</span></code>, <code class="docutils literal notranslate"><span class="pre">field</span></code>, <code class="docutils literal notranslate"><span class="pre">mxl</span></code>, <code class="docutils literal notranslate"><span class="pre">anclr</span></code>, <code class="docutils literal notranslate"><span class="pre">conc</span></code>.</p></li>
+<li><p>element information, <code class="docutils literal notranslate"><span class="pre">natm</span></code>, <code class="docutils literal notranslate"><span class="pre">atmicx</span></code>, <code class="docutils literal notranslate"><span class="pre">atmtyp</span></code>.</p></li>
+</ul>
+<p>For <code class="docutils literal notranslate"><span class="pre">rmt</span></code> and <code class="docutils literal notranslate"><span class="pre">field</span></code>, the values specified in the input parameter file will be used only when they are lists having the same number of elements as <code class="docutils literal notranslate"><span class="pre">ntyp</span></code>.</p>
+</section>
+</section>
 </section>
 
 
@@ -290,7 +317,7 @@ where
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../index.html">cif2x Users Guide</a></h1>
 
@@ -326,7 +353,7 @@ where
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
@@ -334,7 +361,7 @@ where
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 
 
@@ -349,11 +376,11 @@ where
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2023-, The University of Tokyo.
+      &#169;2023-, The University of Tokyo.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="../../_sources/cif2x/filespec/index.rst.txt"
