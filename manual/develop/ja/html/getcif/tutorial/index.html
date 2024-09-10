@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>2. チュートリアル &#8212; cif2x Users Guide 1.1.0 ドキュメント</title>
+    <title>7.2. チュートリアル &#8212; cif2x Users Guide 1.1.0 ドキュメント</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
     <script src="../../_static/documentation_options.js?v=6599c6cf"></script>
@@ -14,8 +14,8 @@
     <script src="../../_static/translations.js?v=91613774"></script>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="検索" href="../../search.html" />
-    <link rel="next" title="3. コマンドリファレンス" href="../command/index.html" />
-    <link rel="prev" title="1. 概要" href="../about/index.html" />
+    <link rel="next" title="7.3. コマンドリファレンス" href="../command/index.html" />
+    <link rel="prev" title="7.1. 概要" href="../about/index.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
@@ -34,10 +34,10 @@
           <div class="body" role="main">
             
   <section id="sec-getcif-tutorial">
-<span id="id1"></span><h1><span class="section-number">2. </span>チュートリアル<a class="headerlink" href="#sec-getcif-tutorial" title="Link to this heading">¶</a></h1>
+<span id="id1"></span><h1><span class="section-number">7.2. </span>チュートリアル<a class="headerlink" href="#sec-getcif-tutorial" title="Link to this heading">¶</a></h1>
 <p>結晶構造などのデータを物質材料データベースから取得するツール getcif を使うには、検索条件と取得するデータを記述した入力パラメータファイルを作成し、プログラム getcif を実行します。現在は Materials Project が公開しているデータベースに対応しています。以下では <code class="docutils literal notranslate"><span class="pre">docs/tutorial/getcif</span></code> ディレクトリにある ABO3 系の物質を検索・取得するサンプルを例にチュートリアルを実施します。</p>
 <section id="api">
-<h2><span class="section-number">2.1. </span>APIキーを取得する<a class="headerlink" href="#api" title="Link to this heading">¶</a></h2>
+<h2>APIキーを取得する<a class="headerlink" href="#api" title="Link to this heading">¶</a></h2>
 <p>Materials Project のデータベースをプログラムから検索するには、あらかじめ Materials Project にユーザ登録し、APIキーを取得する必要があります。
 Materials Project の公式サイト <a class="reference external" href="https://next-gen.materialsproject.org">https://next-gen.materialsproject.org</a> にアクセスし、Login します。APIキーはユーザ登録時に自動的生成され、ユーザのダッシュボードから確認できます。取得した APIキーは安全に保管し、他人に知られないようにしましょう。</p>
 <p>APIキーを getcif にセットするには、以下のいずれかを実行します。</p>
@@ -80,7 +80,7 @@ $<span class="w"> </span><span class="nb">export</span><span class="w"> </span>M
 </div></blockquote>
 </section>
 <section id="id2">
-<h2><span class="section-number">2.2. </span>入力パラメータファイルを作成する<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<h2>入力パラメータファイルを作成する<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
 <p>入力パラメータファイルにはデータベース検索および出力についての設定を記述します。</p>
 <p>以下に入力パラメータファイルのサンプルを記載します。このファイルは YAML形式のテキストファイルで、データベースへの接続に必要な情報や、検索条件、取得するデータの種類などの内容を記述します。仕様の詳細については <a class="reference internal" href="../filespec/index.html#sec-getcif-fileformat"><span class="std std-ref">ファイルフォーマット</span></a> の章を参照してください。</p>
 <p>YAMLフォーマットでは、 <code class="docutils literal notranslate"><span class="pre">keyword:</span> <span class="pre">value</span></code> の辞書形式でパラメータを記述します。 <code class="docutils literal notranslate"><span class="pre">value</span></code> には数値や文字列などのスカラー値や、複数の値を <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">]</span></code> または箇条書きの形式で列挙するリスト型、または辞書型を入れ子にすることができます。検索条件と出力項目については、特別な記法として、リスト型を括弧を使わず空白区切りで列挙する形式でも書くことができます。</p>
@@ -112,7 +112,7 @@ $<span class="w"> </span><span class="nb">export</span><span class="w"> </span>M
 <code class="docutils literal notranslate"><span class="pre">structure</span></code> は結晶構造データで、取得したデータはCIF形式で出力されます。 <code class="docutils literal notranslate"><span class="pre">band_gap</span></code> はバンドギャップの数値、 <code class="docutils literal notranslate"><span class="pre">symmetry</span></code> は対称性の情報です。この他に、 <code class="docutils literal notranslate"><span class="pre">material_id</span></code> で Materials Project 内の物質データのインデックスと、 <code class="docutils literal notranslate"><span class="pre">formula_pretty</span></code> で組成式が暗黙的に取得されます。出力項目の一覧は Appendix を参照してください。また、getcif コマンドのヘルプメッセージにも一覧が出力されます。</p>
 </section>
 <section id="id3">
-<h2><span class="section-number">2.3. </span>データを取得する<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
+<h2>データを取得する<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
 <p>入力パラメータファイル(input.yaml)を引数として getcif を実行します。</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>getcif<span class="w"> </span>input.yaml
 </pre></div>
@@ -187,7 +187,7 @@ mp-753781  EuHfO3  0.4795999999999996  crystal_system=&lt;CrystalSystem.cubic: &
 <li class="toctree-l2"><a class="reference internal" href="../../cif2x/command/index.html">4. コマンドリファレンス</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../cif2x/filespec/index.html">5. ファイルフォーマット</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../cif2x/appendix/index.html">6. 拡張ガイド</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../index.html">CIFデータ取得ツール (getcif)</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">7. CIFデータ取得ツール (getcif)</a></li>
 </ul>
 </li>
 </ul>
@@ -197,9 +197,9 @@ mp-753781  EuHfO3  0.4795999999999996  crystal_system=&lt;CrystalSystem.cubic: &
 <ul>
   <li><a href="../../index.html">Documentation overview</a><ul>
   <li><a href="../../cif2x/index.html">第一原理計算入力ファイル生成ツール (cif2x)</a><ul>
-  <li><a href="../index.html">CIFデータ取得ツール (getcif)</a><ul>
-      <li>Previous: <a href="../about/index.html" title="前の章へ"><span class="section-number">1. </span>概要</a></li>
-      <li>Next: <a href="../command/index.html" title="次の章へ"><span class="section-number">3. </span>コマンドリファレンス</a></li>
+  <li><a href="../index.html"><span class="section-number">7. </span>CIFデータ取得ツール (getcif)</a><ul>
+      <li>Previous: <a href="../about/index.html" title="前の章へ"><span class="section-number">7.1. </span>概要</a></li>
+      <li>Next: <a href="../command/index.html" title="次の章へ"><span class="section-number">7.3. </span>コマンドリファレンス</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
