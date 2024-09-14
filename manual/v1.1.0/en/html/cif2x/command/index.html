@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>4. Command reference &#8212; cif2x Users Guide 1.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
+    <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="5. File format" href="../filespec/index.html" />
+    <link rel="prev" title="3. Tutorial" href="../tutorial/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="command-reference">
+<h1><span class="section-number">4. </span>Command reference<a class="headerlink" href="#command-reference" title="Link to this heading">¶</a></h1>
+<section id="cif2x">
+<h2><span class="section-number">4.1. </span>cif2x<a class="headerlink" href="#cif2x" title="Link to this heading">¶</a></h2>
+<blockquote>
+<div><p>Generate input files for first-principles calculation software</p>
+</div></blockquote>
+<p>SYNOPSIS:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cif2x<span class="w"> </span><span class="o">[</span>-v<span class="o">][</span>-q<span class="o">]</span><span class="w"> </span>-t<span class="w"> </span>target<span class="w"> </span>input_yaml<span class="w"> </span>material.cif
+cif2x<span class="w"> </span>-h
+cif2x<span class="w"> </span>--version
+</pre></div>
+</div>
+</div></blockquote>
+<p>DESCRIPTION:</p>
+<blockquote>
+<div><p>This program reads an input parameter file specified by <code class="docutils literal notranslate"><span class="pre">input_yaml</span></code> and a crystal data file specified by <code class="docutils literal notranslate"><span class="pre">material.cif</span></code>, and generates a set of input files for first-principles calculation software. In the current version, the supported software includes Quantum ESPRESSO, VASP, and OpenMX.
+It takes the following command line options.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">-v</span></code></p>
+<p>increases verbosity of the runtime messages. When specified multiple times, the program becomes more verbose.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-q</span></code></p>
+<p>decreases verbosity of the runtime messages. It cancels the effect of <code class="docutils literal notranslate"><span class="pre">-v</span></code> option, and when specified multiple times, the program becomes more quiet.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-t</span></code> <em>target</em></p>
+<p>specifies the target first-principles calculation software. The supported software for <em>target</em> is listed as follows:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">QE</span></code>, <code class="docutils literal notranslate"><span class="pre">espresso</span></code>, <code class="docutils literal notranslate"><span class="pre">quantum_espresso</span></code>: generates input files for Quantum ESPRESSO.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VASP</span></code>: generates input files for VASP.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OpenMX</span></code>: generates input files for OpenMX.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AkaiKKR</span></code>: generates input files for AkaiKKR.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">input_yaml</span></code></p>
+<p>specifies an input parameter file in YAML format.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">material.cif</span></code></p>
+<p>specifies crystal structure data file. It is in CIF (Crystallographic Information Framework) format, or other format supported by pymatgen.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code></p>
+<p>displays help and exits.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--version</span></code></p>
+<p>displays version information.</p>
+</li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">cif2x Users Guide</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Input file generator for first-principles calculations (cif2x)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../about/index.html">1. Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basic-usage.html">2. Installation and basic usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial/index.html">3. Tutorial</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">4. Command reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../filespec/index.html">5. File format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/index.html">6. Extension guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getcif/index.html">A tool to retrieve crystallographic data from databases (getcif)</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Input file generator for first-principles calculations (cif2x)</a><ul>
+      <li>Previous: <a href="../tutorial/index.html" title="previous chapter"><span class="section-number">3. </span>Tutorial</a></li>
+      <li>Next: <a href="../filespec/index.html" title="next chapter"><span class="section-number">5. </span>File format</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023-, The University of Tokyo.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/cif2x/command/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

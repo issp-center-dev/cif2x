@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>2. Tutorial &#8212; cif2x Users Guide 1.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
+    <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="3. Command reference" href="../command/index.html" />
+    <link rel="prev" title="1. Introduction" href="../about/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="tutorial">
+<span id="sec-getcif-tutorial"></span><h1><span class="section-number">2. </span>Tutorial<a class="headerlink" href="#tutorial" title="Link to this heading">¶</a></h1>
+<p>In this tutorial, the procedure to use the database query tool <code class="docutils literal notranslate"><span class="pre">getcif</span></code> is described for searching and obtaining crystallographic information from databases for the materials science.
+It consists of getting an API key, preparing an input parameter file, and running the getcif program.
+We will explain the steps along an example of searching and obtaining information for ABO3-type materials provided in the <code class="docutils literal notranslate"><span class="pre">docs/tutorial/getcif</span></code> directory.</p>
+<section id="getting-an-api-key">
+<h2><span class="section-number">2.1. </span>Getting an API key<a class="headerlink" href="#getting-an-api-key" title="Link to this heading">¶</a></h2>
+<p>In order to access the Materials Project database via API, users need to register to the Materials Project and obtain an API key.
+Visit the Materials Project website <a class="reference external" href="https://next-gen.materialsproject.org">https://next-gen.materialsproject.org</a>, create an account and do Login. An API key is automatically generated on registration and shown in the user dashboard. The API key should be kept safe and not shared with others.</p>
+<p>The API key is made available to getcif by one of the following ways:</p>
+<blockquote>
+<div><ol class="loweralpha">
+<li><p>storing in the pymatgen configuration file by typing in as follows:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pmg<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>PMG_MAPI_KEY<span class="w"> </span>&lt;API_KEY&gt;
+</pre></div>
+</div>
+</div></blockquote>
+<p>or editing the file <code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc</span></code> to include the following:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>PMG_MAPI_KEY:<span class="w"> </span>&lt;API_KEY&gt;
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>setting to an environment variable by:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nv">MP_API_KEY</span><span class="o">=</span><span class="s2">&quot;&lt;API_KEY&gt;&quot;</span>
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span>MP_API_KEY
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>storing the API key to a file located in the directory where getcif is run.
+The default value of the file name is <code class="docutils literal notranslate"><span class="pre">materials_project.key</span></code>. Otherwise, it is given in the input parameter file. The file name must end with <code class="docutils literal notranslate"><span class="pre">.key</span></code>.</p>
+<blockquote>
+<div><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">database</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">api_key_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">materials_project.key</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Comment: it will be recommended to exclude files with <code class="docutils literal notranslate"><span class="pre">.key</span></code> as a suffix from version control system. (e.g. for Git, add <code class="docutils literal notranslate"><span class="pre">*.key</span></code> in <code class="docutils literal notranslate"><span class="pre">.gitignore</span></code> file.)</p>
+</li>
+</ol>
+</div></blockquote>
+</section>
+<section id="prepare-an-input-parameter-file">
+<h2><span class="section-number">2.2. </span>Prepare an input parameter file<a class="headerlink" href="#prepare-an-input-parameter-file" title="Link to this heading">¶</a></h2>
+<p>An input parameter file describes search conditions and data items to retrieve from databases.</p>
+<p>An example is presented below. It is a text file in YAML format that contains information for accessing the database, search conditions, and types of data to obtain.
+See <a class="reference internal" href="../filespec/index.html#sec-getcif-fileformat"><span class="std std-ref">file format</span></a> section for the details of specification.</p>
+<p>In YAML format, parameters are given in dictionary form as <code class="docutils literal notranslate"><span class="pre">keyword:</span> <span class="pre">value</span></code>, where <code class="docutils literal notranslate"><span class="pre">value</span></code> is a scalar such as a number or a string, or a set of values enclosed in <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">]</span></code> or listed in itemized form, or a nested dictionary.
+For the search conditions and data fields, a list may be given by a space-separated items without brackets as a special notation.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">database</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">materials project</span>
+
+<span class="nt">option</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">output_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">result</span>
+<span class="w">  </span><span class="c1"># dry_run: false</span>
+
+<span class="nt">properties</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">band_gap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt; 1.0</span>
+<span class="w">  </span><span class="nt">is_stable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">is_metal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">formula</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**O3&quot;</span>
+<span class="w">  </span><span class="nt">spacegroup_symbol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Pm-3m</span>
+
+<span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">  </span><span class="no">structure</span>
+<span class="w">  </span><span class="no">band_gap</span>
+<span class="w">  </span><span class="no">symmetry</span>
+</pre></div>
+</div>
+<p>The input parameter file consists of <code class="docutils literal notranslate"><span class="pre">database</span></code>, <code class="docutils literal notranslate"><span class="pre">option</span></code>, <code class="docutils literal notranslate"><span class="pre">properties</span></code>, and <code class="docutils literal notranslate"><span class="pre">fields</span></code> sections.
+The <code class="docutils literal notranslate"><span class="pre">database</span></code> section describes settings about connecting to databases.
+In the example, <code class="docutils literal notranslate"><span class="pre">target</span></code> is set to Materials Project, though this term is not considered at present. <code class="docutils literal notranslate"><span class="pre">api_key</span></code> can be used to set the API key. The key may also be set in the pymatgen configuration file or in the environment variable. The latter is assumed in the tutorial.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">option</span></code> section describes optional settings for the command execution.
+<code class="docutils literal notranslate"><span class="pre">output_dir</span></code> specifies the directory to place the obtained data. The default is the current directory. If <code class="docutils literal notranslate"><span class="pre">dry_run</span></code> is set to <code class="docutils literal notranslate"><span class="pre">true</span></code>, getcif does not connect to the database; instead, it just prints the search conditions and exits. <code class="docutils literal notranslate"><span class="pre">dry_run</span></code> may be specified in the command-line option.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">properties</span></code> section describes search conditions. They are given in the form of <code class="docutils literal notranslate"><span class="pre">keyword:</span> <span class="pre">value</span></code> and treated as AND conditions.
+In the example, the search condition is specified to find materials with band gap less than or equal to 1.0, stable insulator, having composition formula of ABO3 (where A and B are arbitrary species), that belong to the space group <code class="docutils literal notranslate"><span class="pre">Pm-3m</span></code> (perovskite).
+The <code class="docutils literal notranslate"><span class="pre">band_gap</span></code> takes a pair of values for the lower and upper limits, as well as the description such as <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">1.0</span></code>.
+The available terms for specifying search conditions are listed in the Appendix.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">fields</span></code> section describes the data items to obtain. It is given as a YAML list, or a space-sparated list.
+<code class="docutils literal notranslate"><span class="pre">structure</span></code> specifies the crystal structure data that will be stored in CIF format.
+<code class="docutils literal notranslate"><span class="pre">band_gap</span></code> specifies the value of band gap, and <code class="docutils literal notranslate"><span class="pre">symmetry</span></code> specifies the information on the symmetry. <code class="docutils literal notranslate"><span class="pre">material_id</span></code> that refers to the index of material data in the Materials Project, and <code class="docutils literal notranslate"><span class="pre">formula_pretty</span></code> that refers to the composition formula are automatically obtained.
+The available items are listed in the Appendix, or can be found in the help message of getcif command.</p>
+</section>
+<section id="obtaining-data">
+<h2><span class="section-number">2.3. </span>Obtaining data<a class="headerlink" href="#obtaining-data" title="Link to this heading">¶</a></h2>
+<p>The program <code class="docutils literal notranslate"><span class="pre">getcif</span></code> is executed with the input parameter file (<code class="docutils literal notranslate"><span class="pre">input.yaml</span></code>) as follows.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>getcif<span class="w"> </span>input.yaml
+</pre></div>
+</div>
+<p>Then it connects to the Materials Project database, and obtains the data that match the specified conditions.
+The summary including the material IDs, the composition formulas, and other data items is printed to the standard output as follows.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>material_id  formula  band_gap  symmetry  formula_pretty
+mp-861502  AcFeO3  0.9887999999999995  crystal_system=&lt;CrystalSystem.cubic: &#39;Cubic&#39;&gt; symbol=&#39;Pm-3m&#39; number=221 point_group=&#39;m-3m&#39; symprec=0.1 version=&#39;2.0.2&#39;  AcFeO3
+mp-977455  PaAgO3  0.915  crystal_system=&lt;CrystalSystem.cubic: &#39;Cubic&#39;&gt; symbol=&#39;Pm-3m&#39; number=221 point_group=&#39;m-3m&#39; symprec=0.1 version=&#39;2.0.2&#39;  PaAgO3
+mp-11775  RbUO3  0.45420000000000016  crystal_system=&lt;CrystalSystem.cubic: &#39;Cubic&#39;&gt; symbol=&#39;Pm-3m&#39; number=221 point_group=&#39;m-3m&#39; symprec=0.1 version=&#39;2.0.2&#39;  RbUO3
+mp-3163  BaSnO3  0.37239999999999984  crystal_system=&lt;CrystalSystem.cubic: &#39;Cubic&#39;&gt; symbol=&#39;Pm-3m&#39; number=221 point_group=&#39;m-3m&#39; symprec=0.1 version=&#39;2.0.2&#39;  BaSnO3
+mp-4126  KUO3  0.44540000000000024  crystal_system=&lt;CrystalSystem.cubic: &#39;Cubic&#39;&gt; symbol=&#39;Pm-3m&#39; number=221 point_group=&#39;m-3m&#39; symprec=0.1 version=&#39;2.0.2&#39;  KUO3
+mp-865322  UTlO3  0.27360000000000007  crystal_system=&lt;CrystalSystem.cubic: &#39;Cubic&#39;&gt; symbol=&#39;Pm-3m&#39; number=221 point_group=&#39;m-3m&#39; symprec=0.1 version=&#39;2.0.2&#39;  UTlO3
+mp-753781  EuHfO3  0.4795999999999996  crystal_system=&lt;CrystalSystem.cubic: &#39;Cubic&#39;&gt; symbol=&#39;Pm-3m&#39; number=221 point_group=&#39;m-3m&#39; symprec=0.1 version=&#39;2.0.2&#39;  EuHfO3
+</pre></div>
+</div>
+<p>The obtained data are placed in the directory specified by <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> with the subdirectories of the material ID for each material.
+In this example, seven subdirectories with names from mp-3163 to mp-977455 are created within <code class="docutils literal notranslate"><span class="pre">result</span></code> directory, and each subdirectory contains the following files:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt>band_gap</dt><dd><p>the value of band gap</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>formula</dt><dd><p>the composition formula (that corresponds to the field <code class="docutils literal notranslate"><span class="pre">formula_pretty</span></code>)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>structure.cif</dt><dd><p>the crystal structure data in CIF format</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>symmetry</dt><dd><p>the information about symmetry</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>If an option <code class="docutils literal notranslate"><span class="pre">--dry-run</span></code> is added as a command-line option to <code class="docutils literal notranslate"><span class="pre">getcif</span></code>,
+the program prints the search condition as follows, and exits.
+It will be useful for checking the search parameters.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>$ getcif --dry-run input.yaml
+{&#39;band_gap&#39;: (None, 1.0), &#39;is_stable&#39;: True, &#39;is_metal&#39;: False, &#39;formula&#39;: &#39;**O3&#39;, &#39;spacegroup_symbol&#39;: &#39;Pm-3m&#39;, &#39;fields&#39;: [&#39;structure&#39;, &#39;band_gap&#39;, &#39;symmetry&#39;, &#39;material_id&#39;, &#39;formula_pretty&#39;]}
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">cif2x Users Guide</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../cif2x/index.html">Input file generator for first-principles calculations (cif2x)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/about/index.html">1. Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/basic-usage.html">2. Installation and basic usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/tutorial/index.html">3. Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/command/index.html">4. Command reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/filespec/index.html">5. File format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/appendix/index.html">6. Extension guide</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">A tool to retrieve crystallographic data from databases (getcif)</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../../cif2x/index.html">Input file generator for first-principles calculations (cif2x)</a><ul>
+  <li><a href="../index.html">A tool to retrieve crystallographic data from databases (getcif)</a><ul>
+      <li>Previous: <a href="../about/index.html" title="previous chapter"><span class="section-number">1. </span>Introduction</a></li>
+      <li>Next: <a href="../command/index.html" title="next chapter"><span class="section-number">3. </span>Command reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023-, The University of Tokyo.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/getcif/tutorial/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

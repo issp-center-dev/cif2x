@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>2. Installation and basic usage &#8212; cif2x Users Guide 1.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=94bc0932" />
+    <script src="../_static/documentation_options.js?v=fc837d61"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3. Tutorial" href="tutorial/index.html" />
+    <link rel="prev" title="1. Introduction" href="about/index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="installation-and-basic-usage">
+<h1><span class="section-number">2. </span>Installation and basic usage<a class="headerlink" href="#installation-and-basic-usage" title="Link to this heading">¶</a></h1>
+<p><strong>Prerequisite</strong></p>
+<blockquote>
+<div><p>Input file generator for first-principles calculation <code class="docutils literal notranslate"><span class="pre">cif2x</span></code> included in HTP-tools requires the following programs and libraries:</p>
+<ul class="simple">
+<li><p>python 3.x</p></li>
+<li><p>pymatgen module</p></li>
+<li><p>ruamel.yaml module</p></li>
+<li><p>f90nml module</p></li>
+<li><p>qe-tools module</p></li>
+<li><p>numpy module</p></li>
+<li><p>pandas module</p></li>
+<li><p>monty module</p></li>
+<li><p>OpenBabel module (optional)</p></li>
+<li><p>AkaiKKRPythonUtil module</p></li>
+</ul>
+<p>For A tool to retrieve crystallographic data from databases <code class="docutils literal notranslate"><span class="pre">getcif</span></code>, the additional library is required:</p>
+<ul class="simple">
+<li><p>mp-api module</p></li>
+</ul>
+</div></blockquote>
+<p><strong>Official pages</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://github.com/issp-center-dev/cif2x">GitHub repository</a></p></li>
+</ul>
+</div></blockquote>
+<p><strong>Downloads</strong></p>
+<blockquote>
+<div><p>cif2x can be downloaded by the following command with git:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/issp-center-dev/cif2x.git
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Installation</strong></p>
+<blockquote>
+<div><p>Once the source files are obtained, you can install cif2x by running the following command. The required libraries will also be installed automatically at the same time.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>./cif2x
+$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+</pre></div>
+</div>
+<p>The executable files <code class="docutils literal notranslate"><span class="pre">cif2x</span></code> and <code class="docutils literal notranslate"><span class="pre">getcif</span></code> will be installed.
+You may need to add <code class="docutils literal notranslate"><span class="pre">--user</span></code> option next to <code class="docutils literal notranslate"><span class="pre">install</span></code> keyword above in case you are not allowed to install packages system-wide.</p>
+<p>AkaiKKRPythonUtil module need to be installed separately. The source package is available from <a class="reference external" href="https://github.com/AkaiKKRteam/AkaiKKRPythonUtil">the repository</a>. Then follow the steps below to install the module along with the required seaborn module:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/AkaiKKRteam/AkaiKKRPythonUtil.git
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>./AkaiKKRPythonUtil/library/PyAkaiKKR
+$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>seaborn
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Directory structure</strong></p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">.</span>
+<span class="o">|--</span> <span class="n">LICENSE</span>
+<span class="o">|--</span> <span class="n">README</span><span class="o">.</span><span class="n">md</span>
+<span class="o">|--</span> <span class="n">pyproject</span><span class="o">.</span><span class="n">toml</span>
+<span class="o">|--</span> <span class="n">docs</span><span class="o">/</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">ja</span><span class="o">/</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">en</span><span class="o">/</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">tutorial</span><span class="o">/</span>
+<span class="o">|--</span> <span class="n">src</span><span class="o">/</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">cif2x</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">cif2struct</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">struct2qe</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">qe</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">calc_mode</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">cards</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">content</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">qeutils</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">tools</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">struct2vasp</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">struct2openmx</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">openmx</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">vps_table</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">struct2akaikkr</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">akaikkr</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">make_input</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">read_input</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|</span>   <span class="o">|--</span> <span class="n">run_cif2kkr</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">utils</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">getcif</span><span class="o">/</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|</span>       <span class="o">|--</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span>
+<span class="o">|--</span> <span class="n">sample</span><span class="o">/</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Basic usage</strong></p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">cif2x</span></code> is a tool to generate a set of input files for first-principles calculation software. It takes an input parameter file as a template, and generates parameter items that may vary by materials and calculation conditions from crystallographic data. In the present version, <code class="docutils literal notranslate"><span class="pre">cif2x</span></code> supports Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.</p>
+<ol class="arabic">
+<li><p>Prepare input parameter file</p>
+<blockquote>
+<div><p>First, you need to create an input parameter file in YAML format that describes contents of the input file to be generated for the first-principles calculation software.</p>
+</div></blockquote>
+</li>
+<li><p>Prepare crystal structure files and pseudo-potential files</p>
+<blockquote>
+<div><p>The crystal structure data need to be prepared for the target materials. The file format is CIF, POSCAR, xfs, or those supported by pymatgen.</p>
+<p>For Quantum ESPRESSO, the pseudo-potential files and the index file in CSV format need to be placed. Their locations are specified in the input parameter file.</p>
+<p>For VASP, the location of the pseudo-potential files will be specified in a file <code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc.yaml</span></code> or by an environment variable. It may be specified in the input parameter file.</p>
+</div></blockquote>
+</li>
+<li><p>Run command</p>
+<blockquote>
+<div><p>Run <code class="docutils literal notranslate"><span class="pre">cif2x</span></code> command with the input parameter file and the crystal structure data as arguments. To generate input files for Quantum ESPRESSO, the target option <code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">QE</span></code> should be specified. The option turns to <code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">VASP</span></code> for VASP, <code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">OpenMX</span></code> for OpenMX, and <code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">AkaiKKR</span></code> for AkaiKKR.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>cif2x<span class="w"> </span>-t<span class="w"> </span>QE<span class="w"> </span>input.yaml<span class="w"> </span>material.cif
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ol>
+</div></blockquote>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">cif2x Users Guide</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Input file generator for first-principles calculations (cif2x)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="about/index.html">1. Introduction</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">2. Installation and basic usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/index.html">3. Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command/index.html">4. Command reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filespec/index.html">5. File format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix/index.html">6. Extension guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getcif/index.html">A tool to retrieve crystallographic data from databases (getcif)</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Input file generator for first-principles calculations (cif2x)</a><ul>
+      <li>Previous: <a href="about/index.html" title="previous chapter"><span class="section-number">1. </span>Introduction</a></li>
+      <li>Next: <a href="tutorial/index.html" title="next chapter"><span class="section-number">3. </span>Tutorial</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023-, The University of Tokyo.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/cif2x/basic-usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

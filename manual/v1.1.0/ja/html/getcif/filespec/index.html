@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html lang="ja" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>7.4. ファイルフォーマット &#8212; cif2x Users Guide 1.1.0 ドキュメント</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
+    <script src="../../_static/documentation_options.js?v=6599c6cf"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/translations.js?v=91613774"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="検索" href="../../search.html" />
+    <link rel="next" title="7.5. パラメータリスト" href="../appendix/index.html" />
+    <link rel="prev" title="7.3. コマンドリファレンス" href="../command/index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="sec-getcif-fileformat">
+<span id="id1"></span><h1><span class="section-number">7.4. </span>ファイルフォーマット<a class="headerlink" href="#sec-getcif-fileformat" title="Link to this heading">¶</a></h1>
+<section id="id2">
+<h2>入力パラメータファイル<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<p>入力パラメータファイルでは、getcif で Materials Project の物質材料データベースから結晶構造等のデータを取得するための設定情報を YAML形式で記述します。本ファイルは以下の部分から構成されます。</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>databaseセクション: 接続するデータベースについての情報を記述します。</p></li>
+<li><p>optionセクション: 出力先のディレクトリや実行条件などを記述します。</p></li>
+<li><p>propertiesセクション: 検索条件を記述します。</p></li>
+<li><p>fieldsセクション: 取得データの種類を記述します。</p></li>
+</ol>
+</div></blockquote>
+<section id="database">
+<h3>database<a class="headerlink" href="#database" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">target</span></code></p>
+<blockquote>
+<div><p>接続先のデータベースを指定します。現在はこの項目は無視されます。</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> (デフォルト値: <code class="docutils literal notranslate"><span class="pre">materials_project.key</span></code>)</p>
+<blockquote>
+<div><p>データベースに接続する際の APIキーを格納したファイルのファイル名を指定します。ファイル名の拡張子は <code class="docutils literal notranslate"><span class="pre">.key</span></code> とします。
+ファイルが存在しない、または有効なAPIキーが見つからない場合は、環境変数 <code class="docutils literal notranslate"><span class="pre">MP_API_KEY</span></code> または pymatgen の設定ファイル <code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc</span></code> の <code class="docutils literal notranslate"><span class="pre">PMG_MAPI_KEY</span></code> からAPIキーを取得します。</p>
+<p>APIキーファイルはテキスト形式です。 <code class="docutils literal notranslate"><span class="pre">#</span></code> から始まる行はコメントとして扱われます。前後の空白は無視されます。複数行からなる場合は最初の有効な行からキーを取得します。</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="option">
+<h3>option<a class="headerlink" href="#option" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">output_dir</span></code> (デフォルト値: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>)</p>
+<blockquote>
+<div><p>取得データを格納するディレクトリを指定します。データは <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> 以下に、material ID をディレクトリ名としたディレクトリに出力されます。指定がない場合はカレントディレクトリです。</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">dry_run</span></code> (デフォルト値: <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p>
+<blockquote>
+<div><p>データベースへの接続は行わず、検索条件を出力して終了します。検索内容の確認を行うことができます。</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">symprec</span></code> (デフォルト値: 0.1)</p>
+<blockquote>
+<div><p>結晶構造データをCIFファイルに出力する際の対称性を判定する許容精度を指定します。デフォルトは 0.1 です。 <code class="docutils literal notranslate"><span class="pre">symprec</span></code> に 0.0 を指定した場合は <code class="docutils literal notranslate"><span class="pre">symprec</span></code> を指定しないものとして扱い、対称性を考慮しないCIFファイルが生成されます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">symprec</span></code> は、結晶構造における対称性を判定する際の許容精度(tolerance)を指定するパラメータです。対称性の計算においては、原子位置の微細なずれや数値計算の精度の影響を考慮する必要があります。<code class="docutils literal notranslate"><span class="pre">symprec</span></code> はこのずれの許容範囲を制御し、対称操作が適用されるかどうかを決定する際の閾値として機能します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">symprec</span></code> を小さく設定する(例: 0.01)と、対称性の判定がより厳密になり、結晶構造のわずかなずれでも対称操作が適用されない可能性が高まります。その結果、より低い対称性の空間群が得られることがあります。逆に、<code class="docutils literal notranslate"><span class="pre">symprec</span></code> を大きく設定する(例: 1.0)と、対称性の判定が緩やかになり、わずかなずれが無視され、より高い対称性が認められることがあります。</p>
+<p>なお、 <code class="docutils literal notranslate"><span class="pre">fields</span></code> セクションで <code class="docutils literal notranslate"><span class="pre">symmetry</span></code> を指定すると、Materials Project でデフォルトの <code class="docutils literal notranslate"><span class="pre">symprec=0.1</span></code> で判定された対称性の情報を取得し、テキストファイル(symmetry)に出力します。</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="properties">
+<h3>properties<a class="headerlink" href="#properties" title="Link to this heading">¶</a></h3>
+<p>検索条件を記述します。
+元素組成や結晶の対称性、物性値の範囲などの項目を、「項目名: 値」の形式で指定します。これらの条件は AND で扱われます。
+指定できる項目は Materials Project の API に定義されていますが、指定方法は mp-api ライブラリの <code class="docutils literal notranslate"><span class="pre">materials.summary.search</span></code> のパラメータに準拠します。項目のリストは Appendix を参照してください。また、 <code class="docutils literal notranslate"><span class="pre">getcif</span> <span class="pre">--help</span></code> で一覧を見ることができます。</p>
+<p>値の指定方法は次のとおりです。YAML形式に準拠しますが、一部に簡便な記法を用意しています。</p>
+<ul>
+<li><p>数値、文字列</p>
+<blockquote>
+<div><p>そのまま記述します。</p>
+</div></blockquote>
+</li>
+<li><p>真偽値</p>
+<blockquote>
+<div><p>true または false を記述します</p>
+</div></blockquote>
+</li>
+<li><p>数値や文字列のリスト</p>
+<blockquote>
+<div><p>YAML形式の箇条書きおよび <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">...</span> <span class="pre">]</span></code> にカンマ区切りで記述するほか、空白区切りで列挙する記法も可能です。例:</p>
+<blockquote>
+<div><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">element</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Sr Ti</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div></blockquote>
+</li>
+<li><p>数値の範囲</p>
+<blockquote>
+<div><p>上限・下限のリストとして <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">min,</span> <span class="pre">max</span> <span class="pre">]</span></code> のように記述するほか、空白区切りで <code class="docutils literal notranslate"><span class="pre">min</span> <span class="pre">max</span></code> のように記述することもできます。また、以下の記法も可能です。</p>
+<blockquote>
+<div><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">max</span></code></dt><dd><p>max 以下</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">max</span></code></dt><dd><p>max より小さい (実数の場合は <code class="docutils literal notranslate"><span class="pre">&lt;=</span></code> と同等。整数の場合は <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">max-1</span></code> として扱われる)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">min</span></code></dt><dd><p>min 以上</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">min</span></code></dt><dd><p>min より大きい (実数の場合は <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code> と同等。整数の場合は <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">min+1</span></code> として扱われる)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">min</span> <span class="pre">~</span> <span class="pre">max</span></code></dt><dd><p>min 以上 max 以下</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>注記:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>記号と数値の間は空白を置きます。</p></li>
+<li><p>YAML記法では <code class="docutils literal notranslate"><span class="pre">&gt;</span></code> は特殊文字として扱われるため、 <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">min</span></code>, <code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">min</span></code> はそれぞれ <code class="docutils literal notranslate"><span class="pre">&quot;&gt;=</span> <span class="pre">min&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;&gt;</span> <span class="pre">min&quot;</span></code> のように <code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">&quot;</span></code> で囲む必要があります。</p></li>
+<li><p>リストで記述する場合、 <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">max</span></code>, <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">min</span></code> はそれぞれ <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">None,</span> <span class="pre">max</span> <span class="pre">]</span></code>, <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">min,</span> <span class="pre">None</span> <span class="pre">]</span></code> のように表記します。</p></li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+</li>
+<li><p>ワイルドカード</p>
+<blockquote>
+<div><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">formula</span></code> には元素種にワイルドカード <code class="docutils literal notranslate"><span class="pre">*</span></code> を指定できます。その場合は値を <code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">&quot;</span></code> で囲みます。例:</dt><dd><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">formula</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**O3&quot;</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><span class="math notranslate nohighlight">\(ABO_3\)</span> 系の物質を指定します。</p>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="fields">
+<h3>fields<a class="headerlink" href="#fields" title="Link to this heading">¶</a></h3>
+<p>取得するデータの種類を記述します。
+項目のリストを YAML形式で列挙するほか、空白区切りの文字列として記述することもできます。文字列は YAML記法 <code class="docutils literal notranslate"><span class="pre">|</span></code> を用いて複数行で書くこともできます。
+指定できる項目は Materials Project の API の <code class="docutils literal notranslate"><span class="pre">fields</span></code> パラメータに準拠します。項目のリストは Appendix を参照してください。また、 <code class="docutils literal notranslate"><span class="pre">getcif</span> <span class="pre">--help</span></code> で一覧を見ることができます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">material_id</span></code> と <code class="docutils literal notranslate"><span class="pre">formula_pretty</span></code> は暗黙的に取得します。</p>
+<p>取得したデータは、 <code class="docutils literal notranslate"><span class="pre">option</span></code> セクションの <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> で指定したディレクトリ内に、物質ごとに <code class="docutils literal notranslate"><span class="pre">material_id</span></code> をディレクトリ名とするディレクトリを作成し、その中に格納されます。
+項目ごとに、項目名をファイル名としたファイルに保存されます。但し、結晶構造データ (<code class="docutils literal notranslate"><span class="pre">structure</span></code>) は <code class="docutils literal notranslate"><span class="pre">structure.cif</span></code> というファイル名で CIF形式で書き出されます。</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">cif2x Users Guide</a></h1>
+
+
+
+
+
+
+
+
+<h3>ナビゲーション</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../cif2x/index.html">第一原理計算入力ファイル生成ツール (cif2x)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/about/index.html">1. 概要</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/basic-usage.html">2. インストールと基本的な使い方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/tutorial/index.html">3. チュートリアル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/command/index.html">4. コマンドリファレンス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/filespec/index.html">5. ファイルフォーマット</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cif2x/appendix/index.html">6. 拡張ガイド</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">7. CIFデータ取得ツール (getcif)</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../../cif2x/index.html">第一原理計算入力ファイル生成ツール (cif2x)</a><ul>
+  <li><a href="../index.html"><span class="section-number">7. </span>CIFデータ取得ツール (getcif)</a><ul>
+      <li>Previous: <a href="../command/index.html" title="前の章へ"><span class="section-number">7.3. </span>コマンドリファレンス</a></li>
+      <li>Next: <a href="../appendix/index.html" title="次の章へ"><span class="section-number">7.5. </span>パラメータリスト</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">クイック検索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="検索" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2023-, The University of Tokyo.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../../_sources/getcif/filespec/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
