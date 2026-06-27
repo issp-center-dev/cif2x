@@ -145,12 +145,17 @@ def parse_readin(tokens):
     return params, rest
 
 def parse_readk(tokens, fmt=3):
+    # The k-path block is a contiguous run of fixed-width numeric records.
+    # A record is consumed only when a full set of non-empty fields is available
+    # and the leading field starts with a digit; otherwise parsing stops. We stop
+    # (rather than skip-and-resync) on a malformed/empty record because a missing
+    # field makes the remaining record boundaries ambiguous to re-align.
     ntoken = len(tokens)
     idx = 0
 
     if fmt == 1:
         kval = []
-        while idx < ntoken and tokens[idx][0].isdigit():
+        while idx + 2 < ntoken and all(tokens[idx+j] for j in range(3)) and tokens[idx][0].isdigit():
             v1 = tokens[idx].lower(); idx += 1
             v2 = tokens[idx].lower(); idx += 1
             v3 = tokens[idx].lower(); idx += 1
@@ -159,7 +164,7 @@ def parse_readk(tokens, fmt=3):
 
     elif fmt == 2:
         kval = []
-        while idx < ntoken and tokens[idx][0].isdigit():
+        while idx + 3 < ntoken and all(tokens[idx+j] for j in range(4)) and tokens[idx][0].isdigit():
             v1 = tokens[idx].lower(); idx += 1
             v2 = tokens[idx].lower(); idx += 1
             v3 = tokens[idx].lower(); idx += 1
@@ -168,12 +173,12 @@ def parse_readk(tokens, fmt=3):
         kdiv = 0
 
     elif fmt == 3:
-        if idx < ntokens:
-            kdiv = _to_int(tokens[idx]); idx += 1
+        if idx < ntoken:
+            kdiv = _to_int(tokens[idx], 0); idx += 1
         else:
             kdiv = 0
         kval = []
-        while idx < ntoken and tokens[idx][0].isdigit():
+        while idx + 2 < ntoken and all(tokens[idx+j] for j in range(3)) and tokens[idx][0].isdigit():
             v1 = tokens[idx].lower(); idx += 1
             v2 = tokens[idx].lower(); idx += 1
             v3 = tokens[idx].lower(); idx += 1

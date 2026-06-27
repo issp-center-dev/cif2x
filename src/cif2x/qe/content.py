@@ -1,6 +1,8 @@
 import os, sys
 import re
+import ast
 import json
+import itertools
 from pathlib import Path
 import numpy as np
 from f90nml.namelist import Namelist
@@ -93,7 +95,7 @@ def inflate(content: Content):
         is_range = re.search(r"range\((.*?)\)", s)
         if is_range:
             _a = [_to_number(_t) for _t in is_range.group(1).split(",")]
-            return list(np.arange(*_a))
+            return np.arange(*_a).tolist()
 
         # 2. [ c1, c2, ... ] (-> list) or  c1, c2, c3 (-> tuple)
         try:
@@ -138,7 +140,7 @@ def inflate(content: Content):
     ss = content.serialize()
 
     # find range keywords
-    ss = re.sub("\$\{(.*?)\}", _matcher, ss)
+    ss = re.sub(r"\$\{(.*?)\}", _matcher, ss)
 
     logger.debug("inflate: tbl={}".format(tbl))
     # logger.debug("inflate: ss={}".format(ss))
