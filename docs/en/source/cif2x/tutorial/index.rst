@@ -47,9 +47,22 @@ The program ``cif2x`` is executed with the input parameter file (``input.yaml``)
 
   $ cif2x -t QE input.yaml Co3SnS2_nosym.cif
 
-The required pseudo-potential files should be placed in the directory ``./pseudo``, and the index file for the pseudo-potential should be prepared as ``./psudo/pp_psl_pbe_rrkjus.csv``.
+Before running, the following preparation concerning the pseudo-potentials is required.
 
-Run ``cif2x`` and a set of input files for Quantum ESPRESSO will be created. The output file is specified by ``output_file`` parameter of the input parameter file, and stored in the directory given by ``output_dir``. In this example, the input file for SCF calculation is created as ``./scf/scf.in``.
+- **Place the pseudo-potential files (.UPF)**: Put the Quantum ESPRESSO pseudo-potential files (in ``.UPF`` format) used in the calculation into the directory specified by ``optional.pseudo_dir`` in the input parameter file (``./pseudo`` in this example). The pseudo-potential files themselves are not bundled in the repository; obtain the files for the pseudo-potential library you use from sources such as PSlibrary or the official Quantum ESPRESSO pseudo-potential page.
+
+- **Place the index file (CSV)**: Specify the index file that relates the element types to the pseudo-potential names by ``optional.pp_file`` (``./pseudo/pp_psl_pbe_rrkjus.csv`` in this example). The index file for PSlibrary (PBE, RRKJUS) used in this sample is bundled as ``docs/tutorial/cif2x/pseudo/pp_psl_pbe_rrkjus.csv``. When a different pseudo-potential library is used, prepare a similar file accordingly.
+
+Note that ``optional.pseudo_dir`` is the directory in which cif2x looks for ``.UPF`` files to obtain information such as cutoff values, and it is independent of the Quantum ESPRESSO ``control.pseudo_dir`` in the generated input file (the path that ``pw.x`` refers to for pseudo-potentials at run time). The latter is given in the ``namelist`` of ``content``; if left blank, cif2x fills it from ``optional.pseudo_dir`` (``./pseudo`` in this example).
+
+Run ``cif2x`` and a set of input files for Quantum ESPRESSO will be created. The output file is specified by ``output_file`` parameter of the input parameter file, and stored in the directory given by ``output_dir``. In this example, the input file for SCF calculation is created as ``./scf/scf.in``. Its content reads as follows.
+
+.. literalinclude:: ../../../../tutorial/cif2x/scf/scf.in
+   :language: fortran
+
+One can confirm that the cutoff values ``ecutwfc`` and ``ecutrho`` are obtained from the pseudo-potential files, that ``CELL_PARAMETERS``, ``ATOMIC_POSITIONS`` and the species in ``ATOMIC_SPECIES`` are derived from the crystal structure data, that the pseudo-potential file names in ``ATOMIC_SPECIES`` are taken from the ``optional.pp_file`` mapping, and that ``K_POINTS`` is generated from the ``content.K_POINTS`` setting (``grid: [8,8,8]`` in this example).
+
+Samples for VASP, OpenMX, and AkaiKKR are provided under the ``sample/cif2x/`` directory of the repository.
 
 
 Specifying parameter sets

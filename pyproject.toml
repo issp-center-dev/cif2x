@@ -6,7 +6,7 @@ authors = ["HTP-tools developers <htp-tools-dev@issp.u-tokyo.ac.jp>"]
 license = "GPL-3.0-or-later"
 
 readme = "README.md"
-repository = "https://github.com/issp-center-dev/HTP-tools-dev"
+repository = "https://github.com/issp-center-dev/cif2x"
 
 packages = [
   { include = "cif2x", from = "src" },
@@ -14,7 +14,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 numpy = ">=1.20"
 pandas = ">=1.4"
 pymatgen = ">=2019.12.3"

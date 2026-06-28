@@ -47,4 +47,26 @@ cards ブロックについては、card の種類ごとに関数を用意し、
         'K_POINTS': generate_k_points,
     }
 
-cardごとの関数は ``scr/cif2x/qe/cards.py`` にまとめられており、関数名は ``generate_{card名}`` としています。この関数は card ブロックのパラメータを引数に取り、card名、option、dataフィールドからなる辞書データを返します。
+cardごとの関数は ``src/cif2x/qe/cards.py`` にまとめられており、関数名は ``generate_{card名}`` としています。この関数は card ブロックのパラメータを引数に取り、card名、option、dataフィールドからなる辞書データを返します。
+
+
+トラブルシューティング
+----------------------------------------------------------------
+
+cif2x 実行時に起こりやすいエラーと対処法を以下にまとめます。
+
+- **mode not specified (RuntimeError)**
+
+  Quantum ESPRESSO 向けの実行で、 ``tasks`` の各要素に ``mode`` が指定されていない場合に発生します。各 task に ``mode`` (``scf``, ``nscf`` など) を指定してください。
+
+- **output_file not specified (RuntimeError)**
+
+  Quantum ESPRESSO 向けの実行で、 ``tasks`` の各要素に ``output_file`` が指定されていない場合に発生します。各 task に出力ファイル名を ``output_file`` で指定してください。
+
+- **pp_file / cutoff_file / pseudo_dir not specified または not found の警告**
+
+  ``optional`` セクションでこれらのパラメータが指定されていない、または指定したパスが存在しない場合に警告が出力されます (処理は継続します)。擬ポテンシャルのインデックスファイル (``pp_file``)、カットオフのインデックスファイル (``cutoff_file``)、擬ポテンシャル格納ディレクトリ (``pseudo_dir``) のパスが正しいか確認してください。なお、 ``cutoff_file`` / ``pseudo_dir`` は警告のみで処理が継続しますが、 ``pp_file`` は ``ATOMIC_SPECIES`` の生成や ``nbnd`` の自動設定で実際に参照されるため事実上必須であり、未指定のままだと処理の後段で ``RuntimeError`` となります。
+
+- **カットオフが 0.0 になる**
+
+  ``ecutwfc`` / ``ecutrho`` を空欄にして自動取得させる場合、(その元素について ``pp_file`` の対応付けが存在する前提で) 対応する ``.UPF`` ファイルが ``pseudo_dir`` に見つからず、かつ ``cutoff_file`` にも該当エントリがないと、カットオフの値が ``0.0`` にフォールバックします。擬ポテンシャルファイルやカットオフのインデックスエントリが揃っているか確認してください。(なお、 ``pp_file`` にその元素の行自体が無い場合は ``0.0`` フォールバックではなく ``KeyError`` で停止します。)

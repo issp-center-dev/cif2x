@@ -29,7 +29,12 @@ structure
 
   ``supercell`` (default value: none)
 
-    This parameter specifies the size of supercell, when it is adopted, in the form of  [:math:`n_x`, :math:`n_y`, :math:`n_z`].
+    This parameter specifies the size of supercell, when it is adopted, in the form of  [:math:`n_x`, :math:`n_y`, :math:`n_z`]. For example, to build a supercell doubled along each axis:
+
+    .. code-block:: yaml
+
+      structure:
+        supercell: [2, 2, 2]
     
 
 optional
@@ -89,18 +94,25 @@ optional section
 
   ``pp_file``
 
-    This parameter specifies the index file in CSV format that relates the element type and the pseudo-potential file. This file contains the following columns: element name, type of pseudo-potential, nexclude, orbitals. An example line is given as:
+    This parameter specifies the index file in CSV format that relates the element type and the pseudo-potential file. The first line is a header, and the columns are ``element,pseudopotential,nexclude,orbitals``. The meaning of each column is:
+
+    - ``element``: the element symbol.
+    - ``pseudopotential``: the name stem of the pseudo-potential file, i.e. the part of the file name excluding the element symbol and the ``.UPF`` extension. The pseudo-potential file name is assembled as ``{element}.{pseudopotential}.UPF`` (for SOC runs, i.e. noncollinear with spin-orbit coupling, the generated ``ATOMIC_SPECIES`` filename uses the ``rel-`` variant, e.g. ``{element}.rel-{pseudopotential}.UPF``).
+    - ``nexclude``: the number of core bands to exclude when counting the number of bands (``nbnd``) for Wannier functions.
+    - ``orbitals``: the orbitals to be Wannierized, given as a string of the characters ``s``, ``p``, ``d``, ``f``. It is used to compute ``nbnd`` (see ``_find_nbnd_info`` in ``src/cif2x/struct2qe.py``).
+
+    An example line is given as:
 
     .. code-block::
 
+      element,pseudopotential,nexclude,orbitals
       Fe,pbe-spn-rrkjus_psl.0.2.1,4,spd
 
-    The name of the pseudo-potential file corresponding to the above example reads
-    Fe.pbe-spn-rrkjus_psl.0.2.1.UPF .
-      
+    This line corresponds to the pseudo-potential file ``Fe.pbe-spn-rrkjus_psl.0.2.1.UPF``.
+
   ``cutoff_file``
 
-    This parameter specifies the index file in CSV format that relates the pseudo-potential file and the cutoff values. This file contains the following columns: name of pseudo-potential file, ``ecutwfc`` value, ``ecutrho`` value.
+    This parameter specifies the index file in CSV format that relates the pseudo-potential file and the cutoff values. The columns are ``pseudofile,ecutwfc,ecutrho``: the name of the pseudo-potential file, the ``ecutwfc`` value, and the ``ecutrho`` value, respectively.
 
   ``pseudo_dir``
 
@@ -135,7 +147,7 @@ content
 
   - This block exports a list of atom species, atomic mass, and the file name of the pseudo-potential data.
 
-  - The information of the atoms are obtained from the crystal structure data. The file names of the pseudo-potential data are referred from the CSV-formatted index file specified by ``pp_list`` parameter.
+  - The information of the atoms are obtained from the crystal structure data. The file names of the pseudo-potential data are referred from the CSV-formatted index file specified by ``pp_file`` parameter.
 
   - When the ``data`` field is defined and contains the required data, these values will be used instead.
 
@@ -193,7 +205,7 @@ where
 
 When the ``pseudo_dir`` parameter is specified, it is used as the directory that holds the pseudo-potential files, ignoring the convention of pymatgen.
     
-  ``psuedo_dir``
+  ``pseudo_dir``
 
     This parameter specifies the directory that holds the pseudo-potential files. The paths to the pseudo-potential file turn to ``pseudo_dir``/POTCAR.{element}(.gz), or ``pseudo_dir``/{element}/POTCAR.
 
