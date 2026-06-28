@@ -21,7 +21,7 @@ The API key is made available to getcif by one of the following ways:
 
           $ pmg config --add PMG_MAPI_KEY <API_KEY>
 
-      or editing the file ``~/.config/.pmgrc`` to include the following:
+      or editing the file ``~/.config/.pmgrc.yaml`` to include the following:
       
         .. code:: bash
 
@@ -61,7 +61,7 @@ For the search conditions and data fields, a list may be given by a space-separa
 
 The input parameter file consists of ``database``, ``option``, ``properties``, and ``fields`` sections.
 The ``database`` section describes settings about connecting to databases.
-In the example, ``target`` is set to Materials Project, though this term is not considered at present. ``api_key`` can be used to set the API key. The key may also be set in the pymatgen configuration file or in the environment variable. The latter is assumed in the tutorial.
+In the example, ``target`` is set to Materials Project, though this term is not considered at present. To read the API key from a file, ``api_key_file`` specifies the file name (which must end with ``.key``); the default file name is ``materials_project.key``. Note that there is no entry in the ``database`` section to set the API key value directly. Besides ``api_key_file``, the API key can be provided through the environment variable ``MP_API_KEY`` or registered as ``PMG_MAPI_KEY`` in the pymatgen configuration file (``~/.config/.pmgrc.yaml``); see "Getting an API key" above. In this tutorial, ``api_key_file`` is not specified, and the key is assumed to be provided via the environment variable or the pymatgen configuration file.
 
 The ``option`` section describes optional settings for the command execution.
 ``output_dir`` specifies the directory to place the obtained data. The default is the current directory. If ``dry_run`` is set to ``true``, getcif does not connect to the database; instead, it just prints the search conditions and exits. ``dry_run`` may be specified in the command-line option.

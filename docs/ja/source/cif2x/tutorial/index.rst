@@ -45,9 +45,22 @@ Quantum ESPRESSO の入力ファイルは、 ``&keyword`` で始まる Fortran90
 
   $ cif2x -t QE input.yaml Co3SnS2_nosym.cif
 
-予め必要な擬ポテンシャルのファイルを ``./pseudo`` ディレクトリに配置し、擬ポテンシャルのインデックスファイルを ``./pseudo/pp_psl_pbe_rrkjus.csv`` に作成しておきます。
+実行にあたり、擬ポテンシャルに関する以下の準備が必要です。
 
-``cif2x`` を実行すると Quantum ESPRESSO用の入力ファイルが生成され出力されます。出力先は入力パラメータファイル内のパラメータで指定するディレクトリ(``output_dir``)およびファイル(``output_file``)です。この例では ``./scf/scf.in`` に SCF計算用の入力ファイルが書き出されます。
+- **擬ポテンシャルファイル (.UPF) の配置**: 計算に用いる Quantum ESPRESSO の擬ポテンシャルファイル (``.UPF`` 形式) を、入力パラメータファイルの ``optional.pseudo_dir`` で指定したディレクトリ (この例では ``./pseudo``) に配置します。擬ポテンシャルファイル自体はリポジトリには含まれていないため、PSlibrary や Quantum ESPRESSO の公式擬ポテンシャル配布ページなどから、使用する擬ポテンシャルライブラリに対応するファイルを入手してください。
+
+- **インデックスファイル (CSV) の配置**: 元素種と擬ポテンシャル名を対応付けるインデックスファイルを ``optional.pp_file`` (この例では ``./pseudo/pp_psl_pbe_rrkjus.csv``) に指定します。このサンプルで用いる PSlibrary (PBE, RRKJUS) 用のインデックスファイルは ``docs/tutorial/cif2x/pseudo/pp_psl_pbe_rrkjus.csv`` として同梱されています。別の擬ポテンシャルライブラリを使う場合は、これにならって作成してください。
+
+なお、 ``optional.pseudo_dir`` は cif2x が ``.UPF`` ファイルを探してカットオフ等の情報を取得するためのディレクトリで、生成される入力ファイル内の Quantum ESPRESSO の ``control.pseudo_dir`` (計算実行時に pw.x が擬ポテンシャルを参照するパス) とは独立です。後者は ``content`` の ``namelist`` で指定し、空欄にしておくと cif2x が ``optional.pseudo_dir`` の値で補完します (この例では ``./pseudo`` が書き込まれます)。
+
+``cif2x`` を実行すると Quantum ESPRESSO用の入力ファイルが生成され出力されます。出力先は入力パラメータファイル内のパラメータで指定するディレクトリ(``output_dir``)およびファイル(``output_file``)です。この例では ``./scf/scf.in`` に SCF計算用の入力ファイルが書き出されます。生成されたファイルの内容は次のようになります。
+
+.. literalinclude:: ../../../../tutorial/cif2x/scf/scf.in
+   :language: fortran
+
+カットオフ ``ecutwfc``, ``ecutrho`` の値が擬ポテンシャルファイルから取得され、 ``CELL_PARAMETERS``, ``ATOMIC_POSITIONS`` および ``ATOMIC_SPECIES`` の元素種が結晶構造データから決まり、 ``ATOMIC_SPECIES`` の擬ポテンシャルファイル名が ``optional.pp_file`` の対応付けから決まり、 ``K_POINTS`` が ``content.K_POINTS`` の設定(この例では ``grid: [8,8,8]``)から生成されていることが確認できます。
+
+VASP, OpenMX, AkaiKKR 向けのサンプルは、リポジトリの ``sample/cif2x/`` ディレクトリ以下に用意されています。
 
 パラメータセットを指定する
 ----------------------------------------------------------------

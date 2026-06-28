@@ -3,22 +3,21 @@ Installation and basic usage
 
 **Prerequisite**
 
-  Input file generator for first-principles calculation ``cif2x`` included in HTP-tools requires the following programs and libraries:
+  The input file generator ``cif2x`` and the crystallographic data retrieval tool ``getcif`` included in HTP-tools require the following programs and libraries.
+  (They are listed in ``pyproject.toml`` and installed automatically.)
 
-  - python 3.x
-  - pymatgen module
-  - ruamel.yaml module
-  - f90nml module
-  - qe-tools module
+  - Python 3.9 or later
   - numpy module
   - pandas module
-  - monty module
-  - OpenBabel module (optional)
-  - AkaiKKRPythonUtil module
+  - pymatgen module
+  - f90nml module
+  - qe-tools module
+  - beautifulsoup4 module
+  - mp_api module
+  - phonopy module
+  - ruamel.yaml module
 
-  For A tool to retrieve crystallographic data from databases ``getcif``, the additional library is required:
-
-  - mp-api module
+  To generate input files for AkaiKKR, the AkaiKKRPythonUtil module is additionally required. It is not installed automatically and must be installed separately (see below).
 
 
 **Official pages**
@@ -107,7 +106,7 @@ Installation and basic usage
 
   #. Prepare crystal structure files and pseudo-potential files
 
-      The crystal structure data need to be prepared for the target materials. The file format is CIF, POSCAR, xfs, or those supported by pymatgen.
+      The crystal structure data need to be prepared for the target materials. The file format is CIF, POSCAR, xsf, or those supported by pymatgen.
 
       For Quantum ESPRESSO, the pseudo-potential files and the index file in CSV format need to be placed. Their locations are specified in the input parameter file.
 
