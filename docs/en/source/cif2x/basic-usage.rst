@@ -6,7 +6,7 @@ Installation and basic usage
   The input file generator ``cif2x`` and the crystallographic data retrieval tool ``getcif`` included in HTP-tools require the following programs and libraries.
   (They are listed in ``pyproject.toml`` and installed automatically.)
 
-  - Python 3.9 or later
+  - Python 3.10 or later
   - numpy module
   - pandas module
   - pymatgen module

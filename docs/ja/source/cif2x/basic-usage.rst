@@ -6,7 +6,7 @@
   HTP-tools に含まれる第一原理計算入力ファイル生成ツール cif2x および CIFデータ取得ツール getcif を利用するには、以下のプログラムとライブラリが必要です。
   (これらは ``pyproject.toml`` に記載されており、インストール時に自動的に導入されます。)
 
-  - Python 3.9 以上
+  - Python 3.10 以上
   - numpy モジュール
   - pandas モジュール
   - pymatgen モジュール
