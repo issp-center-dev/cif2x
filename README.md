@@ -1,5 +1,10 @@
 # cif2x
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+[![Documentation](https://img.shields.io/badge/docs-online-brightgreen.svg)](https://issp-center-dev.github.io/cif2x/manual/main/en/html/)
+
 In recent years, the use of machine learning for predicting material properties and designing substances (known as materials informatics) has gained considerable attention.
 The accuracy of machine learning depends heavily on the preparation of appropriate training data.
 Therefore, the development of tools and environments for the rapid generation of training data is expected to contribute significantly to the advancement of research in materials informatics.
@@ -26,6 +31,43 @@ getcif requires mp-api, pymatgen, and other library packages.
 ``` bash
 python3 -m pip install DIRECTORY_OF_THE_REPOSITORY
 ```
+
+Installing the package provides the `cif2x` and `getcif` command-line tools.
+
+## Usage
+
+### cif2x
+
+Generate input files from a CIF (or molecular structure) file and a YAML
+parameter file. The target code is selected with `-t`
+(`quantum_espresso`/`qe`, `vasp`, `openmx`, `akaikkr`; case-insensitive):
+
+``` bash
+cif2x -t quantum_espresso input.yaml structure.cif
+```
+
+### getcif
+
+Query the Materials Project database and download structures and properties.
+A Materials Project API key is required (supplied via a key file, the
+environment, or pymatgen settings):
+
+``` bash
+getcif input.yaml
+```
+
+Example inputs are available under the `sample/` directory and in
+`docs/tutorial/`. See the documentation below for the YAML input format.
+
+## Documentation
+
+- [User Guide (English)](https://issp-center-dev.github.io/cif2x/manual/main/en/html/)
+- [ユーザーガイド (日本語)](https://issp-center-dev.github.io/cif2x/manual/main/ja/html/)
+
+## Bug reports & questions
+
+Please report bugs or ask questions on the
+[GitHub issue tracker](https://github.com/issp-center-dev/cif2x/issues).
 
 ## License
 
