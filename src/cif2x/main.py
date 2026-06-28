@@ -64,12 +64,12 @@ def main():
             params.update(info)
             deepupdate(params, {'optional': info_optional})
 
-            qe = Struct2QE(params, struct)
-
             output_file = info.get("output_file")
             if not output_file:
                 logger.error(f"task {taskid}: output_file not specified")
                 raise RuntimeError("output_file not specified")
+
+            qe = Struct2QE(params, struct)
 
             output_dir = info.get("output_dir", ".")
 
@@ -108,12 +108,12 @@ def main():
             params.update(info)
             deepupdate(params, {'optional': info_optional})
 
-            vsp = Struct2OpenMX(params, struct)
-
             output_file = info.get("output_file")
             if not output_file:
                 logger.error(f"task {taskid}: output_file not specified")
                 raise RuntimeError("output_file not specified")
+
+            vsp = Struct2OpenMX(params, struct)
 
             output_dir = info.get("output_dir", ".")
 
@@ -132,12 +132,12 @@ def main():
             params.update(info)
             deepupdate(params, {'optional': info_optional})
 
-            kkr = Struct2AkaiKKR(params, struct)
-
             output_file = info.get("output_file")
             if not output_file:
                 logger.error(f"task {taskid}: output_file not specified")
                 raise RuntimeError("output_file not specified")
+
+            kkr = Struct2AkaiKKR(params, struct)
 
             output_dir = info.get("output_dir", ".")
 

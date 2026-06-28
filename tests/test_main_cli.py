@@ -71,3 +71,27 @@ def test_qe_invalid_output_file_raises(monkeypatch, tmp_path, body):
 def test_qe_with_output_file_ok(monkeypatch, tmp_path):
     _run(monkeypatch, tmp_path, "qe",
          "tasks:\n  - mode: scf\n    output_file: scf.in\n", "Struct2QE")
+
+
+@pytest.mark.parametrize("target,struct_attr,body", [
+    ("openmx", "Struct2OpenMX", "tasks:\n  - template: t.in\n"),
+    ("akaikkr", "Struct2AkaiKKR", "tasks:\n  - template: t.in\n"),
+    ("qe", "Struct2QE", "tasks:\n  - mode: scf\n"),
+])
+def test_output_file_checked_before_constructing_target(
+    monkeypatch, tmp_path, target, struct_attr, body
+):
+    # a missing output_file must be rejected before the (expensive) target
+    # object is constructed
+    def _boom(*a, **k):
+        raise AssertionError("target constructor must not run when output_file is missing")
+
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, struct_attr, _boom)
+    yf = tmp_path / "input.yaml"
+    yf.write_text(body)
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", target, str(yf), str(cif)])
+    with pytest.raises(RuntimeError, match="output_file"):
+        main_mod.main()
