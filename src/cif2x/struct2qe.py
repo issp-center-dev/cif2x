@@ -96,10 +96,17 @@ class Struct2QE:
             
         return ecutwfc, ecutrho
 
+    def _pp_filename(self, ename):
+        # single source of truth for the pseudopotential filename; SOC runs use
+        # the fully-relativistic "rel-" variant. Used by ATOMIC_SPECIES
+        # generation and by both cutoff lookups so they always agree.
+        prefix = "rel-" if self.is_soc else ""
+        return "{}.{}{}.UPF".format(ename, prefix, self.pp_list.at[ename, "pseudopotential"])
+
     def _find_elem_cutoff_from_table(self, ename):
         ecutwfc, ecutrho = None, None
         if self.cutoff_list is not None and self.pp_list is not None:
-            pseudo_file = "{}.{}.UPF".format(ename, self.pp_list.at[ename, "pseudopotential"])
+            pseudo_file = self._pp_filename(ename)
             if pseudo_file in self.cutoff_list.index:
                 ecutwfc = self.cutoff_list.at[pseudo_file, "ecutwfc"]
                 ecutrho = self.cutoff_list.at[pseudo_file, "ecutrho"]
@@ -116,11 +123,7 @@ class Struct2QE:
         if self.pp_list is None:
             return ecutwfc, ecutrho
 
-        # pseudo_file = "{}/{}.{}{}.UPF".format(self.pseudo_dir, ename,
-        #                                       ("rel-" if self.is_soc else ""),
-        #                                       self.pp_list.at[ename, "pseudopotential"])
-        pseudo_file = "{}/{}.{}.UPF".format(self.pseudo_dir, ename,
-                                            self.pp_list.at[ename, "pseudopotential"])
+        pseudo_file = "{}/{}".format(self.pseudo_dir, self._pp_filename(ename))
         bs = None
         try:
             with open(pseudo_file, "r") as fp:
