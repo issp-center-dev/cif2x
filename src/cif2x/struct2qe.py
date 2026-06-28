@@ -477,8 +477,8 @@ class Struct2QE:
             system["cosbc"] = cosbc
             system["cosab"] = cosab
             qe_latt = [
-                [a, 0, 0], 
-                [b*cosab, b*cosab, 0], 
+                [a, 0, 0],
+                [b*cosab, b*sinab, 0],
                 [c*cosac, c*(cosbc - cosac*cosab)/sinab, c*np.sqrt(1 + 2*cosbc*cosac*cosab - cosab**2 - cosac**2 - cosbc**2)/sinab]
             ]
         else:
