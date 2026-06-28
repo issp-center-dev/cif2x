@@ -30,7 +30,28 @@ def read_input_file(input_file):
 
 def tokenize_input_file(input_file):
     with open(input_file, "r") as fp:
-        lines = [line.rstrip() for line in fp.readlines() if line[0] not in ["c","C","#"]]
+        raw = [line.rstrip() for line in fp.readlines() if line[0] not in ["c","C","#"]]
+
+    # Drop option blocks (begin_option ... end_option). The reader does not
+    # parse them; left in the token stream they would be misread as trailing
+    # k-path data and inject a spurious kpath.
+    lines = []
+    in_option = False
+    for line in raw:
+        token = line.strip().lower()
+        if not in_option and token == "begin_option":
+            in_option = True
+            continue
+        if in_option:
+            if token == "end_option":
+                in_option = False
+            continue
+        lines.append(line)
+
+    if in_option:
+        logger.error("unterminated option block (missing end_option)")
+        raise ValueError("unterminated option block (missing end_option)")
+
     st = " ".join(lines)
     st = st.strip()
 
