@@ -130,3 +130,11 @@ def _validate_task(idx, task, target, rule) -> None:
             raise InputValidationError(
                 f"task {idx}: '{key}' must be a string."
             )
+
+    # Free-form blocks may carry open-ended keys, but when present (and not an
+    # empty/None block) they must be mappings -- generators index into them.
+    for block in ("content", "optional"):
+        if block in task and task[block] is not None and not isinstance(task[block], dict):
+            raise InputValidationError(
+                f"task {idx}: '{block}' must be a mapping."
+            )

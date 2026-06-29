@@ -75,7 +75,9 @@ def _run(args):
 
     validate_input(info_dict, target)
 
-    struct = Cif2Struct(args.cif_file, info_dict.get("structure", {}))
+    # `structure:` with no entries parses to None; pass {} so Cif2Struct's
+    # params.get(...) does not crash on None.
+    struct = Cif2Struct(args.cif_file, info_dict.get("structure") or {})
 
     # `optional:` written with no entries parses to None; treat it as empty so
     # generators that read optional.get(...) do not crash on None.

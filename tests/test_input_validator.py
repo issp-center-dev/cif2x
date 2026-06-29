@@ -129,6 +129,19 @@ def test_validate_structure_block_must_be_mapping():
         validate_input({"structure": [1], "tasks": [{"template_dir": "b"}]}, "vasp")
 
 
+@pytest.mark.parametrize("block", ["content", "optional"])
+def test_validate_task_free_form_block_must_be_mapping(block):
+    task = {"mode": "scf", "output_file": "scf.in", block: "bad"}
+    with pytest.raises(InputValidationError, match=f"'{block}' must be a mapping"):
+        validate_input({"tasks": [task]}, "quantum_espresso")
+
+
+@pytest.mark.parametrize("block", ["content", "optional"])
+def test_validate_task_free_form_block_none_passes(block):
+    task = {"mode": "scf", "output_file": "scf.in", block: None}
+    validate_input({"tasks": [task]}, "quantum_espresso")
+
+
 def test_validate_empty_optional_and_structure_blocks_pass():
     # `optional:` / `structure:` with nothing after them parse to None and are
     # accepted as "no entries" (common in samples).

@@ -120,3 +120,23 @@ def test_blank_top_level_optional_normalized(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "vasp", str(yf), str(cif)])
     main_mod.main()
     assert captured["optional"] == {}
+
+
+def test_blank_top_level_structure_normalized(monkeypatch, tmp_path):
+    # `structure:` written with no entries parses to None; it must reach
+    # Cif2Struct as {} so its params.get(...) does not crash on None (P2).
+    captured = {}
+
+    def _record_struct(cif_file, params={}):
+        captured["params"] = params
+        return object()
+
+    monkeypatch.setattr(main_mod, "Cif2Struct", _record_struct)
+    monkeypatch.setattr(main_mod, "Struct2Vasp", lambda *a, **k: _DummyOut())
+    yf = tmp_path / "input.yaml"
+    yf.write_text("structure:\ntasks:\n  - content: {}\n")
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "vasp", str(yf), str(cif)])
+    main_mod.main()
+    assert captured["params"] == {}
