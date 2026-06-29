@@ -76,6 +76,7 @@ def _generator_class(target):
 
 def _run(args):
     target = normalize_target(args.target)
+    _require_one_source(args)
 
     try:
         yaml = YAML(typ="safe")
@@ -95,7 +96,6 @@ def _run(args):
     # `structure:` with no entries parses to None; pass {} so Cif2Struct's
     # params.get(...) does not crash on None.
     struct_params = info_dict.get("structure") or {}
-    _require_one_source(args)
     if args.mp_id:
         with tempfile.TemporaryDirectory() as tmpdir:
             cif_path = Path(tmpdir) / "structure.cif"

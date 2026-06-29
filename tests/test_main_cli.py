@@ -205,6 +205,8 @@ def test_mp_id_path_reaches_writer(monkeypatch, tmp_path):
     def _fake_fetch(material_id, dest_path, **kwargs):
         captured["mid"] = material_id
         captured["symprec"] = kwargs.get("symprec")
+        captured["dest"] = str(dest_path)
+        captured["api_key_file"] = kwargs.get("api_key_file")
 
     class _Recorder:
         def __init__(self, *a, **k):
@@ -224,3 +226,5 @@ def test_mp_id_path_reaches_writer(monkeypatch, tmp_path):
     assert captured.get("wrote") is True
     assert captured["mid"] == "mp-149"
     assert captured["symprec"] == 0.1
+    assert captured["api_key_file"] == "materials_project.key"
+    assert captured["dest"].endswith("structure.cif")
