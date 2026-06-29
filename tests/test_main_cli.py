@@ -122,6 +122,37 @@ def test_blank_top_level_optional_normalized(monkeypatch, tmp_path):
     assert captured["optional"] == {}
 
 
+def test_blank_task_optional_normalized_before_merge(monkeypatch, tmp_path):
+    # A task-level `optional:` with no entries parses to None; normalize it
+    # before merging the top-level optional block so deepupdate does not recurse
+    # into None.
+    captured = {}
+
+    class _Recorder:
+        def __init__(self, params, struct):
+            captured["optional"] = params.get("optional")
+
+        def write_input(self, *a, **k):
+            pass
+
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, "Struct2QE", _Recorder)
+    yf = tmp_path / "input.yaml"
+    yf.write_text(
+        "optional:\n"
+        "  pseudo_dir: /global\n"
+        "tasks:\n"
+        "  - mode: scf\n"
+        "    output_file: scf.in\n"
+        "    optional:\n"
+    )
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "qe", str(yf), str(cif)])
+    main_mod.main()
+    assert captured["optional"] == {"pseudo_dir": "/global"}
+
+
 def test_blank_top_level_structure_normalized(monkeypatch, tmp_path):
     # `structure:` written with no entries parses to None; it must reach
     # Cif2Struct as {} so its params.get(...) does not crash on None (P2).

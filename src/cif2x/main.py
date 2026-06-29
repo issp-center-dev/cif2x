@@ -89,6 +89,8 @@ def _run(args):
 
         params = {}
         params.update(info)
+        if params.get("optional") is None:
+            params["optional"] = {}
         deepupdate(params, {"optional": info_optional})
 
         output_file = info.get("output_file")
