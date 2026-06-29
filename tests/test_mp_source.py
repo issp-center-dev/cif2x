@@ -37,3 +37,17 @@ def test_fetch_to_cif_other_error_raises_validation(monkeypatch, tmp_path):
     monkeypatch.setattr("cif2x.mp_source.fetch_structure", _raise)
     with pytest.raises(InputValidationError, match="failed to fetch 'mp-x'"):
         fetch_to_cif("mp-x", tmp_path / "s.cif")
+
+
+def test_fetch_to_cif_symprec_zero_disables_refinement(monkeypatch, tmp_path):
+    captured = {}
+
+    class _FakeStruct:
+        def to(self, dest, **kwargs):
+            captured["symprec"] = kwargs.get("symprec")
+
+    monkeypatch.setattr("cif2x.mp_source.resolve_api_key", lambda f: None)
+    monkeypatch.setattr("cif2x.mp_source.fetch_structure",
+                        lambda mid, api_key=None: _FakeStruct())
+    fetch_to_cif("mp-1", tmp_path / "s.cif", symprec=0)
+    assert captured["symprec"] is None

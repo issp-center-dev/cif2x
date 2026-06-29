@@ -13,8 +13,8 @@ def fetch_to_cif(material_id, dest_path, *, symprec=0.1,
     InputValidationError so the CLI exits cleanly without a traceback.
     ``symprec == 0`` disables symmetry refinement (mirrors getcif).
     """
-    api_key = resolve_api_key(api_key_file)
     try:
+        api_key = resolve_api_key(api_key_file)
         structure = fetch_structure(material_id, api_key=api_key)
         structure.to(str(dest_path), fmt="cif", symprec=(symprec or None))
     except LookupError:
