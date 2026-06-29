@@ -88,7 +88,10 @@ def validate_input(info_dict, target: str) -> None:
         )
 
     for block in ("structure", "optional"):
-        if block in info_dict and not isinstance(info_dict[block], dict):
+        value = info_dict.get(block)
+        # An empty block (``optional:`` with nothing after it) parses to None
+        # and is accepted as "no entries", matching how main.py treats it.
+        if value is not None and not isinstance(value, dict):
             raise InputValidationError(f"'{block}' must be a mapping.")
 
     tasks = info_dict.get("tasks")

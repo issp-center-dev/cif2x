@@ -127,3 +127,11 @@ def test_validate_vasp_requires_nothing():
 def test_validate_structure_block_must_be_mapping():
     with pytest.raises(InputValidationError, match="'structure' must be a mapping"):
         validate_input({"structure": [1], "tasks": [{"template_dir": "b"}]}, "vasp")
+
+
+def test_validate_empty_optional_and_structure_blocks_pass():
+    # `optional:` / `structure:` with nothing after them parse to None and are
+    # accepted as "no entries" (common in samples).
+    d = {"structure": None, "optional": None,
+         "tasks": [{"output_file": "test.in", "template": "t"}]}
+    validate_input(d, "akaikkr")
