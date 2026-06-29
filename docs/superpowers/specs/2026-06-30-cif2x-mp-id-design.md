@@ -43,11 +43,18 @@ Pure-ish MP helpers, usable by both tools. Top-level imports avoid `mp_api`
 (lazy inside `fetch_structure`).
 
 - `resolve_api_key(api_key_file="materials_project.key") -> str | None`
-  Exact key-resolution logic currently inline in `_setup_dbinfo`: read the first
-  non-`#` line of `api_key_file` when it ends in `.key` and exists; otherwise
-  `None` (so `MPRester` falls back to env var / pymatgen settings).
+  The key-resolution logic currently inline in `_setup_dbinfo`, extracted
+  **verbatim** so getcif behavior does not drift: when `api_key_file` ends in
+  `.key` and exists, take the first line that does not start with `#` after
+  `strip()`; otherwise `None` (so `MPRester` falls back to env var / pymatgen
+  settings). This preserves the existing edge case where a leading blank line
+  yields `""` (treated as "no key" → fallback); changing that is out of scope.
+- `_import_mprester() -> type` — module-level helper that does the lazy
+  `from mp_api.client import MPRester` and returns the class. This is the
+  **patchable seam**: tests monkeypatch `getcif.mp._import_mprester` to inject a
+  fake rester, so `mp_api` is never imported (or required) in unit tests.
 - `fetch_structure(material_id, *, api_key=None) -> Structure`
-  `from mp_api.client import MPRester` (lazy); inside
+  `MPRester = _import_mprester()`; inside
   `with MPRester(api_key=api_key, mute_progress_bars=True) as mpr:` call
   `mpr.materials.summary.search(material_ids=[material_id], fields=["structure"])`.
   Return `docs[0].structure`; raise `LookupError` if `docs` is empty. (Returns
@@ -61,11 +68,12 @@ existing eager `mp_api` import in `getcif/main.py` is unchanged.
 
 - `fetch_to_cif(material_id, dest_path, *, symprec=0.1, api_key_file="materials_project.key") -> None`
   - `api_key = resolve_api_key(api_key_file)`
-  - `structure = fetch_structure(material_id, api_key=api_key)`, mapping failures
-    to `InputValidationError`:
-    - `LookupError` → `"material '<id>' not found in the Materials Project."`
+  - The whole fetch-and-write body is wrapped so **every** failure (auth,
+    network, and `structure.to(...)` serialization) becomes `InputValidationError`
+    (exit 1, no traceback), not just the fetch call:
+    - `LookupError` (empty docs) → `"material '<id>' not found in the Materials Project."`
     - any other exception → `"failed to fetch '<id>' from the Materials Project: <e>"`
-  - `structure.to(dest_path, fmt="cif", symprec=(symprec or None))`
+  - on success: `structure.to(dest_path, fmt="cif", symprec=(symprec or None))`
 
 Imports `InputValidationError` from `cif2x.input_validator` (same package).
 
@@ -75,7 +83,11 @@ CLI:
 - `cif_file` positional becomes `nargs="?"` (optional); `input_file` stays
   required.
 - add `--mp-id`, `--symprec` (type float, default 0.1), `--api-key-file`
-  (default `materials_project.key`).
+  (default `materials_project.key`). `--symprec` / `--api-key-file` are used only
+  when `--mp-id` is set; with a positional CIF they are ignored (no warning).
+- Because `cif_file` is now optional, supplying neither source is no longer an
+  argparse "required argument" error but the `InputValidationError` below
+  (`provide a CIF file or --mp-id.`); tests assert this new message.
 
 `_run` flow:
 ```
@@ -120,10 +132,10 @@ getcif). A genuine 401 surfaces through the generic fetch-failure message.
 `tests/test_mp_source.py` / `tests/test_main_cli.py`:
 - `resolve_api_key`: first non-`#` line returned; missing file → `None`;
   non-`.key` filename → `None`.
-- `fetch_structure`: monkeypatch `getcif.mp.MPRester` with a fake context manager
-  whose `materials.summary.search` returns a one-element list (assert it is
-  called with `material_ids=[id]`, `fields=["structure"]`); empty list →
-  `LookupError`.
+- `fetch_structure`: monkeypatch `getcif.mp._import_mprester` to return a fake
+  `MPRester` class (a context manager whose `materials.summary.search` returns a
+  one-element list); assert it is called with `material_ids=[id]`,
+  `fields=["structure"]`; empty list → `LookupError`. (mp_api is never imported.)
 - `fetch_to_cif`: monkeypatch `fetch_structure` to return a small pymatgen
   `Structure`; assert a CIF is written at `dest_path`; `LookupError` and generic
   exceptions both become `InputValidationError` with the id in the message.
