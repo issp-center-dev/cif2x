@@ -79,10 +79,10 @@ def test_qe_with_output_file_ok(monkeypatch, tmp_path):
     ("qe", "Struct2QE", "tasks:\n  - mode: scf\n"),
 ])
 def test_output_file_checked_before_constructing_target(
-    monkeypatch, tmp_path, target, struct_attr, body
+    monkeypatch, tmp_path, caplog, target, struct_attr, body
 ):
     # a missing output_file must be rejected before the (expensive) target
-    # object is constructed
+    # object is constructed, with a clear message and a clean exit
     def _boom(*a, **k):
         raise AssertionError("target constructor must not run when output_file is missing")
 
@@ -93,5 +93,7 @@ def test_output_file_checked_before_constructing_target(
     cif = tmp_path / "x.cif"
     cif.write_text("")
     monkeypatch.setattr(sys, "argv", ["cif2x", "-t", target, str(yf), str(cif)])
-    with pytest.raises(RuntimeError, match="output_file"):
-        main_mod.main()
+    with caplog.at_level("ERROR"):
+        with pytest.raises(SystemExit):
+            main_mod.main()
+    assert "output_file" in caplog.text
