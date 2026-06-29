@@ -97,3 +97,26 @@ def test_output_file_checked_before_constructing_target(
         with pytest.raises(SystemExit):
             main_mod.main()
     assert "output_file" in caplog.text
+
+
+def test_blank_top_level_optional_normalized(monkeypatch, tmp_path):
+    # `optional:` written with no entries parses to None; it must reach the
+    # generator as {} so downstream optional.get(...) does not crash (P1).
+    captured = {}
+
+    class _Recorder:
+        def __init__(self, params, struct):
+            captured["optional"] = params.get("optional")
+
+        def write_input(self, *a, **k):
+            pass
+
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, "Struct2Vasp", _Recorder)
+    yf = tmp_path / "input.yaml"
+    yf.write_text("optional:\ntasks:\n  - content: {}\n")
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "vasp", str(yf), str(cif)])
+    main_mod.main()
+    assert captured["optional"] == {}

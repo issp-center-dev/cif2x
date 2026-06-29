@@ -77,7 +77,9 @@ def _run(args):
 
     struct = Cif2Struct(args.cif_file, info_dict.get("structure", {}))
 
-    info_optional = info_dict.get("optional", {})
+    # `optional:` written with no entries parses to None; treat it as empty so
+    # generators that read optional.get(...) do not crash on None.
+    info_optional = info_dict.get("optional") or {}
     generator_cls = _generator_class(target)
 
     for idx, info in enumerate(info_dict["tasks"], start=1):
