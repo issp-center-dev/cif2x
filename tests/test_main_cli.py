@@ -171,3 +171,56 @@ def test_blank_top_level_structure_normalized(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "vasp", str(yf), str(cif)])
     main_mod.main()
     assert captured["params"] == {}
+
+
+def test_both_sources_rejected(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, "Struct2QE", lambda *a, **k: _DummyOut())
+    yf = tmp_path / "input.yaml"
+    yf.write_text("tasks:\n  - mode: scf\n    output_file: scf.in\n")
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv",
+                        ["cif2x", "-t", "qe", "--mp-id", "mp-1", str(yf), str(cif)])
+    with caplog.at_level("ERROR"):
+        with pytest.raises(SystemExit):
+            main_mod.main()
+    assert "not both" in caplog.text
+
+
+def test_no_source_rejected(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    yf = tmp_path / "input.yaml"
+    yf.write_text("tasks:\n  - mode: scf\n    output_file: scf.in\n")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "qe", str(yf)])
+    with caplog.at_level("ERROR"):
+        with pytest.raises(SystemExit):
+            main_mod.main()
+    assert "provide a CIF file or --mp-id" in caplog.text
+
+
+def test_mp_id_path_reaches_writer(monkeypatch, tmp_path):
+    captured = {}
+
+    def _fake_fetch(material_id, dest_path, **kwargs):
+        captured["mid"] = material_id
+        captured["symprec"] = kwargs.get("symprec")
+
+    class _Recorder:
+        def __init__(self, *a, **k):
+            pass
+
+        def write_input(self, *a, **k):
+            captured["wrote"] = True
+
+    monkeypatch.setattr(main_mod, "fetch_to_cif", _fake_fetch)
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, "Struct2QE", _Recorder)
+    yf = tmp_path / "input.yaml"
+    yf.write_text("tasks:\n  - mode: scf\n    output_file: scf.in\n")
+    monkeypatch.setattr(sys, "argv",
+                        ["cif2x", "-t", "qe", "--mp-id", "mp-149", str(yf)])
+    main_mod.main()
+    assert captured.get("wrote") is True
+    assert captured["mid"] == "mp-149"
+    assert captured["symprec"] == 0.1
