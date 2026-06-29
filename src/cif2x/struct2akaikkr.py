@@ -64,11 +64,14 @@ class Struct2AkaiKKR:
         for key, content in self.contents:
             logger.debug("content {}: {}".format(key, content.content))
 
-    def write_input(self, filename, dirname):
+    def write_input(self, filename, dirname, dry_run=False):
         for key, content in self.contents:
             logger.debug(f"write_input: key=\"{key}\"")
-            os.makedirs(Path(dirname, key), exist_ok=True)
-            write_content(content, Path(dirname, key, filename))
+            if dry_run:
+                dryrun_emit(Path(dirname, key, filename), make_inputcard(content.as_dict()))
+            else:
+                os.makedirs(Path(dirname, key), exist_ok=True)
+                write_content(content, Path(dirname, key, filename))
 
     def _setup_content(self):
         logger.debug("_setup_content")
