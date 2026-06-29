@@ -12,12 +12,11 @@ import logging
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from ruamel.yaml import YAML, YAMLError
-from mp_api.client import MPRester
-
-# enum parameters
-from emmet.core.symmetry import CrystalSystem
-from emmet.core.summary import HasProps
+# enum parameters (pymatgen is always present; emmet is imported lazily in
+# _find_properties so that this module can be imported without emmet installed)
 from pymatgen.analysis.magnetism import Ordering
+
+from getcif.mp import resolve_api_key, _import_mprester
 
 logger = logging.getLogger("getcif")
 
@@ -163,20 +162,9 @@ class QueryMaterialsProject:
 
         # setup api key
         # 1. read from api_key_file (default "materials_project.key") if exists
-        # 2. taken from environment variable or pymetgen settings (leave api_key None)
-
-        api_key = None
-
+        # 2. taken from environment variable or pymatgen settings (leave api_key None)
         api_key_file = info.get("api_key_file", "materials_project.key")
-        if api_key_file.endswith(".key") and Path(api_key_file).exists():
-            with open(Path(api_key_file), "r", encoding="utf-8") as fp:
-                data = [s.strip() for s in fp.readlines() if not s.strip().startswith("#")]
-                if data:
-                    api_key = data[0]
-        if not api_key:
-            logger.debug("api_key not set. use environment variable or pymatgen settings")
-
-        self.api_key = api_key
+        self.api_key = resolve_api_key(api_key_file)
 
     def _setup_option(self, info):
         self.output_dir = info.get("output_dir", "")
@@ -222,6 +210,9 @@ class QueryMaterialsProject:
         return fields
 
     def _find_properties(self, info):
+        from emmet.core.symmetry import CrystalSystem
+        from emmet.core.summary import HasProps
+
         props = info
 
         def _find_val_or_none(val, typ=float):
@@ -326,7 +317,7 @@ class QueryMaterialsProject:
     def _do_query(self, query):
         if not self.dry_run:
             try:
-                with MPRester(api_key=self.api_key, mute_progress_bars=True) as mpr:
+                with _import_mprester()(api_key=self.api_key, mute_progress_bars=True) as mpr:
                     docs = mpr.materials.summary.search(**query)
                     material_ids = [ doc.material_id for doc in docs ]
                     logger.info("result: number of entries={}".format(len(docs)))
