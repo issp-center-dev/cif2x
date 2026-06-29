@@ -11,6 +11,7 @@ SYNOPSIS:
   .. code-block:: bash
 
     cif2x [-v][-q][--dry-run] -t target input_yaml material.cif
+    cif2x [-v][-q][--dry-run] -t target --mp-id ID [--symprec PREC][--api-key-file FILE] input_yaml
     cif2x -h
     cif2x --version
 
@@ -49,7 +50,23 @@ DESCRIPTION:
 
   - ``material.cif``
 
-    specifies crystal structure data file. It is in CIF (Crystallographic Information Framework) format, or other format supported by pymatgen.
+    specifies crystal structure data file, in CIF (Crystallographic Information Framework) format or another format supported by pymatgen. It is optional when ``--mp-id`` is given.
+
+  - ``--mp-id`` *ID*
+
+    fetches the crystal structure for the Materials Project material id *ID* (for example ``mp-149``) directly, instead of reading ``material.cif``. Provide exactly one of ``material.cif`` or ``--mp-id``. The API key is resolved from ``--api-key-file`` (default ``materials_project.key``) and then from the environment or pymatgen settings, the same way as ``getcif``.
+
+  - ``--symprec`` *PREC*
+
+    symmetry tolerance applied when writing the fetched structure (default ``0.1``, matching the Materials Project). ``--symprec 0`` disables symmetry refinement. Used only with ``--mp-id``.
+
+  - ``--api-key-file`` *FILE*
+
+    file containing the Materials Project API key, one key per non-``#`` line (default ``materials_project.key``). Used only with ``--mp-id``.
+
+  .. note::
+
+     ``--mp-id`` reproduces the ``getcif`` then ``cif2x`` flow by writing the fetched structure to a temporary CIF and reading it back; the Materials Project final structure is used (not a conventionalized cell). Because the structure passes through CIF, site properties such as magnetic moments are not carried over, and disordered (partial-occupancy) structures are rejected by the Quantum ESPRESSO generator -- the same limitations as the two-step flow.
 
   - ``-h``
 
