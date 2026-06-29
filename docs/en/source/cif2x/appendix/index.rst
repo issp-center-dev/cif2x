@@ -52,13 +52,23 @@ Troubleshooting
 
 Common errors that may occur when running ``cif2x`` and how to resolve them are summarized below.
 
-- **mode not specified (RuntimeError)**
+``cif2x`` validates the target and ``input.yaml`` before generating any files. When the target name or the input is invalid, it logs a single error message and exits with status ``1`` (no Python traceback).
 
-  This is raised for a Quantum ESPRESSO run when an element of ``tasks`` does not have ``mode``. Specify ``mode`` (such as ``scf`` or ``nscf``) for each task.
+- **unsupported target '...'**
 
-- **output_file not specified (RuntimeError)**
+  Reported when the ``-t``/``--target`` value is not one of ``quantum_espresso`` (``qe``, ``espresso``), ``vasp``, ``openmx``, or ``akaikkr``. The message lists the valid choices.
 
-  This is raised for a Quantum ESPRESSO run when an element of ``tasks`` does not have ``output_file``. Specify the output file name by ``output_file`` for each task.
+- **task N: 'mode' is required for target 'quantum_espresso'**
+
+  Reported for a Quantum ESPRESSO run when an element of ``tasks`` does not have ``mode``. Specify ``mode`` (such as ``scf`` or ``nscf``) for each task.
+
+- **task N: 'output_file' is required for target '...'**
+
+  Reported when a task that needs an output file name does not have ``output_file``. Specify the output file name by ``output_file`` for each task. (Required for ``quantum_espresso``, ``openmx``, and ``akaikkr``.)
+
+- **task N: unknown key '...' for target '...'**
+
+  Reported when a task contains an unrecognized key, for example a typo such as ``output_fil``. The message lists the keys allowed for the target. The free-form blocks (``content``, ``optional``, ``structure``) are not key-checked.
 
 - **Warnings: pp_file / cutoff_file / pseudo_dir not specified or not found**
 

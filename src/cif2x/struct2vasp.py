@@ -351,8 +351,9 @@ def generate_potcar(vsp, params):
     logger.debug("generate_potcar")
 
     def _find_option(key, default=None):
-        if "optional" in vsp.info:
-            return vsp.info["optional"].get(key)
+        optional = vsp.info.get("optional")
+        if optional is not None:
+            return optional.get(key)
         else:
             return default
 

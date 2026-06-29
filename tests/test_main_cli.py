@@ -79,10 +79,10 @@ def test_qe_with_output_file_ok(monkeypatch, tmp_path):
     ("qe", "Struct2QE", "tasks:\n  - mode: scf\n"),
 ])
 def test_output_file_checked_before_constructing_target(
-    monkeypatch, tmp_path, target, struct_attr, body
+    monkeypatch, tmp_path, caplog, target, struct_attr, body
 ):
     # a missing output_file must be rejected before the (expensive) target
-    # object is constructed
+    # object is constructed, with a clear message and a clean exit
     def _boom(*a, **k):
         raise AssertionError("target constructor must not run when output_file is missing")
 
@@ -93,5 +93,81 @@ def test_output_file_checked_before_constructing_target(
     cif = tmp_path / "x.cif"
     cif.write_text("")
     monkeypatch.setattr(sys, "argv", ["cif2x", "-t", target, str(yf), str(cif)])
-    with pytest.raises(RuntimeError, match="output_file"):
-        main_mod.main()
+    with caplog.at_level("ERROR"):
+        with pytest.raises(SystemExit):
+            main_mod.main()
+    assert "output_file" in caplog.text
+
+
+def test_blank_top_level_optional_normalized(monkeypatch, tmp_path):
+    # `optional:` written with no entries parses to None; it must reach the
+    # generator as {} so downstream optional.get(...) does not crash (P1).
+    captured = {}
+
+    class _Recorder:
+        def __init__(self, params, struct):
+            captured["optional"] = params.get("optional")
+
+        def write_input(self, *a, **k):
+            pass
+
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, "Struct2Vasp", _Recorder)
+    yf = tmp_path / "input.yaml"
+    yf.write_text("optional:\ntasks:\n  - content: {}\n")
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "vasp", str(yf), str(cif)])
+    main_mod.main()
+    assert captured["optional"] == {}
+
+
+def test_blank_task_optional_normalized_before_merge(monkeypatch, tmp_path):
+    # A task-level `optional:` with no entries parses to None; normalize it
+    # before merging the top-level optional block so deepupdate does not recurse
+    # into None.
+    captured = {}
+
+    class _Recorder:
+        def __init__(self, params, struct):
+            captured["optional"] = params.get("optional")
+
+        def write_input(self, *a, **k):
+            pass
+
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, "Struct2QE", _Recorder)
+    yf = tmp_path / "input.yaml"
+    yf.write_text(
+        "optional:\n"
+        "  pseudo_dir: /global\n"
+        "tasks:\n"
+        "  - mode: scf\n"
+        "    output_file: scf.in\n"
+        "    optional:\n"
+    )
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "qe", str(yf), str(cif)])
+    main_mod.main()
+    assert captured["optional"] == {"pseudo_dir": "/global"}
+
+
+def test_blank_top_level_structure_normalized(monkeypatch, tmp_path):
+    # `structure:` written with no entries parses to None; it must reach
+    # Cif2Struct as {} so its params.get(...) does not crash on None (P2).
+    captured = {}
+
+    def _record_struct(cif_file, params={}):
+        captured["params"] = params
+        return object()
+
+    monkeypatch.setattr(main_mod, "Cif2Struct", _record_struct)
+    monkeypatch.setattr(main_mod, "Struct2Vasp", lambda *a, **k: _DummyOut())
+    yf = tmp_path / "input.yaml"
+    yf.write_text("structure:\ntasks:\n  - content: {}\n")
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "vasp", str(yf), str(cif)])
+    main_mod.main()
+    assert captured["params"] == {}
