@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -207,6 +208,15 @@ def test_mp_id_path_reaches_writer(monkeypatch, tmp_path):
         captured["symprec"] = kwargs.get("symprec")
         captured["dest"] = str(dest_path)
         captured["api_key_file"] = kwargs.get("api_key_file")
+        # write a real file so the Cif2Struct handoff can be verified
+        Path(dest_path).write_text("# minimal cif\n")
+
+    def _fake_cif2struct(cif_file, params=None):
+        # the temp CIF must still exist (temp dir alive) when Cif2Struct reads it
+        captured["struct_cif"] = str(cif_file)
+        captured["struct_cif_exists"] = Path(cif_file).exists()
+        captured["struct_params"] = params
+        return object()
 
     class _Recorder:
         def __init__(self, *a, **k):
@@ -216,7 +226,7 @@ def test_mp_id_path_reaches_writer(monkeypatch, tmp_path):
             captured["wrote"] = True
 
     monkeypatch.setattr(main_mod, "fetch_to_cif", _fake_fetch)
-    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, "Cif2Struct", _fake_cif2struct)
     monkeypatch.setattr(main_mod, "Struct2QE", _Recorder)
     yf = tmp_path / "input.yaml"
     yf.write_text("tasks:\n  - mode: scf\n    output_file: scf.in\n")
@@ -228,3 +238,8 @@ def test_mp_id_path_reaches_writer(monkeypatch, tmp_path):
     assert captured["symprec"] == 0.1
     assert captured["api_key_file"] == "materials_project.key"
     assert captured["dest"].endswith("structure.cif")
+    # the path fed to Cif2Struct is the temp CIF that fetch_to_cif wrote, and it
+    # still exists at read time (proves the handoff happens inside the temp dir)
+    assert captured["struct_cif"] == captured["dest"]
+    assert captured["struct_cif_exists"] is True
+    assert captured["struct_params"] == {}
