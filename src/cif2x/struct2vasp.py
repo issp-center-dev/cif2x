@@ -292,7 +292,7 @@ def generate_kpoints(vsp, params):
             ibz = HighSymmKpath(vsp.struct.structure, path_type=path_type)
         else:
             ibz = HighSymmKpath(vsp.struct.structure)
-        logger.debug(f"mode={mode}, division={division}, path_type={path_type}")
+        logger.debug(f"mode={mode}, division={div}, path_type={path_type}")
         kpt = Kpoints.automatic_linemode(div, ibz)
 
     else:

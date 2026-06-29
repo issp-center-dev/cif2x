@@ -31,13 +31,13 @@ def parse_cards(txt):
         lines = card.splitlines()
         key, *param = lines.pop(0).split()
         param = [ s.replace('{','').replace('}','') for s in param ]
-        data = [ [line.split()] for line in lines ]
+        data = [ line.split() for line in lines ]
 
+        # use the same key/option/data schema as generated cards and the writer
         item = {}
-        item["type"] = key
+        item["key"] = key
+        item["option"] = param[0] if len(param) > 0 else None
         item["data"] = data
-        if len(param) > 0:
-            item["param"] = param[0]
 
         cardlist[key] = item
     return cardlist

@@ -147,7 +147,7 @@ def make_inputcard(params):
     retv += _add_separator()
     retv += _make_atom_card(params)
 
-    if False:
+    if isinstance(params.get("option"), dict) and params["option"]:
         retv += _add_separator()
         retv += _make_option_card(params)
 

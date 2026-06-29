@@ -14,7 +14,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 numpy = ">=1.20"
 pandas = ">=1.4"
 pymatgen = ">=2019.12.3"
@@ -28,6 +28,7 @@ phonopy = "*"
 [tool.poetry.extras]
 
 [tool.poetry.dev-dependencies]
+pytest = "*"
 
 [tool.poetry.scripts]
 cif2x = "cif2x.main:main"

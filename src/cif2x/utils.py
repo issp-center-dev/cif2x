@@ -1,7 +1,10 @@
 import re
+import ast
 import itertools
 import json
 from collections import UserDict
+
+import numpy as np
 
 import logging
 logger = logging.getLogger(__name__)
@@ -28,7 +31,7 @@ def inflate(content):
         is_range = re.search(r"range\((.*?)\)", s)
         if is_range:
             _a = [_to_number(_t) for _t in is_range.group(1).split(",")]
-            return list(np.arange(*_a))
+            return np.arange(*_a).tolist()
 
         # 2. [ c1, c2, ... ] (-> list) or  c1, c2, c3 (-> tuple)
         try:
@@ -73,7 +76,7 @@ def inflate(content):
     ss = content.serialize()
 
     # find range keywords
-    ss = re.sub("\$\{(.*?)\}", _matcher, ss)
+    ss = re.sub(r"\$\{(.*?)\}", _matcher, ss)
 
     logger.debug("inflate: tbl={}".format(tbl))
     # logger.debug("inflate: ss={}".format(ss))

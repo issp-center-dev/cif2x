@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
 
-import os,sys
-import re
+import sys
 from pathlib import Path
-#import tomli as toml
 from ruamel.yaml import YAML
-import f90nml
-from f90nml import Namelist
-from qe_tools import PwInputFile
-from datetime import datetime
 
 import logging
 logger = logging.getLogger("cif2x")
@@ -70,13 +64,13 @@ def main():
             params.update(info)
             deepupdate(params, {'optional': info_optional})
 
-            qe = Struct2QE(params, struct)
-
-            if "output_file" not in info:
+            output_file = info.get("output_file")
+            if not output_file:
                 logger.error(f"task {taskid}: output_file not specified")
                 raise RuntimeError("output_file not specified")
 
-            output_file = info.get("output_file")
+            qe = Struct2QE(params, struct)
+
             output_dir = info.get("output_dir", ".")
 
             qe.write_input(output_file, output_dir)
@@ -114,9 +108,13 @@ def main():
             params.update(info)
             deepupdate(params, {'optional': info_optional})
 
+            output_file = info.get("output_file")
+            if not output_file:
+                logger.error(f"task {taskid}: output_file not specified")
+                raise RuntimeError("output_file not specified")
+
             vsp = Struct2OpenMX(params, struct)
 
-            output_file = info.get("output_file")
             output_dir = info.get("output_dir", ".")
 
             vsp.write_input(output_file, output_dir)
@@ -134,9 +132,13 @@ def main():
             params.update(info)
             deepupdate(params, {'optional': info_optional})
 
+            output_file = info.get("output_file")
+            if not output_file:
+                logger.error(f"task {taskid}: output_file not specified")
+                raise RuntimeError("output_file not specified")
+
             kkr = Struct2AkaiKKR(params, struct)
 
-            output_file = info.get("output_file")
             output_dir = info.get("output_dir", ".")
 
             kkr.write_input(output_file, output_dir)

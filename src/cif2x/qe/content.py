@@ -1,6 +1,8 @@
 import os, sys
 import re
+import ast
 import json
+import itertools
 from pathlib import Path
 import numpy as np
 from f90nml.namelist import Namelist
@@ -29,23 +31,39 @@ class Content:
 
     def _write_namelist(self, fp):
         logger.debug("_write_namelist")
-        if self.namelist is not None:
-            for key, tbl in self.namelist.items():
-                _ = [ logger.warning(f"{key}.{k} is empty") for k, v in tbl.items() if v is None ]
-                tbl = { k: v for k, v in tbl.items() if v is not None }
+        if self.namelist is None:
+            return
 
-            # contents in this order
-            contents = ["control", "system", "electrons", "ions", "cell", "fcp", "rism"]
+        # pw.x reads namelists in this fixed order (&system must precede
+        # &electrons); unknown sections are appended in insertion order.
+        section_order = ["control", "system", "electrons", "ions", "cell", "fcp", "rism"]
+        ordered = [s for s in section_order if s in self.namelist]
+        ordered += [s for s in self.namelist if s not in section_order]
 
-            nml = {}
-            for content in contents:
-                if content in self.namelist.keys():
-                    nml.update({content: self.namelist[content]})
-            for key in self.namelist.keys():
-                if key not in contents:
-                    nml.update({key: self.namelist[key]})
+        # Build f90nml Namelist instances via ordered assignment. f90nml only
+        # preserves order for Namelist instances; passing plain dicts makes it
+        # alphabetize both sections and keys. Drop keys left as None (at any
+        # nesting depth), which would otherwise be emitted as a bad "key = ,"
+        # line that QE rejects.
+        def _build(tbl, path):
+            out = Namelist()
+            for k, v in tbl.items():
+                key = f"{path}.{k}" if path else k
+                if v is None:
+                    logger.warning(f"{key} is empty; skipped")
+                    continue
+                out[k] = _build(v, key) if isinstance(v, dict) else v
+            return out
 
-            Namelist(nml).write(fp)
+        nml = Namelist()
+        for sec in ordered:
+            tbl = self.namelist[sec]
+            if tbl is None:
+                logger.warning(f"namelist section &{sec} is empty; skipped")
+                continue
+            nml[sec] = _build(tbl, sec)
+
+        nml.write(fp)
 
     def _write_cards(self, fp):
         logger.debug("_write_cards")
@@ -93,7 +111,7 @@ def inflate(content: Content):
         is_range = re.search(r"range\((.*?)\)", s)
         if is_range:
             _a = [_to_number(_t) for _t in is_range.group(1).split(",")]
-            return list(np.arange(*_a))
+            return np.arange(*_a).tolist()
 
         # 2. [ c1, c2, ... ] (-> list) or  c1, c2, c3 (-> tuple)
         try:
@@ -138,7 +156,7 @@ def inflate(content: Content):
     ss = content.serialize()
 
     # find range keywords
-    ss = re.sub("\$\{(.*?)\}", _matcher, ss)
+    ss = re.sub(r"\$\{(.*?)\}", _matcher, ss)
 
     logger.debug("inflate: tbl={}".format(tbl))
     # logger.debug("inflate: ss={}".format(ss))

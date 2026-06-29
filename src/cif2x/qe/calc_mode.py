@@ -32,7 +32,11 @@ class QEmode_base:
                 logger.debug(f"card_result = {d}")
                 new_cards[key] = d
             else:
-                logger.warning(f"card {key} not supported")
+                # no generator for this card (e.g. generic/non-pw modes, or a
+                # card supplied verbatim in the template): pass it through
+                # unchanged rather than dropping it.
+                logger.debug(f"card {key} has no generator; passed through")
+                new_cards[key] = card
         content.cards = new_cards
 
 class QEmode_generic(QEmode_base):

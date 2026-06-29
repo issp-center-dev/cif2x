@@ -131,12 +131,13 @@ class Struct2AkaiKKR:
             for key in ["natm", "atmicx"]:
                 tbl[key] = copy.deepcopy(struct_data[key])
 
-            # kpath parameters: overwrite if not given in input parameters
+            # kpath parameters: keep each user-provided value (an explicit
+            # value, including an empty list, is respected); fill from cif data
+            # only when the key is absent or None. Done per key so overriding
+            # only kpath still backfills kdiv/fmt from the cif data.
             if "kpath" in struct_data:
-                if "kpath" in tbl and not (tbl["kpath"] is None or tbl["kpath"]):
-                    pass
-                else:
-                    for k in ["kpath", "kdiv", "fmt"]:
+                for k in ["kpath", "kdiv", "fmt"]:
+                    if k in struct_data and (k not in tbl or tbl[k] is None):
                         tbl[k] = copy.deepcopy(struct_data[k])
 
         logger.debug("content: {}".format(tbl))

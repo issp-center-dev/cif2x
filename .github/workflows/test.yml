@@ -1,0 +1,41 @@
+name: test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+          pip install pytest
+
+      - name: Smoke-test the installed package and entry points
+        run: |
+          python -c "import cif2x, pathlib; p = pathlib.Path(cif2x.__file__).resolve(); assert ('site-packages' in p.parts or 'dist-packages' in p.parts), p; print(p)"
+          cif2x --help
+          getcif --help
+
+      - name: Run tests
+        env:
+          CIF2X_TEST_INSTALLED: "1"
+        run: python -m pytest -q
