@@ -16,7 +16,7 @@ cif2x
 
 説明:
 
-  input_yaml に指定した入力パラメータファイルと material.cif に指定した結晶構造データを読み込み、第一原理計算プログラム用の入力ファイルを生成します。現在は Quantum ESPRESSO, VASP, OpenMX に対応しています。
+  input_yaml に指定した入力パラメータファイルと material.cif に指定した結晶構造データを読み込み、第一原理計算プログラム用の入力ファイルを生成します。現在は Quantum ESPRESSO, VASP, OpenMX, AkaiKKR に対応しています。
   以下のオプションを受け付けます。
 
   - ``-v``

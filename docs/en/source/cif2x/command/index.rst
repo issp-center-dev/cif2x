@@ -16,7 +16,7 @@ SYNOPSIS:
 
 DESCRIPTION:
 
-  This program reads an input parameter file specified by ``input_yaml`` and a crystal data file specified by ``material.cif``, and generates a set of input files for first-principles calculation software. In the current version, the supported software includes Quantum ESPRESSO, VASP, and OpenMX.
+  This program reads an input parameter file specified by ``input_yaml`` and a crystal data file specified by ``material.cif``, and generates a set of input files for first-principles calculation software. In the current version, the supported software includes Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
   It takes the following command line options.
 
   - ``-v``

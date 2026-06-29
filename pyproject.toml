@@ -6,7 +6,7 @@ authors = ["HTP-tools developers <htp-tools-dev@issp.u-tokyo.ac.jp>"]
 license = "GPL-3.0-or-later"
 
 readme = "README.md"
-repository = "https://github.com/issp-center-dev/HTP-tools-dev"
+repository = "https://github.com/issp-center-dev/cif2x"
 
 packages = [
   { include = "cif2x", from = "src" },
