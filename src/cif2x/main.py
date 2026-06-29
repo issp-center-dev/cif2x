@@ -24,6 +24,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="count", default=0, help="increase output verbosity")
     parser.add_argument("-q", "--quiet", action="count", default=0, help="increase output verbosity")
     parser.add_argument("-t", "--target", action="store", required=True, help="target application. Supported targets: quantum_espresso (qe, espresso), vasp, openmx, akaikkr. (case-insensitive)")
+    parser.add_argument("--dry-run", action="store_true", default=False, help="print the generated input files to stdout instead of writing them")
 
     args = parser.parse_args()
 
@@ -73,7 +74,7 @@ def main():
 
             output_dir = info.get("output_dir", ".")
 
-            qe.write_input(output_file, output_dir)
+            qe.write_input(output_file, output_dir, dry_run=args.dry_run)
 
     elif target.lower() in ["vasp"]:
 
@@ -93,7 +94,7 @@ def main():
             output_file = info.get("output_file", None)  #dummy
             output_dir = info.get("output_dir", ".")
 
-            vsp.write_input(output_file, output_dir)
+            vsp.write_input(output_file, output_dir, dry_run=args.dry_run)
 
     elif target.lower() in ["openmx"]:
 
@@ -117,7 +118,7 @@ def main():
 
             output_dir = info.get("output_dir", ".")
 
-            vsp.write_input(output_file, output_dir)
+            vsp.write_input(output_file, output_dir, dry_run=args.dry_run)
 
     elif target.lower() in ["akaikkr"]:
 
@@ -141,7 +142,7 @@ def main():
 
             output_dir = info.get("output_dir", ".")
 
-            kkr.write_input(output_file, output_dir)
+            kkr.write_input(output_file, output_dir, dry_run=args.dry_run)
 
     else:
         logger.error("unsupported target {}".format(target))

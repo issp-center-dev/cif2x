@@ -1,5 +1,6 @@
 import re
 import ast
+import sys
 import itertools
 import json
 from collections import UserDict
@@ -8,6 +9,15 @@ import numpy as np
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+def dryrun_emit(path, text, stream=None):
+    """Print a generated input file (path header + content) for --dry-run."""
+    stream = stream if stream is not None else sys.stdout
+    stream.write("# === {} ===\n".format(path))
+    stream.write(text)
+    if not text.endswith("\n"):
+        stream.write("\n")
 
 
 def serializer(data):

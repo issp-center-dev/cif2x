@@ -10,7 +10,7 @@ SYNOPSIS:
 
   .. code-block:: bash
 
-    cif2x [-v][-q] -t target input_yaml material.cif
+    cif2x [-v][-q][--dry-run] -t target input_yaml material.cif
     cif2x -h
     cif2x --version
 
@@ -38,6 +38,10 @@ DESCRIPTION:
     - ``OpenMX``: generates input files for OpenMX.
 
     - ``AkaiKKR``: generates input files for AkaiKKR.
+
+  - ``--dry-run``
+
+    prints the generated input files to standard output instead of writing them to disk. This is useful for previewing the result without creating any files or directories.
 
   - ``input_yaml``
 

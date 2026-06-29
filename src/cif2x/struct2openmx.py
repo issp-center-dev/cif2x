@@ -144,12 +144,15 @@ class Struct2OpenMX:
             logger.debug("content {}: {}".format(key, content))
             self._fill_content(content)
 
-    def write_input(self, filename, dirname):
+    def write_input(self, filename, dirname, dry_run=False):
         for key, content in self.contents:
             logger.debug(f"write_input: key=\"{key}\"")
-            os.makedirs(Path(dirname, key), exist_ok=True)
-            with open(Path(dirname, key, filename), "w") as fp:
-                fp.write(content.to_str())
+            if dry_run:
+                dryrun_emit(Path(dirname, key, filename), content.to_str())
+            else:
+                os.makedirs(Path(dirname, key), exist_ok=True)
+                with open(Path(dirname, key, filename), "w") as fp:
+                    fp.write(content.to_str())
 
     def _setup_content(self):
         logger.debug("_setup_template")

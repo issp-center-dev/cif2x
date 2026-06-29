@@ -38,8 +38,7 @@ class Content:
         d = deserializer(str)
         return Content.from_dict(d)
 
-def write_content(vsp, content, output_dir):
-
+def build_vaspinput(vsp, content):
     incar = Incar.from_dict(content["incar"])
 
     if "@optional" in content["kpoints"]:
@@ -51,8 +50,11 @@ def write_content(vsp, content, output_dir):
 
     potcar = generate_potcar(vsp, content["potcar"].get("@optional", {}))
 
-    vsp = VaspInput(incar, kpoints, poscar, potcar)
-    vsp.write_input(output_dir)
+    return VaspInput(incar, kpoints, poscar, potcar)
+
+
+def write_content(vsp, content, output_dir):
+    build_vaspinput(vsp, content).write_input(output_dir)
 
 
 class Struct2Vasp:
@@ -73,10 +75,17 @@ class Struct2Vasp:
         for key, content in self.contents:
             logger.debug("content {}: {}".format(key, content.content))
 
-    def write_input(self, filename, dirname):
+    def write_input(self, filename, dirname, dry_run=False):
         for key, content in self.contents:
             logger.debug(f"write_input: key=\"{key}\"")
-            write_content(self, content, Path(dirname, key))
+            if dry_run:
+                vaspinput = build_vaspinput(self, content)
+                # mirror VaspInput.write_input(), which skips None components
+                for fname, fcontent in vaspinput.items():
+                    if fcontent is not None:
+                        dryrun_emit(Path(dirname, key, fname), str(fcontent))
+            else:
+                write_content(self, content, Path(dirname, key))
 
     def _read_input(self, dirname):
         sub_d = {}

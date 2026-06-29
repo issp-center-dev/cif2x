@@ -10,7 +10,7 @@ cif2x
 
   .. code-block:: bash
 
-    cif2x [-v][-q] -t target input_yaml material.cif
+    cif2x [-v][-q][--dry-run] -t target input_yaml material.cif
     cif2x -h
     cif2x --version
 
@@ -38,6 +38,10 @@ cif2x
     - ``OpenMX``: OpenMX向け入力ファイルを生成します。
 
     - ``AkaiKKR``: AkaiKKR向け入力ファイルを生成します。
+
+  - ``--dry-run``
+
+    生成される入力ファイルをディスクに書き込まず、標準出力に表示します。ファイルやディレクトリを作成せずに生成結果を確認したい場合に便利です。
 
   - ``input_yaml``
 

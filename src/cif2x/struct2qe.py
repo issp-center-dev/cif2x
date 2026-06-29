@@ -9,6 +9,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 import copy
 
 from cif2x.cif2struct import Cif2Struct
+from cif2x.utils import dryrun_emit
 from cif2x.qe.tools import *
 from cif2x.qe.qeutil import QEInputGeneral
 from cif2x.qe.content import Content, inflate
@@ -69,10 +70,13 @@ class Struct2QE:
             modeproc.update_namelist(content)
             modeproc.update_cards(content)
 
-    def write_input(self, filename, dirname):
+    def write_input(self, filename, dirname, dry_run=False):
         for key, content in self.contents:
             logger.debug(f"write_input: key=\"{key}\"")
-            content.write_input(filename, Path(dirname, key))
+            if dry_run:
+                dryrun_emit(Path(dirname, key, filename), content.render())
+            else:
+                content.write_input(filename, Path(dirname, key))
 
     def _find_cutoff_info(self):
         cutoffs = [ self._find_elem_cutoff(ename) for ename in self.struct.elem_names ]
