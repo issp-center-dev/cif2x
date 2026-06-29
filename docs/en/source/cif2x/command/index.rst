@@ -54,7 +54,7 @@ DESCRIPTION:
 
   - ``--mp-id`` *ID*
 
-    fetches the crystal structure for the Materials Project material id *ID* (for example ``mp-149``) directly, instead of reading ``material.cif``. Provide exactly one of ``material.cif`` or ``--mp-id``. The API key is resolved from ``--api-key-file`` (default ``materials_project.key``) and then from the environment or pymatgen settings, the same way as ``getcif``.
+    fetches the crystal structure for the Materials Project material id *ID* (for example ``mp-149``) directly, instead of reading ``material.cif``. Provide exactly one of ``material.cif`` or ``--mp-id``. The API key is resolved from ``--api-key-file`` (default ``materials_project.key``), then the ``MP_API_KEY`` environment variable, then the ``PMG_MAPI_KEY`` entry in the pymatgen configuration (``~/.config/.pmgrc.yaml``) -- the same way as ``getcif``.
 
   - ``--symprec`` *PREC*
 

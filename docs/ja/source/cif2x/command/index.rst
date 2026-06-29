@@ -54,11 +54,11 @@ cif2x
 
   - ``--mp-id`` *ID*
 
-    ``material.cif`` を読む代わりに、Materials Project の物質 ID *ID*(例: ``mp-149``)の結晶構造を直接取得します。``material.cif`` と ``--mp-id`` はいずれか一方のみを指定してください。API キーは ``--api-key-file``(既定 ``materials_project.key``)、続いて環境変数または pymatgen の設定から、``getcif`` と同じ方法で解決されます。
+    ``material.cif`` を読む代わりに、Materials Project の物質 ID *ID*(例: ``mp-149``)の結晶構造を直接取得します。``material.cif`` と ``--mp-id`` はいずれか一方のみを指定してください。API キーは ``--api-key-file``(既定 ``materials_project.key``)、続いて環境変数 ``MP_API_KEY``、pymatgen 設定ファイル(``~/.config/.pmgrc.yaml``)の ``PMG_MAPI_KEY`` の順に、``getcif`` と同じ方法で解決されます。
 
   - ``--symprec`` *PREC*
 
-    取得した構造を書き出す際の対称性トレランス(既定 ``0.1``、Materials Project に準拠)。``--symprec 0`` で対称性の精密化を無効化します。``--mp-id`` 指定時のみ有効です。
+    取得した構造を書き出す際の対称性の許容誤差(symprec、既定 ``0.1``、Materials Project に準拠)。``--symprec 0`` で対称性の精密化を無効化します。``--mp-id`` 指定時のみ有効です。
 
   - ``--api-key-file`` *FILE*
 
@@ -66,7 +66,7 @@ cif2x
 
   .. note::
 
-     ``--mp-id`` は、取得した構造を一時 CIF に書き出して読み直すことで「``getcif`` のあと ``cif2x``」の流れを再現します。Materials Project の最終構造を使用します(慣用セル化はしません)。CIF を経由するため、磁気モーメントなどのサイト特性は引き継がれず、無秩序(部分占有)構造は Quantum ESPRESSO 生成で拒否されます。これらは2段階の流れと同じ制限です。
+     ``--mp-id`` は、取得した構造を一時 CIF に書き出して読み直すことで「``getcif`` のあと ``cif2x``」の流れを再現します。Materials Project の最終構造をそのまま使用します(標準セル〔慣用セル〕への変換はしません)。CIF を経由するため、磁気モーメントなどのサイト特性は引き継がれず、無秩序(部分占有)構造は Quantum ESPRESSO 生成で拒否されます。これらは2段階の流れと同じ制限です。
 
   - ``-h``
 
