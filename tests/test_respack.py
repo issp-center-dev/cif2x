@@ -124,6 +124,35 @@ def test_reading_sk_format_nonzero_rejected(tmp_path):
         _render(tmp_path, template=_write(tmp_path, t))
 
 
+def test_template_not_found_rejected(tmp_path):
+    with pytest.raises(InputValidationError, match="not found"):
+        Struct2RESPACK({"template": str(tmp_path / "nope.in_tmpl"), "content": {}},
+                       _Struct(_cubic()))
+
+
+@pytest.mark.parametrize("bad", [0, -1])
+def test_n_wannier_nonpositive_rejected(tmp_path, bad):
+    t = _TEMPLATE.replace("N_wannier = 3", "N_wannier = {}".format(bad))
+    with pytest.raises(InputValidationError, match="N_wannier"):
+        _render(tmp_path, template=_write(tmp_path, t))
+
+
+def test_missing_windows_rejected(tmp_path):
+    t = (_TEMPLATE
+         .replace("Lower_energy_window = 11.0\n", "")
+         .replace("Upper_energy_window = 14.2\n", ""))
+    with pytest.raises(InputValidationError, match="window|Lower|Upper"):
+        _render(tmp_path, template=_write(tmp_path, t))
+
+
+def test_template_unparseable_rejected(tmp_path):
+    # Unterminated namelist (no closing '/') makes f90nml.reads raise; the
+    # generator must wrap it as a user-facing InputValidationError.
+    t = "&param_wannier\nN_wannier = 3\n"
+    with pytest.raises(InputValidationError, match="parse|failed"):
+        _render(tmp_path, template=_write(tmp_path, t))
+
+
 def test_write_input_dry_run(tmp_path, capsys):
     params = {"template": _write(tmp_path), "content": {}}
     gen = Struct2RESPACK(params, _Struct(_cubic()))
