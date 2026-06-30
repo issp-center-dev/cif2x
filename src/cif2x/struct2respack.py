@@ -159,6 +159,9 @@ class Struct2RESPACK:
 
         interp = data.setdefault("param_interpolation", {})
         rsf = interp.get("reading_sk_format", 0)
+        if isinstance(rsf, bool):
+            raise InputValidationError(
+                "respack: 'reading_sk_format' must be an integer (got {!r}).".format(rsf))
         try:
             rsf = int(rsf)
         except (TypeError, ValueError):

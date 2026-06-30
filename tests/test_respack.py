@@ -190,3 +190,9 @@ def test_write_input_dry_run(tmp_path, capsys):
     assert not (tmp_path / "input.in").exists()
     gen.write_input("input.in", str(tmp_path), dry_run=False)
     assert (tmp_path / "input.in").exists()
+
+
+def test_bool_reading_sk_format_rejected(tmp_path):
+    t = _TEMPLATE.replace("dense = 8, 8, 8", "dense = 8, 8, 8\nreading_sk_format = .true.")
+    with pytest.raises(InputValidationError, match="reading_sk_format"):
+        _render(tmp_path, template=_write(tmp_path, t))
