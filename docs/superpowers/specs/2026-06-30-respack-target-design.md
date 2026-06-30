@@ -7,11 +7,13 @@ Date: 2026-06-30
 Add a `respack` target so `cif2x -t respack input.yaml structure.cif` emits the
 whole RESPACK workflow in one run: the Quantum ESPRESSO inputs RESPACK consumes
 (`scf` / `nscf` / `bands`, via the existing QE generator) **and** the RESPACK
-control input `input.in` (a new generator). The structure-derived fields of
-`input.in` are auto-filled (number of Wannier functions, the high-symmetry
-k-path, the interpolation grid); physics parameters come from a template /
-`content`. Initial guesses use **SCDM** (`N_initial_guess = 0`), so no manual
-Gaussian projection block is emitted.
+control input `input.in` (a new generator). cif2x auto-fills only the
+**structure-derived k-path** (`&param_interpolation`'s high-symmetry points);
+all physics — including **`N_wannier`** (the number of target Wannier functions,
+a user choice such as t2g = 3, which is NOT the full orbital count), the energy
+windows, `dense`, and the cRPA parameters — comes from a template / `content`.
+Initial guesses use **SCDM** (`N_initial_guess = 0`), so no manual Gaussian
+projection block is emitted.
 
 Scope: the QE target stays unchanged; `respack` reuses it for QE-mode tasks.
 
@@ -20,11 +22,14 @@ Scope: the QE target stays unchanged; `respack` reuses it for QE-mode tasks.
 - Targets are dispatched in `main.py` via `normalize_target` + a `Struct2X`
   class; `input_validator.TARGETS` holds per-target aliases/required/allowed
   keys. Each `cif2x` run uses ONE target, but iterates a `tasks:` list.
-- `Struct2QE` already computes the Wannier counts: `_find_nbnd_info`
-  (`struct2qe.py:179-204`) sets `self.num_wann`, `self.nexclude`,
-  `self.num_bands` from `pp_file` `orbitals`/`nexclude` (loaded by
-  `_set_pseudo_info`). These are exactly `input.in`'s `N_wannier` and the QE
-  `nbnd` for the nscf step.
+- `Struct2QE._find_nbnd_info` (`struct2qe.py:179-204`) computes `num_wann` from
+  `pp_file` `orbitals` (s/p/d/f → 1/3/5/7) for the QE `nbnd` of the nscf step.
+  This **orbital count is NOT** RESPACK's `N_wannier`: `N_wannier` is the number
+  of target Wannier functions (e.g. t2g = 3 for SrVO3, while V's `d` orbital
+  count is 5 — see `samples/srvo3_6x6x6/input.in` `N_wannier=3`). So `N_wannier`
+  is a user-specified physics value, NOT auto-derived; `Struct2RESPACK` does not
+  need the pp table or `num_wann`. (`Struct2QE` keeps `_find_nbnd_info` unchanged
+  for the nscf `nbnd`.)
 - `cards._generate_band_path` builds a high-symmetry path from pymatgen
   `HighSymmKpath` (added for `bands`); `input.in`'s `&param_interpolation`
   block needs the same high-symmetry points (without per-segment divisions).
@@ -64,15 +69,12 @@ Scope: the QE target stays unchanged; `respack` reuses it for QE-mode tasks.
   after the namelists (token-level: the content `f90nml` did not consume, not a
   raw `/` string search). cif2x generates ALL non-namelist blocks (the k-coords
   block) itself, so a template must not carry a Gaussian or k-path block.
-- **Spin scope (v1):** `spinor_factor` comes from a **dedicated respack task
-  field `spinor`** (bool, default `false` → factor 1; `true` → factor 2), NOT
-  from a QE `&system` block (which must not appear in `input.in`). A spin-polarised
-  `nspin = 2` (LSDA) respack configuration is **rejected** with
-  `InputValidationError` (the split `input.in.up`/`.dn` is out of scope); the docs
-  require `spinor` to match the QE nscf task.
-- Wannier-count computation is **factored into a neutral shared helper**
-  (`src/cif2x/wannier.py`, not under `cif2x/qe/`) so QE and RESPACK produce
-  identical `num_wann`/`nexclude`.
+- **`N_wannier` is user-specified physics** (template/content), validated as a
+  present positive integer. cif2x does NOT auto-derive it (the orbital count is
+  not the target-Wannier count; see Background). Consequently `Struct2RESPACK`
+  needs no pseudopotential table, no `num_wann`, and no spin/SOC field — those
+  concern only the QE nscf `nbnd`, which `Struct2QE` already handles. (LSDA split
+  `input.in.up`/`.dn` is out of scope; v1 emits a single `input.in`.)
 
 ## RESPACK `input.in` format (resolved via cross-check of the reference parser)
 
@@ -112,37 +114,13 @@ break.
 
 ## Components
 
-### 1. Shared Wannier-count helper
-
-Extract the `num_wann`/`nexclude` computation currently inside
-`Struct2QE._find_nbnd_info` into a reusable function in a **neutral module**
-`src/cif2x/wannier.py` (NOT `cif2x/qe/`, so RESPACK does not depend on the QE
-namespace):
-
-```
-wannier_counts(composition: Mapping[str, int], pp_list, *, spinor_factor: int)
-    -> {"num_wann", "nexclude", "num_bands", "nbnd"}
-```
-
-- `composition` = per-element atom counts (e.g. `{"Sr":1,"V":1,"O":3}`); `pp_list`
-  is the pp table keyed by element symbol (the existing `Struct2QE.pp_list`).
-- Formula (verbatim from current `_find_nbnd_info`,
-  `struct2qe.py:188-203`): `nexclude = Σ_element count·pp[el].nexclude · sf`;
-  `num_wann = Σ_element count·(Σ orbital_degeneracy) · sf`;
-  `num_bands = num_wann*2 + (num_wann//2 + (num_wann//2)%2)`;
-  `nbnd = nexclude + num_bands`; where `sf = spinor_factor`.
-- A shared **pp loader** (thin extraction of `Struct2QE._set_pseudo_info`) returns
-  this `pp_list`; both QE and RESPACK use it. Missing `orbitals`/`nexclude`
-  columns raise `InputValidationError`.
-
-`Struct2QE._find_nbnd_info` calls `wannier_counts` (behavior unchanged — covered
-by existing QE tests); `Struct2RESPACK` calls it for `N_wannier` with
-`spinor_factor` from the task's `spinor` field.
-
-### 2. `Struct2RESPACK` (`src/cif2x/struct2respack.py`)
+### 1. `Struct2RESPACK` (`src/cif2x/struct2respack.py`)
 
 `__init__(params, struct)` then `write_input(output_file, output_dir, dry_run=False)`,
 matching the other generators (and supporting `--dry-run` via `utils.dryrun_emit`).
+No pseudopotential/`num_wann`/spin handling is needed — `N_wannier` is user
+physics, so this generator only merges the template, validates the physics it
+must, and appends the auto-generated k-path.
 
 Build `input.in`:
 1. Load the RESPACK template (`params["template"]`, namelist-only) with `f90nml`;
@@ -151,16 +129,14 @@ Build `input.in`:
    `deepupdate`). Namelist keys are case-insensitive (f90nml lowercases them);
    internal handling is lowercase and the rendered output uses lowercase keys
    (RESPACK reads keys case-insensitively, per the reference parser's `.lower()`).
-2. Resolve pseudopotential / orbital info via the shared pp loader, reading
-   `pp_file`/`pseudo_dir` from the **shared `optional:` block** (same source as QE
-   tasks; injected per-task by `deepupdate`). Determine `spinor_factor` from the
-   task's `spinor` field (default 1; `true` ⇒ 2); reject `nspin = 2`
-   (`InputValidationError`). Compute `num_wann` via `wannier_counts`.
-3. Auto-fill:
-   - `&param_wannier`: `N_wannier = num_wann`; force `N_initial_guess = 0` (SCDM)
-     and reject a template/content nonzero `N_initial_guess` or Gaussian block
-     with `InputValidationError`. `Lower_energy_window`/`Upper_energy_window` come
-     from template/content and are **validated** (both present, numeric,
+2. **Validate `&param_wannier.N_wannier`**: present and a positive integer
+   (`InputValidationError` otherwise) — it is user physics, never auto-derived.
+3. Auto-fill / validate:
+   - `&param_wannier`: force `N_initial_guess = 0` (SCDM) and reject a
+     template/content nonzero `N_initial_guess` or Gaussian block
+     (`InputValidationError`). `N_wannier` is taken from template/content
+     (validated in step 2). `Lower_energy_window`/`Upper_energy_window` come from
+     template/content and are **validated** (both present, numeric,
      `lower < upper`), else `InputValidationError`.
    - `&param_interpolation`: `dense` from template/content, validated as three
      ints (scalar → `(n,n,n)` or a 3-list); no invented physics default. Reject a
@@ -179,7 +155,7 @@ Build `input.in`:
    ignores). Surface pymatgen's "path may be incorrect" warning through the logger
    (as the QE bands path does) when the cell is non-standard.
 
-### 3. Dispatch + validation
+### 2. Dispatch + validation
 
 - `main._run`: when `target == "respack"`, select the generator per task:
   `mode in {"scf","nscf","bands"} → Struct2QE`, `mode == "respack" →
@@ -190,13 +166,12 @@ Build `input.in`:
 - `input_validator` validates respack tasks **per mode**: `scf`/`nscf`/`bands`
   tasks must satisfy the existing QE task schema (so QE required/allowed keys still
   apply), and a `mode: respack` task uses the RESPACK schema (allowed:
-  `mode`, `template`, `content`, `output_file`, `output_dir`, `optional`,
-  `spinor`; required: `mode`, `output_file`, `template`). Any other mode →
-  `InputValidationError`. `pp_file`/`pseudo_dir` are read from the merged
-  `optional` (a task-local `optional` overrides the shared top-level one via the
-  existing `deepupdate` precedence).
+  `mode`, `template`, `content`, `output_file`, `output_dir`, `optional`;
+  required: `mode`, `output_file`, `template`). Any other mode →
+  `InputValidationError`. (The respack task needs no pseudopotential keys —
+  `N_wannier` is user physics, not derived from `pp_file`.)
 
-### 4. QE side (no new code, but documented requirements)
+### 3. QE side (no new code, but documented requirements)
 
 The `scf`/`nscf`/`bands` tasks are ordinary `Struct2QE` tasks. For RESPACK the
 nscf task uses `K_POINTS` `crystal` (uniform explicit mesh, already supported)
@@ -217,11 +192,9 @@ possible follow-up.)
 - `structure.use_primitive` is false or `structure.use_ibrav` is true under
   `-t respack` → `InputValidationError` (the `HighSymmKpath` path requires the
   standardized primitive cell; a mismatched basis is a silent physics error).
-- Missing `pp_file`/`orbitals` columns when `num_wann` is needed →
-  `InputValidationError` (the shared pp loader/helper raises it).
+- `N_wannier` absent or not a positive integer → `InputValidationError`.
 - `N_initial_guess != 0` or a Gaussian block in template/content →
   `InputValidationError` (v1 is SCDM-only).
-- `nspin = 2` in a respack task → `InputValidationError` (LSDA out of scope).
 - Missing/invalid energy windows (`Lower`/`Upper` absent, non-numeric, or
   `lower >= upper`) → `InputValidationError`.
 - `dense` not three ints → `InputValidationError`.
@@ -229,25 +202,21 @@ possible follow-up.)
 
 ## Testing (network-free where possible)
 
-- **Shared helper:** `wannier_counts` returns the expected
-  `num_wann`/`nexclude`/`num_bands`/`nbnd` for a small species list + a stub pp
-  table, for both `spinor_factor=1` and `2`; existing QE `nbnd` tests still pass
-  (behavior unchanged).
 - **Struct2RESPACK render (golden-style):** with a small structure
-  (`use_primitive=True`, `use_ibrav=False`), a minimal RESPACK template, and a
-  stub pp table, render `input.in` and **parse it back** (f90nml for the
-  namelists + a small reader for the k-coords block) to assert: `N_wannier` =
-  computed num_wann; `N_initial_guess = 0` and no Gaussian lines; `N_sym_points`
-  equals the per-segment lengths from `HighSymmKpath` and the coords block has
-  that many lines per segment; `dense` and the windows pass through. Include a
-  multi-segment structure (e.g. simple cubic) so the segment list is exercised.
-  Use `pytest.importorskip("pymatgen")`.
-- **Spin:** `spinor: true` doubles `num_wann`/`N_wannier` vs the default; assert
-  both.
+  (`use_primitive=True`, `use_ibrav=False`) and a minimal RESPACK template that
+  sets `N_wannier`/windows/`dense`, render `input.in` and **parse it back**
+  (f90nml for the namelists + a small reader for the k-coords block) to assert:
+  `N_wannier` is the user value (passed through unchanged); `N_initial_guess = 0`
+  and no Gaussian lines; `N_sym_points` equals the per-segment lengths from
+  `HighSymmKpath` and the coords block has that many lines per segment; `dense`
+  and the windows pass through. Include a multi-segment structure (e.g. simple
+  cubic) so the segment list is exercised. Use `pytest.importorskip("pymatgen")`.
 - **Template contract:** a template with a trailing non-namelist line, or a
   non-`param_*` namelist such as `&system`, is rejected.
-- **Validation/error paths:** nonzero `N_initial_guess`, missing window,
-  `lower >= upper`, bad `dense`, `nspin = 2` each raise `InputValidationError`.
+- **Validation/error paths:** missing/non-positive `N_wannier`, nonzero
+  `N_initial_guess`, missing window, `lower >= upper`, bad `dense`, nonzero
+  `reading_sk_format`, and `use_primitive=False`/`use_ibrav=True` each raise
+  `InputValidationError`.
 - **Dispatch:** `-t respack` routes a `mode: scf` task to `Struct2QE` and a
   `mode: respack` task to `Struct2RESPACK` (monkeypatch both, assert each
   `write_input` is called for the right task); `mode: relax` (and unknown) raise.
@@ -295,10 +264,13 @@ possible follow-up.)
 
 ## Open items to resolve in the plan
 
-- The exact mechanics of extracting the shared pp loader from
-  `Struct2QE._set_pseudo_info` (which attributes it must keep populating on
-  `Struct2QE` for backward compatibility) — QE behavior must stay unchanged
-  (covered by existing QE tests).
-- Whether `HighSymmKpath` segment labels (e.g. `\Gamma`) are emitted verbatim as
-  inline comments or normalized to ASCII (comments are ignored by RESPACK, so
-  either is acceptable; pick one in the plan).
+- `HighSymmKpath` segment labels (e.g. `\Gamma`) — emit verbatim as inline
+  comments (chosen: verbatim, since RESPACK ignores comments); confirm the
+  comment syntax `! label` is accepted by the reference parser's line reader.
+- Whether v1 ships a runnable `sample/cif2x/respack/<case>/` directory or
+  docs-only inline examples (decide in the plan; a runnable sample strengthens
+  coverage but needs a structure file + pp CSV + templates).
+
+(The shared Wannier-count helper and pp-loader extraction are NO LONGER part of
+this feature — `N_wannier` is user-specified, so `Struct2QE._find_nbnd_info`
+stays untouched and `Struct2RESPACK` needs no pp table.)
