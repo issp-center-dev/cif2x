@@ -12,7 +12,7 @@ In order to add supports to modes of Quantum ESPRESSO, the mapping between the m
 .. code-block:: python
 
   def create_modeproc(mode, qe):
-      if mode in ["scf", "nscf"]:
+      if mode in ["scf", "nscf", "relax", "vc-relax", "bands"]:
           modeproc = QEmode_pw(qe)
       else:
           modeproc = QEmode_generic(qe)
@@ -20,7 +20,7 @@ In order to add supports to modes of Quantum ESPRESSO, the mapping between the m
 	
 
 The transformation functionality for each mode is provided as a derived class of ``QEmode_base`` class. This class implements methods ``update_namelist()`` for updating the namelist block, and ``update_cards()`` for generating data of card blocks.
-In the current version, two classes are provided: ``QEmode_pw`` class for scf and nscf calculations of pw.x, and ``QEmode_generic`` class for generating output as-is.
+In the current version, two classes are provided: ``QEmode_pw`` class for scf, nscf, relax, vc-relax, and bands calculations of pw.x, and ``QEmode_generic`` class for generating output as-is.
 
 .. code-block:: python
 
@@ -45,6 +45,56 @@ The method ``update_cards()`` in the base class picks up and runs the function a
     }
 
 The functions for cards are gathered in ``src/cif2x/qe/cards.py`` with the function names as ``generate_{card name}``. These functions takes parameters for card blocks as argument, and returns a dictionary containing the card name, the options, and the data field.
+
+
+Supported calculation modes
+----------------------------------------------------------------
+
+``QEmode_pw`` generates the structure cards (``CELL_PARAMETERS``,
+``ATOMIC_SPECIES``, ``ATOMIC_POSITIONS``, ``K_POINTS``) and sets ``calculation``
+from the task ``mode`` for ``scf``, ``nscf``, ``relax``, ``vc-relax``, and
+``bands``. The ``&ions`` (for ``relax``/``vc-relax``) and ``&cell`` (for
+``vc-relax``) namelists are taken from the template/``content`` as written.
+
+For ``bands``, set the K_POINTS option to ``crystal_b`` in ``content``; the path
+is generated from the crystal symmetry with ``pymatgen``'s high-symmetry k-path,
+for example:
+
+.. code-block:: yaml
+
+    tasks:
+      - mode: bands
+        output_file: bands.in
+        content:
+          system:
+            nbnd: 16        # set explicitly if conduction bands are wanted
+          K_POINTS:
+            option: crystal_b
+            line_npoints: 30   # points generated between high-symmetry points
+
+``line_npoints`` defaults to 20. A high-symmetry path may contain breaks
+(disjoint segments); the generator marks them with a 0 in the per-line integer
+so ``bands.x`` does not interpolate across the gap. To use a custom path, give a
+``path`` list of label sequences (labels must exist in the auto-generated
+k-path). Note: ``bands`` currently targets ``use_ibrav: false``.
+
+There is no ``calculation='dos'`` in pw.x. A density-of-states run is the
+chain ``scf`` -> ``nscf`` (a dense mesh) -> ``dos`` (a ``dos.x`` input). The
+``dos`` task is emitted as-is via ``QEmode_generic``; put the ``&DOS`` namelist
+in its template/``content``:
+
+.. code-block:: yaml
+
+    tasks:
+      - mode: scf
+        output_file: scf.in
+        content: { K_POINTS: { option: automatic, grid: [8, 8, 8] } }
+      - mode: nscf
+        output_file: nscf.in
+        content: { K_POINTS: { option: automatic, grid: [16, 16, 16] } }
+      - mode: dos
+        template: dos.in_tmpl     # contains the &DOS namelist
+        output_file: dos.in
 
 
 Troubleshooting
