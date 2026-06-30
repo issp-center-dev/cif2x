@@ -15,10 +15,15 @@ works for all four targets).
 
 ## Background (verified)
 
-- `inflate(content)` lives in `src/cif2x/utils.py` and is shared: every generator
-  calls it — `struct2qe.py:63`, `struct2vasp.py:74`, `struct2openmx.py:142`,
-  `struct2akaikkr.py:63`. It returns a list of `(dirkey, content)`; with no
-  `${...}` it returns `[("", content)]`.
+- There are **two near-identical `inflate` implementations**: VASP, OpenMX, and
+  AkaiKKR use `cif2x.utils.inflate` (each does `from cif2x.utils import *` and
+  calls `inflate(self.content)` — `struct2vasp.py:74`, `struct2openmx.py:142`,
+  `struct2akaikkr.py:63`); QE uses its own `cif2x.qe.content.inflate`
+  (`struct2qe.py:15,63`). Both return a list of `(dirkey, content)` and, with no
+  `${...}`, return `[("", content)]`. This work tests the three non-QE targets
+  through `cif2x.utils.inflate`; QE's path is already covered by existing
+  `tests/test_inflate.py` cases against `cif2x.qe.content.inflate`. (Unifying the
+  two implementations is out of scope; see Risks.)
 - `inflate` is content-agnostic: it uses `content.serialize()` /
   `type(content).deserialize(...)`. Each target ships a small content class with
   those methods (QE `cif2x/qe/content.py`; VASP/OpenMX/AkaiKKR each define a
@@ -51,9 +56,29 @@ works for all four targets).
 ### Documentation (`docs/en` and `docs/ja` `cif2x/tutorial/index.rst`)
 
 In the "Specifying parameter sets" / corresponding JA section, after the existing
-QE example, add a sentence that the sweep applies to all targets (the output
-sub-directory name comes from the swept value), then three small `code-block:: yaml`
-examples:
+QE example, add the exact bridging text below, then a note about where the swept
+key sits in `content` for each target (VASP groups parameters under
+`incar`/`kpoints`/`poscar`/`potcar`; OpenMX and AkaiKKR use flat `content` keys),
+then three small `code-block:: yaml` examples.
+
+Exact text (EN):
+
+> The same ``${...}`` syntax applies to every target, not only Quantum ESPRESSO;
+> the output sub-directory name is derived from the swept value. The swept key
+> sits wherever the parameter lives in ``content`` — for VASP that is under
+> ``incar`` (or ``kpoints``/``poscar``/``potcar``); for OpenMX and AkaiKKR the
+> ``content`` keys are flat. For example:
+
+Exact text (JA):
+
+> 同じ ``${...}`` 構文は Quantum ESPRESSO だけでなく全ターゲットで利用でき、
+> 出力サブディレクトリ名はスイープ値から生成されます。スイープ対象のキーは
+> ``content`` 内でそのパラメータが定義される階層に記述します。VASP では ``incar``
+> (または ``kpoints``/``poscar``/``potcar``)の下、OpenMX と AkaiKKR では
+> ``content`` 直下のフラットなキーです。例:
+
+各 ``content:`` ブロックは、既存の例と同様に ``tasks:`` の各エントリ配下に置かれます
+(EN の説明にも同趣旨の一文を添える)。
 
 ```yaml
 # VASP — cutoff convergence
@@ -77,26 +102,42 @@ generic there.)
 
 ### Regression test (`tests/test_inflate.py`)
 
-Add cases that build each target's content class and run the shared `inflate`:
+Add **one required case per non-QE target**, each building that target's real
+content class and running `cif2x.utils.inflate` (the function those targets call).
+The content classes are plain dict-wrappers with **no init-time validation and no
+filesystem access** (verified), so minimal construction is safe. Exact
+constructor signatures (verified):
 
-- VASP: `from cif2x.struct2vasp import Content as VaspContent`;
-  `VaspContent(incar={"ENCUT": "${[400, 600]}"}, kpoints={}, poscar={}, potcar={})`
-  → `inflate` yields 2 entries; the two `incar["ENCUT"]` values are `400` and
-  `600`; dir keys are `"400"`/`"600"`.
-- AkaiKKR: `from cif2x.struct2akaikkr import Content as KkrContent`;
-  `KkrContent(go="go", bzqlty="${[12, 16]}")` → 2 entries; `bzqlty` values
-  `12`/`16`.
-- OpenMX: `from cif2x.struct2openmx import Content as OpenmxContent` if it is
-  constructible from a plain mapping (`Content.from_dict({"scf.energycutoff":
-  "${[150, 200]}"})`); assert 2 entries with the substituted values. If its
-  constructor needs target-specific objects that make a unit test brittle, omit
-  the OpenMX case and rely on VASP + AkaiKKR + the existing QE/DictContent
-  coverage (note this in the test/commit). 
+- VASP — `cif2x.struct2vasp.Content(incar, kpoints, poscar, potcar, **kwargs)`:
+  `Content(incar={"ENCUT": "${[400, 600]}"}, kpoints={}, poscar={}, potcar={})`
+  → 2 entries; the `(dirkey, incar["ENCUT"])` pairs are exactly
+  `("400", 400)` and `("600", 600)`.
+- AkaiKKR — `cif2x.struct2akaikkr.Content(**kwargs)`:
+  `Content(go="go", bzqlty="${[12, 16]}")` → 2 entries; `(dirkey, bzqlty)` pairs
+  `("12", 12)` and `("16", 16)`.
+- OpenMX — `cif2x.struct2openmx.Content` (a case-insensitive dict subclass) built
+  via `Content.from_dict({"scf.energycutoff": "${[150, 200]}"})` →
+  2 entries; `(dirkey, scf.energycutoff)` pairs `("150", 150)` and `("200", 200)`.
+  This case is **required** (the class is constructible from a plain mapping, so
+  there is no reason to omit it).
 
-Use `cif2x.utils.inflate` (the shared function the generators call). Imports that
-pull heavy optional deps should use `pytest.importorskip` consistent with the
-existing QE tests (e.g. skip if `qe_tools`/`pymatgen` import side effects block
-loading a target module).
+Field accessors (verified): VASP/AkaiKKR `Content.__getitem__` reads the wrapped
+dict (`content["incar"]["ENCUT"]`, `content["bzqlty"]`); OpenMX `Content` is a
+dict subclass (`content["scf.energycutoff"]`).
+
+Test requirements:
+- Each target case does `mod = pytest.importorskip("cif2x.struct2vasp")` (and
+  `..struct2openmx`, `..struct2akaikkr`) **inside the test body**, then uses
+  `mod.Content`. Guarding on the target module — not a specific library name —
+  skips only that case when ANY of its transitive optional deps (pymatgen, monty,
+  pandas, …) is missing, without affecting the generic/QE cases. (Tests run under
+  the existing `tests/conftest.py`, which puts `src/` on `sys.path`.)
+- Assert the `(dirkey, value)` pairs **together** (sorted list of tuples), not the
+  keys and values separately, so a mismatch between the generated sub-directory
+  name and the substituted value is caught.
+- Also add the paired `(dirkey, value)` assertion to the existing QE inflate
+  case(s) (currently value-only), so the separate `cif2x.qe.content.inflate` path
+  is validated the same way. Keep the generic (`DictContent`) cases unchanged.
 
 ## Testing / verification
 
@@ -104,6 +145,17 @@ loading a target module).
 - Manual: render one target's swept content (e.g. run `inflate` on the VASP
   content above) and confirm the directory keys are `400`/`600`/`800`.
 - `docutils` lint on the two edited tutorial files (no severe/error).
+
+## Risks
+
+- QE keeps a separate `cif2x.qe.content.inflate`, so sweep behaviour could
+  diverge from the other three targets even with the new tests green. Unifying
+  the two implementations is deliberately out of scope here; the divergence risk
+  is noted for a future cleanup.
+- Tests build real target content classes; a missing optional dependency
+  (e.g. pymatgen) is handled by per-case `pytest.importorskip` so it skips only
+  that case. (Verified: the content classes do no init-time validation or
+  filesystem I/O, so construction itself is side-effect-free.)
 
 ## Out of scope
 
