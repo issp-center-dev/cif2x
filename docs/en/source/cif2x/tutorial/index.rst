@@ -78,3 +78,38 @@ In some cases, a series of input files should be generated with varying their pa
        grid:   ${ [ [4,4,4], [8,8,8], [12,12,12] ] }
 
 When ``K_POINTS`` is given as above, the input files having the ``grid`` value to be ``[4,4,4]``, ``[8,8,8]``, ``[12,12,12]`` will be generated in the sub-directories,  ``4x4x4/``, ``8x8x8/``, ``12x12x12/``, respectively.
+
+The same ``${...}`` syntax applies to every target, not only Quantum ESPRESSO;
+the output sub-directory name is derived from the swept value. As in the example
+above, each ``content:`` block below belongs to a ``tasks:`` entry. The swept key
+sits wherever the parameter lives in ``content`` — for VASP under ``incar`` (or
+``kpoints``/``poscar``/``potcar``); for OpenMX and AkaiKKR the ``content`` keys are
+flat.
+
+VASP — cutoff convergence:
+
+.. code-block:: yaml
+
+   content:
+     incar:
+       ENCUT: ${ [400, 600, 800] }
+
+generates the input files in ``400/``, ``600/``, ``800/``.
+
+OpenMX — energy-cutoff convergence:
+
+.. code-block:: yaml
+
+   content:
+     scf.energycutoff: ${ [150, 200, 250] }
+
+generates the input files in ``150/``, ``200/``, ``250/``.
+
+AkaiKKR — Brillouin-zone-quality convergence:
+
+.. code-block:: yaml
+
+   content:
+     bzqlty: ${ [12, 16, 20] }
+
+generates the input files in ``12/``, ``16/``, ``20/``.

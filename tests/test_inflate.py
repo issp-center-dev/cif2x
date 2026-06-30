@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from cif2x.utils import inflate as utils_inflate
 from cif2x.qe.content import Content, inflate as qe_inflate
 
@@ -53,6 +55,8 @@ def test_qe_inflate_expands_list_placeholder():
     results = qe_inflate(c)
     assert len(results) == 2
     assert sorted(cc.namelist["system"]["ecutwfc"] for _, cc in results) == [30, 40]
+    assert sorted((k, cc.namelist["system"]["ecutwfc"]) for k, cc in results) == \
+        [("30", 30), ("40", 40)]
 
 
 def test_qe_inflate_expands_range_placeholder():
@@ -64,3 +68,35 @@ def test_qe_inflate_expands_range_placeholder():
     results = qe_inflate(c)
     assert len(results) == 2
     assert sorted(cc.namelist["system"]["ecutwfc"] for _, cc in results) == [30, 40]
+    assert sorted((k, cc.namelist["system"]["ecutwfc"]) for k, cc in results) == \
+        [("30", 30), ("40", 40)]
+
+
+def test_vasp_content_inflate_expands_sweep():
+    # importorskip the external dependency (matching tests/test_dry_run.py); a
+    # real import bug in struct2vasp then fails the test rather than skipping it.
+    pytest.importorskip("pymatgen")
+    from cif2x.struct2vasp import Content
+    content = Content(incar={"ENCUT": "${[400, 600]}"},
+                      kpoints={}, poscar={}, potcar={})
+    results = utils_inflate(content)
+    assert sorted((k, c["incar"]["ENCUT"]) for k, c in results) == \
+        [("400", 400), ("600", 600)]
+
+
+def test_akaikkr_content_inflate_expands_sweep():
+    pytest.importorskip("pymatgen")
+    from cif2x.struct2akaikkr import Content
+    content = Content(go="go", bzqlty="${[12, 16]}")
+    results = utils_inflate(content)
+    assert sorted((k, c["bzqlty"]) for k, c in results) == \
+        [("12", 12), ("16", 16)]
+
+
+def test_openmx_content_inflate_expands_sweep():
+    pytest.importorskip("pymatgen")
+    from cif2x.struct2openmx import Content
+    content = Content.from_dict({"scf.energycutoff": "${[150, 200]}"})
+    results = utils_inflate(content)
+    assert sorted((k, c["scf.energycutoff"]) for k, c in results) == \
+        [("150", 150), ("200", 200)]
