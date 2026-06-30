@@ -196,3 +196,9 @@ def test_bool_reading_sk_format_rejected(tmp_path):
     t = _TEMPLATE.replace("dense = 8, 8, 8", "dense = 8, 8, 8\nreading_sk_format = .true.")
     with pytest.raises(InputValidationError, match="reading_sk_format"):
         _render(tmp_path, template=_write(tmp_path, t))
+
+
+def test_nonintegral_reading_sk_format_rejected(tmp_path):
+    t = _TEMPLATE.replace("dense = 8, 8, 8", "dense = 8, 8, 8\nreading_sk_format = 0.5")
+    with pytest.raises(InputValidationError, match="reading_sk_format"):
+        _render(tmp_path, template=_write(tmp_path, t))
