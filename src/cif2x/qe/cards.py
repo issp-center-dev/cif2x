@@ -161,6 +161,11 @@ def _generate_band_path(qe, params):
     from pymatgen.symmetry.bandstructure import HighSymmKpath
 
     line_npoints = int(params.get("line_npoints", 20))
+    if line_npoints < 1:
+        raise ValueError(
+            "K_POINTS 'line_npoints' must be a positive integer "
+            "(got {}).".format(line_npoints)
+        )
     # HighSymmKpath labels live in the standardized primitive reciprocal basis;
     # if the input is not that cell (conventional cell, supercell,
     # use_primitive: false) pymatgen warns that "the path may be incorrect".

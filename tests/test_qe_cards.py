@@ -171,3 +171,26 @@ def test_crystal_b_warns_through_logger_for_nonstandard_cell(caplog):
     with caplog.at_level("WARNING", logger="cif2x.qe.cards"):
         generate_k_points(_BandQE("bands", s), {"option": "crystal_b"})
     assert any("band path" in r.getMessage() for r in caplog.records)
+
+
+@pytest.mark.parametrize("bad", [0, -5])
+def test_crystal_b_rejects_nonpositive_line_npoints(bad):
+    s = _cubic()
+    with pytest.raises(ValueError, match="line_npoints"):
+        generate_k_points(_BandQE("bands", s),
+                          {"option": "crystal_b", "line_npoints": bad})
+
+
+def test_crystal_b_renders_to_qe_text_with_break_marker():
+    from cif2x.qe.content import Content
+    s = _cubic()
+    card = generate_k_points(_BandQE("bands", s),
+                             {"option": "crystal_b", "line_npoints": 12})
+    c = Content()
+    c.namelist = None
+    c.cards = {"K_POINTS": card}
+    c.textblock = None
+    text = c.render()
+    assert "K_POINTS {crystal_b}" in text
+    # at least one rendered row is a break marker (ends in the nk=0 integer)
+    assert any(line.endswith("  0") for line in text.splitlines())
