@@ -142,6 +142,12 @@ def _run(args):
         output_file = info.get("output_file")
         output_dir = info.get("output_dir", ".")
 
+        if target == "respack" and info.get("mode") == "nscf":
+            _sys = (info.get("content") or {}).get("system") or {}
+            if not _sys.get("nosym") or not _sys.get("noinv"):
+                logger.warning(
+                    "respack: the nscf task should set content.system.nosym: true "
+                    "and noinv: true (required by qe2respack).")
         gen_cls = _respack_generator(info.get("mode"), idx) if target == "respack" else generator_cls
         generator = gen_cls(params, struct)
         generator.write_input(output_file, output_dir, dry_run=args.dry_run)

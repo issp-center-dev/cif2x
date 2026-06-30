@@ -310,3 +310,29 @@ def test_respack_requires_primitive_cell(monkeypatch, tmp_path, caplog):
         with pytest.raises(SystemExit):
             main_mod.main()
     assert "use_primitive" in caplog.text
+
+
+def test_respack_nscf_warns_without_nosym(monkeypatch, tmp_path, caplog):
+    pytest.importorskip("pymatgen")
+
+    class _Dummy:
+        def __init__(self, *a, **k):
+            pass
+
+        def write_input(self, *a, **k):
+            pass
+
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, "Struct2QE", _Dummy)
+    monkeypatch.setattr(main_mod, "Struct2RESPACK", _Dummy)
+    yf = tmp_path / "input.yaml"
+    yf.write_text(
+        "structure:\n  use_primitive: true\n"
+        "tasks:\n  - mode: nscf\n    output_file: nscf.in\n"
+    )
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "respack", str(yf), str(cif)])
+    with caplog.at_level("WARNING"):
+        main_mod.main()
+    assert "nosym" in caplog.text

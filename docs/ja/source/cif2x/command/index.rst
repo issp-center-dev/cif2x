@@ -40,7 +40,7 @@ cif2x
 
     - ``AkaiKKR``: AkaiKKR向け入力ファイルを生成します。
 
-    - ``respack``: RESPACK ワークフロー一式を生成します。Quantum ESPRESSO 入力(``scf``/``nscf``/``bands`` タスク)と RESPACK 制御ファイル ``input.in``(``mode: respack`` タスク)を出力します。構造は標準プリミティブセル(``structure.use_primitive: true``、``use_ibrav: false``)である必要があります。``N_wannier`` とエネルギー窓は ``content``/テンプレートで与える物理量で、初期ゲスは SCDM(``N_initial_guess = 0``、``respack-wannier-py`` を対象)です。``nscf`` タスクには ``qe2respack`` 用に ``nosym = .true.``/``noinv = .true.`` を設定してください。実行順序: ``scf`` → ``nscf`` → ``qe2respack`` → ``respack``。
+    - ``respack``: RESPACK ワークフロー一式を生成します。Quantum ESPRESSO 入力(``scf``/``nscf`` タスク、および任意で ``bands`` タスク)と RESPACK 制御ファイル ``input.in``(``mode: respack`` タスク)を出力します。構造は pymatgen の高対称 k 経路が前提とする**標準プリミティブセル**である必要があります(``structure.use_primitive: true``、``use_ibrav: false`` を指定し、標準プリミティブ構造を与えてください)。非立方系で不一致のセルを与えると、書き出される k 経路が QE のセルと不整合になります(cif2x は警告を出力します)。``N_wannier`` とエネルギー窓は ``content``/テンプレートで与える物理量で、初期ゲスは SCDM(``N_initial_guess = 0``、``respack-wannier-py`` を対象)です。``nscf`` タスクには ``qe2respack`` 用に ``nosym = .true.``/``noinv = .true.`` を設定してください。実行順序: ``scf`` → ``nscf`` → ``qe2respack`` → ``respack``。
 
   - ``--dry-run``
 

@@ -40,7 +40,7 @@ DESCRIPTION:
 
     - ``AkaiKKR``: generates input files for AkaiKKR.
 
-    - ``respack``: generates the RESPACK workflow — the Quantum ESPRESSO inputs (``scf``/``nscf``/``bands`` tasks) and the RESPACK control file ``input.in`` (a ``mode: respack`` task). The structure must be the standardized primitive cell (``structure.use_primitive: true``, ``use_ibrav: false``). ``N_wannier`` and the energy windows are user physics supplied in the ``content``/template; initial guesses use SCDM (``N_initial_guess = 0``), targeting the ``respack-wannier-py`` port. The ``nscf`` task must set ``nosym = .true.``/``noinv = .true.`` for ``qe2respack``. Run order: ``scf`` → ``nscf`` → ``qe2respack`` → ``respack``.
+    - ``respack``: generates the RESPACK workflow — the Quantum ESPRESSO inputs (``scf``/``nscf`` tasks, plus an optional ``bands`` task) and the RESPACK control file ``input.in`` (a ``mode: respack`` task). The structure must be the **standardized primitive cell** that pymatgen's high-symmetry k-path assumes — set ``structure.use_primitive: true`` and ``use_ibrav: false``, and provide a standardized primitive structure; for non-cubic cells a mismatched cell makes the written k-path inconsistent with the QE cell (cif2x logs a warning). ``N_wannier`` and the energy windows are user physics supplied in the ``content``/template; initial guesses use SCDM (``N_initial_guess = 0``), targeting the ``respack-wannier-py`` port. The ``nscf`` task must set ``nosym = .true.``/``noinv = .true.`` for ``qe2respack``. Run order: ``scf`` → ``nscf`` → ``qe2respack`` → ``respack``.
 
   - ``--dry-run``
 
