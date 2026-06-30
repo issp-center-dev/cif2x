@@ -77,8 +77,20 @@ Exact text (JA):
 > (または ``kpoints``/``poscar``/``potcar``)の下、OpenMX と AkaiKKR では
 > ``content`` 直下のフラットなキーです。例:
 
-各 ``content:`` ブロックは、既存の例と同様に ``tasks:`` の各エントリ配下に置かれます
-(EN の説明にも同趣旨の一文を添える)。
+Each example's ``content:`` block sits under an entry of ``tasks:``, exactly like
+the existing QE example earlier in the section. Exact one-liners to append:
+
+> EN: "As in the earlier example, each ``content:`` block below belongs to a
+> ``tasks:`` entry."
+> JA: 「以下の各 ``content:`` ブロックは、前述の例と同様に ``tasks:`` の各エントリ
+> 配下に置かれます。」
+
+Both the spaced (``${ [400, 600, 800] }``) and compact (``${[400,600,800]}``) forms
+are accepted — whitespace inside ``${...}`` is ignored (verified) — so the tutorial
+may use the spaced form (matching the existing QE example) while the tests use the
+compact form. The unquoted form parses as a plain string under the safe YAML
+loader (verified for ``grid``/``ENCUT``/``bzqlty``), so no surrounding quotes are
+needed — keep the examples unquoted, consistent with the existing QE example.
 
 ```yaml
 # VASP — cutoff convergence
@@ -138,13 +150,21 @@ Test requirements:
 - Also add the paired `(dirkey, value)` assertion to the existing QE inflate
   case(s) (currently value-only), so the separate `cif2x.qe.content.inflate` path
   is validated the same way. Keep the generic (`DictContent`) cases unchanged.
+  (Verified: both `cif2x.utils.inflate` and `cif2x.qe.content.inflate` return the
+  same `list[(dirkey, content)]` shape, so the paired-assertion helper applies to
+  both.)
 
 ## Testing / verification
 
 - `pytest tests/test_inflate.py` — existing + new cases pass.
 - Manual: render one target's swept content (e.g. run `inflate` on the VASP
   content above) and confirm the directory keys are `400`/`600`/`800`.
-- `docutils` lint on the two edited tutorial files (no severe/error).
+- Best-effort reST lint on the two edited tutorial files with the exact command
+  `python3 -m docutils <file> /dev/null` (run only if `docutils` is importable),
+  expecting no `severe`/`error` lines. CI is expected to run in an environment
+  where all three target modules import, so the new per-case `importorskip`
+  guards skip nothing there (they only protect minimal local environments, and a
+  target module's import error would surface in CI rather than be masked).
 
 ## Risks
 
