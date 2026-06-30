@@ -34,6 +34,9 @@ def _deepupdate(dst, src):
 
 def _has_content_outside_namelists(text):
     """True if a non-blank, non-comment line sits outside a &name.../ block."""
+    # NOTE: assumes namelist value lines do not end in a bare '/' (true for
+    # RESPACK's numeric/quoted namelists); an unquoted token ending in '/'
+    # would falsely close the block. Fails safe (rejects) rather than mis-render.
     inside = False
     for raw in text.splitlines():
         line = raw.split("!", 1)[0].strip()
@@ -114,13 +117,25 @@ class Struct2RESPACK:
 
         data = {k: dict(v) for k, v in nml.items()}
         content = self.params.get("content") or {}
-        norm = {str(k).lower(): {str(kk).lower(): vv for kk, vv in (v or {}).items()}
-                for k, v in content.items()}
+        norm = {}
+        for k, v in content.items():
+            name = str(k).lower()
+            if name not in _ALLOWED_NAMELISTS:
+                raise InputValidationError(
+                    "respack content: unexpected namelist '{}'. Only RESPACK "
+                    "&param_* namelists are allowed.".format(name))
+            if v is None:
+                norm[name] = {}
+            elif isinstance(v, dict):
+                norm[name] = {str(kk).lower(): vv for kk, vv in v.items()}
+            else:
+                raise InputValidationError(
+                    "respack content: '{}' must be a mapping of namelist keys.".format(k))
         _deepupdate(data, norm)
 
         wann = data.setdefault("param_wannier", {})
         n_wannier = wann.get("n_wannier")
-        if not isinstance(n_wannier, int) or n_wannier <= 0:
+        if not isinstance(n_wannier, int) or isinstance(n_wannier, bool) or n_wannier <= 0:
             raise InputValidationError(
                 "respack: &param_wannier 'N_wannier' must be a positive integer "
                 f"(got {n_wannier!r}); it is user physics and is not auto-derived.")

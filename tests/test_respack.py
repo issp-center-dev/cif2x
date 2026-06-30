@@ -153,6 +153,16 @@ def test_template_unparseable_rejected(tmp_path):
         _render(tmp_path, template=_write(tmp_path, t))
 
 
+def test_content_unknown_namelist_rejected(tmp_path):
+    with pytest.raises(InputValidationError, match="unexpected namelist"):
+        _render(tmp_path, content={"param_bogus": {"x": 1}})
+
+
+def test_content_non_mapping_namelist_rejected(tmp_path):
+    with pytest.raises(InputValidationError, match="mapping"):
+        _render(tmp_path, content={"param_wannier": "oops"})
+
+
 def test_write_input_dry_run(tmp_path, capsys):
     params = {"template": _write(tmp_path), "content": {}}
     gen = Struct2RESPACK(params, _Struct(_cubic()))
