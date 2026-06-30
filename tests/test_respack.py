@@ -163,6 +163,24 @@ def test_content_non_mapping_namelist_rejected(tmp_path):
         _render(tmp_path, content={"param_wannier": "oops"})
 
 
+def test_bool_window_rejected(tmp_path):
+    t = _TEMPLATE.replace("Lower_energy_window = 11.0", "Lower_energy_window = .false.")
+    with pytest.raises(InputValidationError, match="window|Lower"):
+        _render(tmp_path, template=_write(tmp_path, t))
+
+
+def test_bool_dense_rejected(tmp_path):
+    t = _TEMPLATE.replace("dense = 8, 8, 8", "dense = .true.")
+    with pytest.raises(InputValidationError, match="dense"):
+        _render(tmp_path, template=_write(tmp_path, t))
+
+
+def test_non_integer_reading_sk_format_rejected(tmp_path):
+    t = _TEMPLATE.replace("dense = 8, 8, 8", "dense = 8, 8, 8\nreading_sk_format = 'x'")
+    with pytest.raises(InputValidationError, match="reading_sk_format"):
+        _render(tmp_path, template=_write(tmp_path, t))
+
+
 def test_write_input_dry_run(tmp_path, capsys):
     params = {"template": _write(tmp_path), "content": {}}
     gen = Struct2RESPACK(params, _Struct(_cubic()))

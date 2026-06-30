@@ -75,14 +75,16 @@ def _kpath(structure):
 
 
 def _as_three_ints(value, *, key):
+    if isinstance(value, bool):
+        raise InputValidationError(
+            "respack: '{}' must be three integers (got {!r}).".format(key, value))
     if isinstance(value, int):
         return [value, value, value]
-    if isinstance(value, (list, tuple)) and len(value) == 3 and all(
-        isinstance(v, int) for v in value
-    ):
+    if (isinstance(value, (list, tuple)) and len(value) == 3
+            and all(isinstance(v, int) and not isinstance(v, bool) for v in value)):
         return list(value)
     raise InputValidationError(
-        f"respack: '{key}' must be three integers (got {value!r}).")
+        "respack: '{}' must be three integers (got {!r}).".format(key, value))
 
 
 class Struct2RESPACK:
@@ -146,7 +148,8 @@ class Struct2RESPACK:
         wann["n_initial_guess"] = 0
         lo = wann.get("lower_energy_window")
         hi = wann.get("upper_energy_window")
-        if not isinstance(lo, (int, float)) or not isinstance(hi, (int, float)):
+        if (not isinstance(lo, (int, float)) or isinstance(lo, bool)
+                or not isinstance(hi, (int, float)) or isinstance(hi, bool)):
             raise InputValidationError(
                 "respack: 'Lower_energy_window' and 'Upper_energy_window' are "
                 "required numeric values in &param_wannier.")
@@ -155,7 +158,14 @@ class Struct2RESPACK:
                 f"respack: energy window must have lower < upper (got {lo} >= {hi}).")
 
         interp = data.setdefault("param_interpolation", {})
-        if int(interp.get("reading_sk_format", 0)) != 0:
+        rsf = interp.get("reading_sk_format", 0)
+        try:
+            rsf = int(rsf)
+        except (TypeError, ValueError):
+            raise InputValidationError(
+                "respack: 'reading_sk_format' must be an integer (got {!r}).".format(
+                    interp.get("reading_sk_format")))
+        if rsf != 0:
             raise InputValidationError(
                 "respack: only reading_sk_format = 0 is supported.")
         interp["dense"] = _as_three_ints(interp.get("dense"), key="dense")
