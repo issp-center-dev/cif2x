@@ -57,11 +57,13 @@ Scope: the QE target stays unchanged; `respack` reuses it for QE-mode tasks.
   Gaussian block (v1). If the template/content supplies a nonzero
   `N_initial_guess` or a Gaussian projection block, that is **rejected** with
   `InputValidationError` (v1 is SCDM-only; no silent override).
-- **Template contract (v1): namelist-only.** A RESPACK template contains only
-  `&param_*` namelists (parsed by `f90nml`). Any non-blank, non-comment line
-  after the last namelist's `/` is rejected with `InputValidationError` — cif2x
-  generates ALL non-namelist blocks (the k-coords block) itself, so a template
-  must not carry a Gaussian or k-path block.
+- **Template contract (v1): `&param_*` namelists only.** A RESPACK template is
+  parsed with `f90nml`; cif2x then rejects (`InputValidationError`): (a) any
+  namelist whose name is not a RESPACK `param_*` block (so an accidental QE
+  `&system` is caught), and (b) any unparsed non-blank/non-comment remainder
+  after the namelists (token-level: the content `f90nml` did not consume, not a
+  raw `/` string search). cif2x generates ALL non-namelist blocks (the k-coords
+  block) itself, so a template must not carry a Gaussian or k-path block.
 - **Spin scope (v1):** `spinor_factor` comes from a **dedicated respack task
   field `spinor`** (bool, default `false` → factor 1; `true` → factor 2), NOT
   from a QE `&system` block (which must not appear in `input.in`). A spin-polarised
@@ -161,17 +163,21 @@ Build `input.in`:
      from template/content and are **validated** (both present, numeric,
      `lower < upper`), else `InputValidationError`.
    - `&param_interpolation`: `dense` from template/content, validated as three
-     ints (scalar → `(n,n,n)` or a 3-list); no invented physics default. The
-     k-path comes from `HighSymmKpath(struct.structure)`: emit
+     ints (scalar → `(n,n,n)` or a 3-list); no invented physics default. Reject a
+     nonzero `reading_sk_format` (cif2x only emits format 0). The k-path comes from
+     `HighSymmKpath(struct.structure)`: emit
      `N_sym_points = [len(seg) for seg in kpath["path"]]` (one entry per disjoint
-     segment, each `>= 2`) and the segment-by-segment coords block.
+     segment, each `>= 2`; canonical output — no Fortran trailing-zero padding) and
+     the segment-by-segment coords block.
    - `&param_chiqw` / `&param_calc_int` / `&param_visualization`: passthrough from
      template/content.
-4. Render (format resolved above): write the `&param_*` namelists in RESPACK
-   order; after `&param_interpolation`'s `/`, append the multi-segment k-coords
-   block (format 0): per segment, one `kx ky kz  ! label` line per high-symmetry
-   point (fractional coords). Surface pymatgen's "path may be incorrect" warning
-   through the logger (as the QE bands path does) when the cell is non-standard.
+4. Render (format resolved above): `f90nml` cannot interleave raw text between
+   namelists, so write each `&param_*` namelist individually in RESPACK order and
+   **append the k-coords block immediately after the `&param_interpolation`
+   namelist's `/`**: per segment, one `kx ky kz  ! label` line per high-symmetry
+   point (fractional coords; labels emitted verbatim — they are comments RESPACK
+   ignores). Surface pymatgen's "path may be incorrect" warning through the logger
+   (as the QE bands path does) when the cell is non-standard.
 
 ### 3. Dispatch + validation
 
@@ -186,7 +192,9 @@ Build `input.in`:
   apply), and a `mode: respack` task uses the RESPACK schema (allowed:
   `mode`, `template`, `content`, `output_file`, `output_dir`, `optional`,
   `spinor`; required: `mode`, `output_file`, `template`). Any other mode →
-  `InputValidationError`.
+  `InputValidationError`. `pp_file`/`pseudo_dir` are read from the merged
+  `optional` (a task-local `optional` overrides the shared top-level one via the
+  existing `deepupdate` precedence).
 
 ### 4. QE side (no new code, but documented requirements)
 
@@ -203,8 +211,12 @@ possible follow-up.)
 ## Error handling
 
 - `respack` task with an unrecognized/unsupported `mode` → `InputValidationError`.
-- Template with non-blank/non-comment content after the last namelist →
-  `InputValidationError` (v1 templates are namelist-only).
+- Template with a non-`param_*` namelist (e.g. `&system`) or unparsed
+  non-blank/non-comment remainder → `InputValidationError` (namelist-only).
+- `reading_sk_format != 0` in template/content → `InputValidationError`.
+- `structure.use_primitive` is false or `structure.use_ibrav` is true under
+  `-t respack` → `InputValidationError` (the `HighSymmKpath` path requires the
+  standardized primitive cell; a mismatched basis is a silent physics error).
 - Missing `pp_file`/`orbitals` columns when `num_wann` is needed →
   `InputValidationError` (the shared pp loader/helper raises it).
 - `N_initial_guess != 0` or a Gaussian block in template/content →
@@ -232,7 +244,8 @@ possible follow-up.)
   Use `pytest.importorskip("pymatgen")`.
 - **Spin:** `spinor: true` doubles `num_wann`/`N_wannier` vs the default; assert
   both.
-- **Template contract:** a template with a trailing non-namelist line is rejected.
+- **Template contract:** a template with a trailing non-namelist line, or a
+  non-`param_*` namelist such as `&system`, is rejected.
 - **Validation/error paths:** nonzero `N_initial_guess`, missing window,
   `lower >= upper`, bad `dense`, `nspin = 2` each raise `InputValidationError`.
 - **Dispatch:** `-t respack` routes a `mode: scf` task to `Struct2QE` and a
@@ -260,9 +273,10 @@ possible follow-up.)
 
 - **Reciprocal-basis match:** `HighSymmKpath` coordinates are in the standardized
   primitive reciprocal basis, so the RESPACK path is only consistent with a
-  primitive cell. respack targets `use_primitive: true` (and `use_ibrav: false`),
-  same as the QE bands path; pymatgen's "path may be incorrect" warning is
-  surfaced for non-standard cells.
+  primitive cell. respack **requires** `use_primitive: true` and
+  `use_ibrav: false` (enforced with `InputValidationError`); pymatgen's "path may
+  be incorrect" warning is additionally surfaced for any residual non-standard
+  cell.
 - **Fortran-RESPACK incompatibility:** SCDM (`N_initial_guess = 0`, no Gaussian
   block) is supported by `respack-wannier-py`; the Fortran `calc_wannier` would
   reject it. Stated in the docs.
