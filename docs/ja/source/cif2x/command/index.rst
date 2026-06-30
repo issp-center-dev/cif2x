@@ -40,6 +40,8 @@ cif2x
 
     - ``AkaiKKR``: AkaiKKR向け入力ファイルを生成します。
 
+    - ``respack``: RESPACK ワークフロー一式を生成します。Quantum ESPRESSO 入力(``scf``/``nscf``/``bands`` タスク)と RESPACK 制御ファイル ``input.in``(``mode: respack`` タスク)を出力します。構造は標準プリミティブセル(``structure.use_primitive: true``、``use_ibrav: false``)である必要があります。``N_wannier`` とエネルギー窓は ``content``/テンプレートで与える物理量で、初期ゲスは SCDM(``N_initial_guess = 0``、``respack-wannier-py`` を対象)です。``nscf`` タスクには ``qe2respack`` 用に ``nosym = .true.``/``noinv = .true.`` を設定してください。実行順序: ``scf`` → ``nscf`` → ``qe2respack`` → ``respack``。
+
   - ``--dry-run``
 
     生成される入力ファイルをディスクに書き込まず、標準出力に表示します。ファイルやディレクトリを作成せずに生成結果を確認したい場合に便利です。

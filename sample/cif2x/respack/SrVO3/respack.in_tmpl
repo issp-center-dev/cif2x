@@ -1,0 +1,14 @@
+&param_chiqw
+Ecut_for_eps = 5.0
+flg_cRPA = 1
+/
+&param_wannier
+N_wannier = 3
+Lower_energy_window = 11.0
+Upper_energy_window = 14.2
+/
+&param_interpolation
+dense = 8, 8, 8
+/
+&param_calc_int
+/

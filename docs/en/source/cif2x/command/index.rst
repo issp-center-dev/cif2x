@@ -40,6 +40,8 @@ DESCRIPTION:
 
     - ``AkaiKKR``: generates input files for AkaiKKR.
 
+    - ``respack``: generates the RESPACK workflow — the Quantum ESPRESSO inputs (``scf``/``nscf``/``bands`` tasks) and the RESPACK control file ``input.in`` (a ``mode: respack`` task). The structure must be the standardized primitive cell (``structure.use_primitive: true``, ``use_ibrav: false``). ``N_wannier`` and the energy windows are user physics supplied in the ``content``/template; initial guesses use SCDM (``N_initial_guess = 0``), targeting the ``respack-wannier-py`` port. The ``nscf`` task must set ``nosym = .true.``/``noinv = .true.`` for ``qe2respack``. Run order: ``scf`` → ``nscf`` → ``qe2respack`` → ``respack``.
+
   - ``--dry-run``
 
     prints the generated input files to standard output instead of writing them to disk. This is useful for previewing the result without creating any files or directories.

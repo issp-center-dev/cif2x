@@ -1,0 +1,23 @@
+structure:
+  use_primitive: true
+  use_ibrav: false
+
+optional:
+  pseudo_dir: ./pseudo
+  pp_file: pp.csv
+
+tasks:
+  - mode: scf
+    output_file: scf.in
+    content:
+      control: { calculation: scf }
+      K_POINTS: { option: automatic, grid: [6, 6, 6] }
+  - mode: nscf
+    output_file: nscf.in
+    content:
+      control: { calculation: nscf }
+      system: { nosym: true, noinv: true }
+      K_POINTS: { option: crystal, grid: [6, 6, 6] }
+  - mode: respack
+    output_file: input.in
+    template: respack.in_tmpl

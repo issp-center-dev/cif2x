@@ -19,6 +19,7 @@ from cif2x.input_validator import (
     InputValidationError,
     normalize_target,
     validate_input,
+    _target_choices,
 )
 from cif2x.mp_source import fetch_to_cif
 
@@ -39,7 +40,8 @@ def main():
     parser.add_argument("--version", action="version", version="%(prog)s version {}".format(__version__))
     parser.add_argument("-v", "--verbose", action="count", default=0, help="increase output verbosity")
     parser.add_argument("-q", "--quiet", action="count", default=0, help="increase output verbosity")
-    parser.add_argument("-t", "--target", action="store", required=True, help="target application. Supported targets: quantum_espresso (qe, espresso), vasp, openmx, akaikkr. (case-insensitive)")
+    parser.add_argument("-t", "--target", action="store", required=True,
+                        help="target application. Supported targets: {}. (case-insensitive)".format(_target_choices()))
     parser.add_argument("--dry-run", action="store_true", default=False, help="print the generated input files to stdout instead of writing them")
 
     args = parser.parse_args()
