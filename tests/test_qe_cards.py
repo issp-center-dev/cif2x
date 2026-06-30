@@ -153,3 +153,10 @@ def test_crystal_b_unknown_label_in_path_override_errors():
     with pytest.raises(ValueError, match="NOPE"):
         generate_k_points(_BandQE("bands", s),
                           {"option": "crystal_b", "path": [["NOPE"]]})
+
+
+def test_crystal_b_path_override_must_be_list_of_sequences():
+    s = _cubic()
+    with pytest.raises(ValueError, match="list of label sequences"):
+        generate_k_points(_BandQE("bands", s),
+                          {"option": "crystal_b", "path": ["\\Gamma", "X"]})

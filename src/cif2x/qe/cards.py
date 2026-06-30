@@ -163,6 +163,12 @@ def _generate_band_path(qe, params):
     label_coords = kpath["kpoints"]
     segments = params.get("path") or kpath["path"]
 
+    if any(isinstance(seg, str) for seg in segments):
+        raise ValueError(
+            "K_POINTS 'path' must be a list of label sequences "
+            "(e.g. [['\\Gamma', 'X', 'M']]), not a flat list of labels."
+        )
+
     rows = []
     for segment in segments:
         for i, label in enumerate(segment):
