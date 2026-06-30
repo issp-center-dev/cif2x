@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import tempfile
 from pathlib import Path
 from ruamel.yaml import YAML
 
@@ -18,6 +19,7 @@ from cif2x.input_validator import (
     normalize_target,
     validate_input,
 )
+from cif2x.mp_source import fetch_to_cif
 
 
 def main():
@@ -25,7 +27,14 @@ def main():
 
     parser = argparse.ArgumentParser(prog="cif2x")
     parser.add_argument("input_file", action="store", help="input parameter file (input.yaml)")
-    parser.add_argument("cif_file", action="store", help="CIF file (data.cif)")
+    parser.add_argument("cif_file", action="store", nargs="?", default=None,
+                        help="CIF file (data.cif); optional when --mp-id is given")
+    parser.add_argument("--mp-id", action="store", default=None,
+                        help="Materials Project material id (e.g. mp-149); fetch the structure instead of reading a CIF file")
+    parser.add_argument("--symprec", action="store", type=float, default=0.1,
+                        help="symmetry tolerance for the fetched structure's CIF (used only with --mp-id; 0 disables)")
+    parser.add_argument("--api-key-file", action="store", default="materials_project.key",
+                        help="file holding the Materials Project API key (used only with --mp-id)")
     parser.add_argument("--version", action="version", version="%(prog)s version {}".format(__version__))
     parser.add_argument("-v", "--verbose", action="count", default=0, help="increase output verbosity")
     parser.add_argument("-q", "--quiet", action="count", default=0, help="increase output verbosity")
@@ -41,6 +50,14 @@ def main():
     except InputValidationError as e:
         logger.error(str(e))
         sys.exit(1)
+
+
+def _require_one_source(args):
+    """Require exactly one structure source: a positional CIF or --mp-id."""
+    if args.mp_id and args.cif_file:
+        raise InputValidationError("provide either a CIF file or --mp-id, not both.")
+    if not args.mp_id and not args.cif_file:
+        raise InputValidationError("provide a CIF file or --mp-id.")
 
 
 def _generator_class(target):
@@ -59,6 +76,7 @@ def _generator_class(target):
 
 def _run(args):
     target = normalize_target(args.target)
+    _require_one_source(args)
 
     try:
         yaml = YAML(typ="safe")
@@ -77,7 +95,15 @@ def _run(args):
 
     # `structure:` with no entries parses to None; pass {} so Cif2Struct's
     # params.get(...) does not crash on None.
-    struct = Cif2Struct(args.cif_file, info_dict.get("structure") or {})
+    struct_params = info_dict.get("structure") or {}
+    if args.mp_id:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cif_path = Path(tmpdir) / "structure.cif"
+            fetch_to_cif(args.mp_id, cif_path,
+                         symprec=args.symprec, api_key_file=args.api_key_file)
+            struct = Cif2Struct(str(cif_path), struct_params)
+    else:
+        struct = Cif2Struct(args.cif_file, struct_params)
 
     # `optional:` written with no entries parses to None; treat it as empty so
     # generators that read optional.get(...) do not crash on None.
