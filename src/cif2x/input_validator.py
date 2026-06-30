@@ -40,6 +40,11 @@ TARGETS = {
         "required": ("output_file",),
         "allowed": _COMMON_ALLOWED | {"mode", "workdir"},
     },
+    "respack": {
+        "aliases": ("respack",),
+        "required": ("mode", "output_file"),
+        "allowed": _COMMON_ALLOWED | {"mode"},
+    },
 }
 
 _TOP_LEVEL_KEYS = {"structure", "optional", "tasks"}

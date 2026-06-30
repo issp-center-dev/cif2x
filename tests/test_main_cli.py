@@ -243,3 +243,70 @@ def test_mp_id_path_reaches_writer(monkeypatch, tmp_path):
     assert captured["struct_cif"] == captured["dest"]
     assert captured["struct_cif_exists"] is True
     assert captured["struct_params"] == {}
+
+
+def test_respack_routes_qe_and_respack_tasks(monkeypatch, tmp_path):
+    pytest.importorskip("pymatgen")
+    captured = {"qe": [], "respack": []}
+
+    class _QE:
+        def __init__(self, params, struct):
+            pass
+
+        def write_input(self, *a, **k):
+            captured["qe"].append(True)
+
+    class _RP:
+        def __init__(self, params, struct):
+            pass
+
+        def write_input(self, *a, **k):
+            captured["respack"].append(True)
+
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    monkeypatch.setattr(main_mod, "Struct2QE", _QE)
+    monkeypatch.setattr(main_mod, "Struct2RESPACK", _RP)
+    yf = tmp_path / "input.yaml"
+    yf.write_text(
+        "structure:\n  use_primitive: true\n"
+        "tasks:\n"
+        "  - mode: scf\n    output_file: scf.in\n"
+        "  - mode: respack\n    output_file: input.in\n    template: r.in_tmpl\n"
+    )
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "respack", str(yf), str(cif)])
+    main_mod.main()
+    assert captured["qe"] == [True]
+    assert captured["respack"] == [True]
+
+
+def test_respack_rejects_non_workflow_mode(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    yf = tmp_path / "input.yaml"
+    yf.write_text(
+        "structure:\n  use_primitive: true\n"
+        "tasks:\n  - mode: relax\n    output_file: x.in\n"
+    )
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "respack", str(yf), str(cif)])
+    with caplog.at_level("ERROR"):
+        with pytest.raises(SystemExit):
+            main_mod.main()
+    assert "relax" in caplog.text
+
+
+def test_respack_requires_primitive_cell(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(main_mod, "Cif2Struct", lambda *a, **k: object())
+    yf = tmp_path / "input.yaml"
+    yf.write_text(
+        "tasks:\n  - mode: respack\n    output_file: input.in\n    template: r\n"
+    )
+    cif = tmp_path / "x.cif"
+    cif.write_text("")
+    monkeypatch.setattr(sys, "argv", ["cif2x", "-t", "respack", str(yf), str(cif)])
+    with caplog.at_level("ERROR"):
+        with pytest.raises(SystemExit):
+            main_mod.main()
+    assert "use_primitive" in caplog.text
