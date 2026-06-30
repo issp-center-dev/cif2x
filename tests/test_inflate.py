@@ -73,25 +73,30 @@ def test_qe_inflate_expands_range_placeholder():
 
 
 def test_vasp_content_inflate_expands_sweep():
-    mod = pytest.importorskip("cif2x.struct2vasp")
-    content = mod.Content(incar={"ENCUT": "${[400, 600]}"},
-                          kpoints={}, poscar={}, potcar={})
+    # importorskip the external dependency (matching tests/test_dry_run.py); a
+    # real import bug in struct2vasp then fails the test rather than skipping it.
+    pytest.importorskip("pymatgen")
+    from cif2x.struct2vasp import Content
+    content = Content(incar={"ENCUT": "${[400, 600]}"},
+                      kpoints={}, poscar={}, potcar={})
     results = utils_inflate(content)
     assert sorted((k, c["incar"]["ENCUT"]) for k, c in results) == \
         [("400", 400), ("600", 600)]
 
 
 def test_akaikkr_content_inflate_expands_sweep():
-    mod = pytest.importorskip("cif2x.struct2akaikkr")
-    content = mod.Content(go="go", bzqlty="${[12, 16]}")
+    pytest.importorskip("pymatgen")
+    from cif2x.struct2akaikkr import Content
+    content = Content(go="go", bzqlty="${[12, 16]}")
     results = utils_inflate(content)
     assert sorted((k, c["bzqlty"]) for k, c in results) == \
         [("12", 12), ("16", 16)]
 
 
 def test_openmx_content_inflate_expands_sweep():
-    mod = pytest.importorskip("cif2x.struct2openmx")
-    content = mod.Content.from_dict({"scf.energycutoff": "${[150, 200]}"})
+    pytest.importorskip("pymatgen")
+    from cif2x.struct2openmx import Content
+    content = Content.from_dict({"scf.energycutoff": "${[150, 200]}"})
     results = utils_inflate(content)
     assert sorted((k, c["scf.energycutoff"]) for k, c in results) == \
         [("150", 150), ("200", 200)]
