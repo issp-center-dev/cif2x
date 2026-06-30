@@ -76,7 +76,13 @@ for example:
 (disjoint segments); the generator marks them with a 0 in the per-line integer
 so ``bands.x`` does not interpolate across the gap. To use a custom path, give a
 ``path`` list of label sequences (labels must exist in the auto-generated
-k-path). Note: ``bands`` currently targets ``use_ibrav: false``.
+k-path).
+
+The high-symmetry coordinates are defined in the **standardized primitive cell**,
+so ``bands`` requires the structure to be that cell — use ``use_primitive: true``
+(and ``use_ibrav: false``). If the input is a conventional cell, a supercell, or
+otherwise non-standard, ``cif2x`` logs a warning ("band path: ... the path may be
+incorrect") and the sampled path will not match the written ``CELL_PARAMETERS``.
 
 There is no ``calculation='dos'`` in pw.x. A density-of-states run is the
 chain ``scf`` -> ``nscf`` (a dense mesh) -> ``dos`` (a ``dos.x`` input). The

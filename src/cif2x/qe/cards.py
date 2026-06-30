@@ -156,10 +156,23 @@ def _generate_band_path(qe, params):
     is ``line_npoints`` for interior points and 0 at the terminal point of each
     disjoint segment so bands.x does not interpolate across a break.
     """
+    import warnings
+
     from pymatgen.symmetry.bandstructure import HighSymmKpath
 
     line_npoints = int(params.get("line_npoints", 20))
-    kpath = HighSymmKpath(qe.struct.structure).kpath
+    # HighSymmKpath labels live in the standardized primitive reciprocal basis;
+    # if the input is not that cell (conventional cell, supercell,
+    # use_primitive: false) pymatgen warns that "the path may be incorrect".
+    # Surface that warning through cif2x's logger instead of bare stderr.
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        kpath = HighSymmKpath(qe.struct.structure).kpath
+    for w in caught:
+        # skip unrelated deprecation noise (e.g. spglib); surface the
+        # "path may be incorrect" warning so a wrong-cell input is visible.
+        if not issubclass(w.category, DeprecationWarning):
+            logger.warning("band path: %s", w.message)
     label_coords = kpath["kpoints"]
     segments = params.get("path") or kpath["path"]
 

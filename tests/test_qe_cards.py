@@ -160,3 +160,14 @@ def test_crystal_b_path_override_must_be_list_of_sequences():
     with pytest.raises(ValueError, match="list of label sequences"):
         generate_k_points(_BandQE("bands", s),
                           {"option": "crystal_b", "path": ["\\Gamma", "X"]})
+
+
+def test_crystal_b_warns_through_logger_for_nonstandard_cell(caplog):
+    from pymatgen.core import Lattice, Structure
+    # a conventional 4-atom FCC cell is not the standardized primitive cell, so
+    # pymatgen warns the band path may be incorrect; that must reach cif2x's log
+    coords = [[0, 0, 0], [0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]]
+    s = Structure(Lattice.cubic(3.6), ["Cu"] * 4, coords)
+    with caplog.at_level("WARNING", logger="cif2x.qe.cards"):
+        generate_k_points(_BandQE("bands", s), {"option": "crystal_b"})
+    assert any("band path" in r.getMessage() for r in caplog.records)
