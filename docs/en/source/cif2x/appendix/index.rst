@@ -54,7 +54,8 @@ Supported calculation modes
 ``ATOMIC_SPECIES``, ``ATOMIC_POSITIONS``, ``K_POINTS``) and sets ``calculation``
 from the task ``mode`` for ``scf``, ``nscf``, ``relax``, ``vc-relax``, and
 ``bands``. The ``&ions`` (for ``relax``/``vc-relax``) and ``&cell`` (for
-``vc-relax``) namelists are taken from the template/``content`` as written.
+``vc-relax``) namelists are taken from the template/``content`` as written —
+make sure they are present, as ``pw.x`` errors without them.
 
 For ``bands``, set the K_POINTS option to ``crystal_b`` in ``content``; the path
 is generated from the crystal symmetry with ``pymatgen``'s high-symmetry k-path,
@@ -77,6 +78,10 @@ for example:
 so ``bands.x`` does not interpolate across the gap. To use a custom path, give a
 ``path`` list of label sequences (labels must exist in the auto-generated
 k-path).
+
+Quantum ESPRESSO computes only the occupied (valence) bands by default, so set
+``nbnd`` explicitly in ``content.system`` to include conduction bands in the band
+structure.
 
 The high-symmetry coordinates are defined in the **standardized primitive cell**,
 so ``bands`` requires the structure to be that cell — use ``use_primitive: true``
@@ -101,6 +106,10 @@ in its template/``content``:
       - mode: dos
         template: dos.in_tmpl     # contains the &DOS namelist
         output_file: dos.in
+
+Run the generated inputs in order — ``scf``, then ``nscf``, then ``dos.x`` — and
+give all three the same ``prefix`` and ``outdir`` so each step can read the
+previous step's saved data.
 
 
 Troubleshooting
