@@ -5,7 +5,7 @@ from .cards import *
 from .tools import *
 
 def create_modeproc(mode, qe):
-    if mode in ["scf", "nscf"]:
+    if mode in ["scf", "nscf", "relax", "vc-relax", "bands"]:
         modeproc = QEmode_pw(qe)
     else:
         modeproc = QEmode_generic(qe)

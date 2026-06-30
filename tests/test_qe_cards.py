@@ -46,14 +46,14 @@ def _passthrough_to_text(tmp_path, txt):
     from cif2x.qe.content import Content
 
     class FakeQE:
-        mode = "bands"
+        mode = "dos"
 
     content = Content()
     content.namelist = None
     content.cards = dict(parse_cards(txt))
     content.textblock = None
 
-    create_modeproc("bands", FakeQE()).update_cards(content)
+    create_modeproc("dos", FakeQE()).update_cards(content)
     content.write_input("x.in", str(tmp_path))
     return (tmp_path / "x.in").read_text()
 
