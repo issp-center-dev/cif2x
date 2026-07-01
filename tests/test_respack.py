@@ -112,6 +112,34 @@ def test_trailing_content_rejected(tmp_path):
         _render(tmp_path, template=_write(tmp_path, t))
 
 
+def test_trailing_content_after_close_line_rejected(tmp_path):
+    # Non-blank text after the terminating '/' on the close line is outside
+    # the namelist; f90nml silently drops it, so the validator must reject it.
+    t = _TEMPLATE.rstrip("\n") + "  trailing junk\n"
+    with pytest.raises(InputValidationError, match="namelist-only|outside"):
+        _render(tmp_path, template=_write(tmp_path, t))
+
+
+def test_trailing_content_after_inline_close_rejected(tmp_path):
+    # Same-line '&name ... / junk': the '/' terminates the namelist and the
+    # trailing 'junk' is outside content that must be rejected, not dropped.
+    t = ("&param_wannier N_wannier=3 Lower_energy_window=11.0 "
+         "Upper_energy_window=14.2 / junk\n"
+         "&param_interpolation\ndense = 8, 8, 8\n/\n")
+    with pytest.raises(InputValidationError, match="namelist-only|outside"):
+        _render(tmp_path, template=_write(tmp_path, t))
+
+
+def test_quoted_slash_value_not_rejected(tmp_path):
+    # A '/' inside a quoted value (e.g. a path) must NOT be treated as the
+    # namelist terminator — this template is valid and must render.
+    t = _TEMPLATE.replace(
+        "&param_calc_int\n/\n",
+        "&param_calc_int\nfile_name = './dir/out.dat'\n/\n")
+    out = _render(tmp_path, template=_write(tmp_path, t))
+    assert "&param_wannier" in out
+
+
 def test_bad_dense_rejected(tmp_path):
     t = _TEMPLATE.replace("dense = 8, 8, 8", "dense = 8, 8")
     with pytest.raises(InputValidationError, match="dense"):

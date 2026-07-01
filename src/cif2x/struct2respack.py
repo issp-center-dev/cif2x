@@ -32,23 +32,46 @@ def _deepupdate(dst, src):
             dst[k] = v
 
 
+def _first_unquoted_slash(text):
+    """Index of the first '/' not inside a single/double-quoted string, else -1.
+
+    Fortran namelists terminate at the first unquoted '/'; a '/' inside a quoted
+    value (e.g. a file path) does not close the block.
+    """
+    quote = None
+    for i, ch in enumerate(text):
+        if quote is not None:
+            if ch == quote:
+                quote = None
+        elif ch in ("'", '"'):
+            quote = ch
+        elif ch == "/":
+            return i
+    return -1
+
+
 def _has_content_outside_namelists(text):
-    """True if a non-blank, non-comment line sits outside a &name.../ block."""
-    # NOTE: assumes namelist value lines do not end in a bare '/' (true for
-    # RESPACK's numeric/quoted namelists); an unquoted token ending in '/'
-    # would falsely close the block. Fails safe (rejects) rather than mis-render.
+    """True if a non-blank, non-comment line sits outside a &name.../ block.
+
+    A namelist terminates at the first unquoted '/'; any non-blank text after
+    that terminator (whether on the &open line or a dedicated close line) is
+    content outside the namelist and is rejected. Quoted '/' (e.g. paths) does
+    not close the block. An unquoted token containing '/' still fails safe
+    (rejects) rather than mis-render.
+    """
     inside = False
     for raw in text.splitlines():
         line = raw.split("!", 1)[0].strip()
         if not line:
             continue
-        if inside:
-            if line == "/" or line.endswith("/"):
-                inside = False
-        else:
-            if line.startswith("&"):
-                inside = not (line.endswith("/") or "/" in line[1:])
-            else:
+        if not inside:
+            if not line.startswith("&"):
+                return True
+            inside = True
+        slash = _first_unquoted_slash(line)
+        if slash != -1:
+            inside = False
+            if line[slash + 1:].strip():
                 return True
     return False
 
