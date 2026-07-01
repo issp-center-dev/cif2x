@@ -10,6 +10,7 @@ import copy
 
 from cif2x.cif2struct import Cif2Struct
 from cif2x.utils import dryrun_emit
+from cif2x.input_validator import InputValidationError
 from cif2x.qe.tools import *
 from cif2x.qe.qeutil import QEInputGeneral
 from cif2x.qe.content import Content, inflate
@@ -93,11 +94,12 @@ class Struct2QE:
         if ecutwfc is None or ecutrho is None:
             ecutwfc, ecutrho = self._find_elem_cutoff_from_file(ename)
 
-        if ecutwfc is None:
-            ecutwfc = 0.0
-        if ecutrho is None:
-            ecutrho = 0.0
-            
+        if ecutwfc is None or ecutrho is None:
+            raise InputValidationError(
+                "cutoff information not found for element '{}'. Provide it via "
+                "optional.cutoff_file or set content.system.ecutwfc/ecutrho "
+                "explicitly.".format(ename))
+
         return ecutwfc, ecutrho
 
     def _pp_filename(self, ename):
@@ -151,9 +153,6 @@ class Struct2QE:
                     elif "charge density" in s:
                         ecutrho = float(s.split()[6])
 
-        if ecutwfc is None or ecutrho is None:
-            # raise ValueError("cutoff information not found")
-            logger.error("cutoff information not found")
         return ecutwfc, ecutrho
 
     def _set_nspin_info(self, content):

@@ -4,6 +4,7 @@ pytest.importorskip("qe_tools")
 pd = pytest.importorskip("pandas")
 
 from cif2x.struct2qe import Struct2QE
+from cif2x.input_validator import InputValidationError
 
 
 def _qe(is_soc):
@@ -45,3 +46,41 @@ def test_cutoff_file_lookup_uses_soc_filename(tmp_path):
     ecutwfc, ecutrho = qe._find_elem_cutoff_from_file("Fe")
     assert ecutwfc == 40.0
     assert ecutrho == 320.0
+
+
+def test_find_elem_cutoff_missing_raises():
+    # Neither the cutoff CSV nor a UPF file is available: the resolver must
+    # reject with a clear error naming the element, not fall back to 0.0.
+    qe = Struct2QE.__new__(Struct2QE)
+    qe.is_soc = False
+    qe.cutoff_list = None
+    qe.pp_list = None
+    with pytest.raises(InputValidationError, match="Sr"):
+        qe._find_elem_cutoff("Sr")
+
+
+def test_find_elem_cutoff_resolves_from_table():
+    # Regression guard: a CSV hit resolves without error.
+    qe = Struct2QE.__new__(Struct2QE)
+    qe.is_soc = False
+    qe.pp_list = pd.DataFrame({"pseudopotential": ["pbe-spn-rrkjus_psl.1.0.0"]},
+                              index=["Fe"])
+    qe.cutoff_list = pd.DataFrame(
+        {"ecutwfc": [40.0], "ecutrho": [320.0]},
+        index=["Fe.pbe-spn-rrkjus_psl.1.0.0.UPF"],
+    )
+    assert qe._find_elem_cutoff("Fe") == (40.0, 320.0)
+
+
+def test_find_elem_cutoff_resolves_from_upf(tmp_path):
+    # Regression guard: a UPF-header hit resolves without error.
+    pytest.importorskip("bs4")
+    qe = Struct2QE.__new__(Struct2QE)
+    qe.is_soc = False
+    qe.pp_list = pd.DataFrame({"pseudopotential": ["pbe-spn-rrkjus_psl.1.0.0"]},
+                              index=["Fe"])
+    qe.cutoff_list = None
+    qe.pseudo_dir = str(tmp_path)
+    (tmp_path / "Fe.pbe-spn-rrkjus_psl.1.0.0.UPF").write_text(
+        '<UPF><PP_HEADER wfc_cutoff="40.0" rho_cutoff="320.0"/></UPF>')
+    assert qe._find_elem_cutoff("Fe") == (40.0, 320.0)
