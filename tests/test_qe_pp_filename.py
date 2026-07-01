@@ -116,3 +116,31 @@ def test_find_elem_cutoff_skips_unneeded_rho(tmp_path):
         '<UPF><PP_HEADER wfc_cutoff="40.0"/></UPF>')
     ecutwfc, ecutrho = qe._find_elem_cutoff("Fe", need_wfc=True, need_rho=False)
     assert ecutwfc == 40.0
+
+
+def test_update_cutoff_info_keeps_user_wfc_and_fills_rho(tmp_path):
+    # Regression: when the user supplies ecutwfc and leaves ecutrho empty,
+    # _update_cutoff_info must keep the user's ecutwfc and fill only ecutrho
+    # from a UPF that exposes only rho_cutoff -- not reject the input.
+    pytest.importorskip("bs4")
+    from types import SimpleNamespace
+    from cif2x.qe.calc_mode import QEmode_pw
+
+    qe = Struct2QE.__new__(Struct2QE)
+    qe.is_soc = False
+    qe.pp_list = pd.DataFrame({"pseudopotential": ["pbe-spn-rrkjus_psl.1.0.0"]},
+                              index=["Fe"])
+    qe.cutoff_list = None
+    qe.pseudo_dir = str(tmp_path)
+    qe.struct = SimpleNamespace(elem_names=["Fe"])
+    (tmp_path / "Fe.pbe-spn-rrkjus_psl.1.0.0.UPF").write_text(
+        '<UPF><PP_HEADER rho_cutoff="320.0"/></UPF>')
+
+    mode = QEmode_pw.__new__(QEmode_pw)
+    mode.qe = qe
+    content = SimpleNamespace(
+        namelist={"system": {"ecutwfc": 40.0, "ecutrho": None}})
+    mode._update_cutoff_info(content)
+
+    assert content.namelist["system"]["ecutwfc"] == 40.0   # user value kept
+    assert content.namelist["system"]["ecutrho"] == 320.0  # filled from UPF
