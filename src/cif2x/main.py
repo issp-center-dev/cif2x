@@ -14,10 +14,12 @@ from cif2x.struct2qe import Struct2QE
 from cif2x.struct2vasp import Struct2Vasp
 from cif2x.struct2openmx import Struct2OpenMX
 from cif2x.struct2akaikkr import Struct2AkaiKKR
+from cif2x.struct2respack import Struct2RESPACK
 from cif2x.input_validator import (
     InputValidationError,
     normalize_target,
     validate_input,
+    _target_choices,
 )
 from cif2x.mp_source import fetch_to_cif
 
@@ -38,7 +40,8 @@ def main():
     parser.add_argument("--version", action="version", version="%(prog)s version {}".format(__version__))
     parser.add_argument("-v", "--verbose", action="count", default=0, help="increase output verbosity")
     parser.add_argument("-q", "--quiet", action="count", default=0, help="increase output verbosity")
-    parser.add_argument("-t", "--target", action="store", required=True, help="target application. Supported targets: quantum_espresso (qe, espresso), vasp, openmx, akaikkr. (case-insensitive)")
+    parser.add_argument("-t", "--target", action="store", required=True,
+                        help="target application. Supported targets: {}. (case-insensitive)".format(_target_choices()))
     parser.add_argument("--dry-run", action="store_true", default=False, help="print the generated input files to stdout instead of writing them")
 
     args = parser.parse_args()
@@ -72,6 +75,17 @@ def _generator_class(target):
         "openmx": Struct2OpenMX,
         "akaikkr": Struct2AkaiKKR,
     }[target]
+
+
+def _respack_generator(mode, taskid):
+    """Pick the generator for a task under -t respack, by mode."""
+    if mode in ("scf", "nscf", "bands"):
+        return Struct2QE
+    if mode == "respack":
+        return Struct2RESPACK
+    raise InputValidationError(
+        f"task {taskid}: unsupported mode '{mode}' for target 'respack' "
+        "(use scf, nscf, bands, or respack).")
 
 
 def _run(args):
@@ -108,7 +122,13 @@ def _run(args):
     # `optional:` written with no entries parses to None; treat it as empty so
     # generators that read optional.get(...) do not crash on None.
     info_optional = info_dict.get("optional") or {}
-    generator_cls = _generator_class(target)
+    generator_cls = None if target == "respack" else _generator_class(target)
+
+    if target == "respack":
+        if not struct_params.get("use_primitive") or struct_params.get("use_ibrav"):
+            raise InputValidationError(
+                "target 'respack' requires structure.use_primitive: true and "
+                "use_ibrav: false (the high-symmetry k-path needs the primitive cell).")
 
     for idx, info in enumerate(info_dict["tasks"], start=1):
         logger.info(f"start task {idx}")
@@ -122,7 +142,14 @@ def _run(args):
         output_file = info.get("output_file")
         output_dir = info.get("output_dir", ".")
 
-        generator = generator_cls(params, struct)
+        if target == "respack" and info.get("mode") == "nscf":
+            _sys = (info.get("content") or {}).get("system") or {}
+            if not _sys.get("nosym") or not _sys.get("noinv"):
+                logger.warning(
+                    "respack: the nscf task should set content.system.nosym: true "
+                    "and noinv: true (required by qe2respack).")
+        gen_cls = _respack_generator(info.get("mode"), idx) if target == "respack" else generator_cls
+        generator = gen_cls(params, struct)
         generator.write_input(output_file, output_dir, dry_run=args.dry_run)
 
 
