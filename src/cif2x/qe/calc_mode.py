@@ -103,12 +103,15 @@ class QEmode_pw(QEmode_base):
 
     def _update_cutoff_info(self, content):
         if "system" in content.namelist:
-            if is_empty_key(content.namelist["system"], "ecutwfc") or is_empty_key(content.namelist["system"], "ecutrho"):
-                ecutwfc, ecutrho = self.qe._find_cutoff_info()
-                if content.namelist["system"]["ecutwfc"] is None:
-                    content.namelist["system"]["ecutwfc"] = ecutwfc
-                if content.namelist["system"]["ecutrho"] is None:
-                    content.namelist["system"]["ecutrho"] = ecutrho
+            system = content.namelist["system"]
+            need_wfc = is_empty_key(system, "ecutwfc")
+            need_rho = is_empty_key(system, "ecutrho")
+            if need_wfc or need_rho:
+                ecutwfc, ecutrho = self.qe._find_cutoff_info(need_wfc, need_rho)
+                if need_wfc:
+                    system["ecutwfc"] = ecutwfc
+                if need_rho:
+                    system["ecutrho"] = ecutrho
 
     def _update_nspin_info(self, content):
         if "system" in content.namelist:

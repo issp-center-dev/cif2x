@@ -79,13 +79,14 @@ class Struct2QE:
             else:
                 content.write_input(filename, Path(dirname, key))
 
-    def _find_cutoff_info(self):
-        cutoffs = [ self._find_elem_cutoff(ename) for ename in self.struct.elem_names ]
-        ecutwfc_max = max([wfc for wfc, _ in cutoffs])
-        ecutrho_max = max([rho for _, rho in cutoffs])
+    def _find_cutoff_info(self, need_wfc=True, need_rho=True):
+        cutoffs = [ self._find_elem_cutoff(ename, need_wfc, need_rho)
+                    for ename in self.struct.elem_names ]
+        ecutwfc_max = max(wfc for wfc, _ in cutoffs) if need_wfc else None
+        ecutrho_max = max(rho for _, rho in cutoffs) if need_rho else None
         return ecutwfc_max, ecutrho_max
 
-    def _find_elem_cutoff(self, ename):
+    def _find_elem_cutoff(self, ename, need_wfc=True, need_rho=True):
         ecutwfc, ecutrho = None, None
 
         if ecutwfc is None or ecutrho is None:
@@ -94,11 +95,16 @@ class Struct2QE:
         if ecutwfc is None or ecutrho is None:
             ecutwfc, ecutrho = self._find_elem_cutoff_from_file(ename)
 
-        if ecutwfc is None or ecutrho is None:
+        if need_wfc and ecutwfc is None:
             raise InputValidationError(
-                "cutoff information not found for element '{}'. Provide it via "
-                "optional.cutoff_file or set content.system.ecutwfc/ecutrho "
-                "explicitly.".format(ename))
+                "cutoff information (ecutwfc) not found for element '{}'. "
+                "Provide it via optional.cutoff_file or set "
+                "content.system.ecutwfc explicitly.".format(ename))
+        if need_rho and ecutrho is None:
+            raise InputValidationError(
+                "cutoff information (ecutrho) not found for element '{}'. "
+                "Provide it via optional.cutoff_file or set "
+                "content.system.ecutrho explicitly.".format(ename))
 
         return ecutwfc, ecutrho
 

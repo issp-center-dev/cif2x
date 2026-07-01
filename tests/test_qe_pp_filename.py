@@ -84,3 +84,35 @@ def test_find_elem_cutoff_resolves_from_upf(tmp_path):
     (tmp_path / "Fe.pbe-spn-rrkjus_psl.1.0.0.UPF").write_text(
         '<UPF><PP_HEADER wfc_cutoff="40.0" rho_cutoff="320.0"/></UPF>')
     assert qe._find_elem_cutoff("Fe") == (40.0, 320.0)
+
+
+def test_find_elem_cutoff_skips_unneeded_wfc(tmp_path):
+    # ecutwfc supplied by the user (need_wfc=False): a UPF exposing only
+    # rho_cutoff must resolve ecutrho without raising for the absent wfc.
+    pytest.importorskip("bs4")
+    qe = Struct2QE.__new__(Struct2QE)
+    qe.is_soc = False
+    qe.pp_list = pd.DataFrame({"pseudopotential": ["pbe-spn-rrkjus_psl.1.0.0"]},
+                              index=["Fe"])
+    qe.cutoff_list = None
+    qe.pseudo_dir = str(tmp_path)
+    (tmp_path / "Fe.pbe-spn-rrkjus_psl.1.0.0.UPF").write_text(
+        '<UPF><PP_HEADER rho_cutoff="320.0"/></UPF>')
+    ecutwfc, ecutrho = qe._find_elem_cutoff("Fe", need_wfc=False, need_rho=True)
+    assert ecutrho == 320.0
+
+
+def test_find_elem_cutoff_skips_unneeded_rho(tmp_path):
+    # ecutrho supplied by the user (need_rho=False): a UPF exposing only
+    # wfc_cutoff must resolve ecutwfc without raising for the absent rho.
+    pytest.importorskip("bs4")
+    qe = Struct2QE.__new__(Struct2QE)
+    qe.is_soc = False
+    qe.pp_list = pd.DataFrame({"pseudopotential": ["pbe-spn-rrkjus_psl.1.0.0"]},
+                              index=["Fe"])
+    qe.cutoff_list = None
+    qe.pseudo_dir = str(tmp_path)
+    (tmp_path / "Fe.pbe-spn-rrkjus_psl.1.0.0.UPF").write_text(
+        '<UPF><PP_HEADER wfc_cutoff="40.0"/></UPF>')
+    ecutwfc, ecutrho = qe._find_elem_cutoff("Fe", need_wfc=True, need_rho=False)
+    assert ecutwfc == 40.0
