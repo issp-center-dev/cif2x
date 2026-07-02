@@ -5,6 +5,7 @@ structure:
 optional:
   pseudo_dir: ./pseudo
   pp_file: pp.csv
+  cutoff_file: cutoff.csv
 
 tasks:
   - mode: scf

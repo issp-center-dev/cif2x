@@ -1,10 +1,9 @@
 """Integration regression test for the full `-t respack` 3-task flow.
 
-Runs the shipped sample (sample/cif2x/respack/SrVO3/input.yaml) end-to-end
-with a generated SrVO3 cell and mock ONCV pseudopotentials, so the sample's
-content shape is actually exercised (issue #15: the scf/nscf tasks used to
-put `control:`/`system:` outside `namelist:`, which the QE generator treats
-as cards, producing an input without any namelists).
+Runs the shipped sample (sample/cif2x/respack/SrVO3/) end-to-end so the
+sample's content shape is actually exercised (issue #15: the scf/nscf tasks
+used to put `control:`/`system:` outside `namelist:`, which the QE generator
+treats as cards, producing an input without any namelists).
 """
 
 import logging
@@ -22,23 +21,11 @@ SAMPLE_DIR = Path(__file__).resolve().parent.parent / "sample" / "cif2x" / "resp
 
 
 def _setup_case(workdir):
-    from pymatgen.core import Lattice, Structure
-
-    shutil.copy(SAMPLE_DIR / "input.yaml", workdir / "input.yaml")
-    shutil.copy(SAMPLE_DIR / "respack.in_tmpl", workdir / "respack.in_tmpl")
-
-    s = Structure(
-        Lattice.cubic(3.8425), ["Sr", "V", "O", "O", "O"],
-        [[0, 0, 0], [0.5, 0.5, 0.5], [0.5, 0.5, 0], [0.5, 0, 0.5], [0, 0.5, 0.5]])
-    s.to(filename=str(workdir / "SrVO3.cif"))
-
-    (workdir / "pseudo").mkdir()
-    for elem in ("Sr", "V", "O"):
-        (workdir / "pseudo" / f"{elem}.oncv.UPF").write_text(
-            '<UPF><PP_HEADER wfc_cutoff="40.0"/></UPF>')
-    (workdir / "pp.csv").write_text(
-        "element,pseudopotential,nexclude,orbitals\n"
-        "Sr,oncv,0,\nV,oncv,0,\nO,oncv,0,\n")
+    # the sample is self-contained apart from the UPF files themselves;
+    # cutoff.csv resolves both cutoffs, so no UPF needs to be read
+    for name in ("input.yaml", "respack.in_tmpl", "SrVO3.cif",
+                 "pp.csv", "cutoff.csv"):
+        shutil.copy(SAMPLE_DIR / name, workdir / name)
 
 
 def _run_cif2x(monkeypatch, workdir):
@@ -59,9 +46,10 @@ def test_sample_three_task_flow_generates_valid_inputs(tmp_path, monkeypatch, ca
     assert "&control" in scf
     assert "calculation = 'scf'" in scf
     assert "&system" in scf
-    assert "ecutwfc = 40.0" in scf
-    assert "ecutrho" not in scf          # ONCV set: left to the pw.x default
+    assert "ecutwfc = 80.0" in scf       # from the shipped cutoff.csv
+    assert "ecutrho = 320.0" in scf
     assert "ATOMIC_SPECIES" in scf
+    assert "Sr.ONCV_PBE-1.0.UPF" in scf  # pp.csv mapping reaches the card
     assert "ATOMIC_POSITIONS" in scf
     assert "K_POINTS {automatic}" in scf
     # the old broken shape leaked bare "control"/"system" card blocks
