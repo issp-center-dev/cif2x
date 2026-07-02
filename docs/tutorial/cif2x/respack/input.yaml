@@ -1,0 +1,64 @@
+structure:
+  use_primitive: true
+  use_ibrav: false
+
+optional:
+  pseudo_dir: ./pseudo
+  pp_file: pp.csv
+  cutoff_file: cutoff.csv
+
+tasks:
+  - mode: scf
+    output_file: scf.in
+    output_dir: scf
+    content:
+      namelist:
+        control:
+          prefix: pwscf
+          pseudo_dir:
+          outdir: ./work
+        system:
+          ibrav:
+          nat:
+          ntyp:
+          ecutwfc:
+          ecutrho:
+        electrons:
+          conv_thr: 1.e-8
+      CELL_PARAMETERS:
+      ATOMIC_SPECIES:
+      ATOMIC_POSITIONS:
+        option: crystal
+      K_POINTS:
+        option: automatic
+        grid: [6, 6, 6]
+  - mode: nscf
+    output_file: nscf.in
+    output_dir: nscf
+    content:
+      namelist:
+        control:
+          prefix: pwscf
+          pseudo_dir:
+          outdir: ./work
+        system:
+          ibrav:
+          nat:
+          ntyp:
+          ecutwfc:
+          ecutrho:
+          nbnd: 60
+          nosym: true
+          noinv: true
+        electrons:
+          conv_thr: 1.e-8
+      CELL_PARAMETERS:
+      ATOMIC_SPECIES:
+      ATOMIC_POSITIONS:
+        option: crystal
+      K_POINTS:
+        option: crystal
+        grid: [6, 6, 6]
+  - mode: respack
+    output_file: input.in
+    template: respack.in_tmpl

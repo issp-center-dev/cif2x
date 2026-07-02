@@ -1,0 +1,24 @@
+&param_chiqw
+    ecut_for_eps = 5.0
+    flg_crpa = 1
+/
+&param_wannier
+    lower_energy_window = 11.0
+    n_initial_guess = 0
+    n_wannier = 3
+    upper_energy_window = 14.2
+/
+&param_interpolation
+    dense = 8, 8, 8
+    n_sym_points = 6, 2
+/
+0.000000 0.000000 0.000000  ! \Gamma
+0.000000 0.500000 0.000000  ! X
+0.500000 0.500000 0.000000  ! M
+0.000000 0.000000 0.000000  ! \Gamma
+0.500000 0.500000 0.500000  ! R
+0.000000 0.500000 0.000000  ! X
+0.500000 0.500000 0.000000  ! M
+0.500000 0.500000 0.500000  ! R
+&param_calc_int
+/

@@ -111,3 +111,85 @@ AkaiKKR(ブリルアンゾーン品質の収束):
      bzqlty: ${ [12, 16, 20] }
 
 により ``12/``, ``16/``, ``20/`` に入力ファイルが生成されます。
+
+RESPACK ワークフロー
+----------------------------------------------------------------
+
+cif2x は、cRPA 計算パッケージ RESPACK に至る一連のワークフロー (Quantum ESPRESSO による SCF/NSCF 計算 → ``qe2respack`` による変換 → RESPACK 実行) のための入力ファイルをまとめて生成できます。cif2x の役割は入力ファイルの生成までで、計算の実行そのものは行いません。以下では ``docs/tutorial/cif2x/respack`` ディレクトリにある SrVO3 (立方晶ペロブスカイト) のサンプルを例に、3 つの入力ファイル (``scf/scf.in``, ``nscf/nscf.in``, ``input.in``) を生成します。
+
+入力パラメータファイル
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/input.yaml
+   :language: yaml
+
+``tasks`` には ``scf``, ``nscf``, ``respack`` の 3 つのタスクを記述します。``scf`` / ``nscf`` タスクは Quantum ESPRESSO 向けと同じ書式 (``content.namelist`` と cards) で記述します。RESPACK 固有の注意点は次のとおりです。
+
+- ``structure.use_primitive: true`` と ``use_ibrav: false`` は必須です。RESPACK 用の高対称 k 経路 (pymatgen の ``HighSymmKpath``) が標準化された primitive cell を前提とするためです。
+- ``nscf`` タスクでは ``system`` に ``nosym: true`` / ``noinv: true`` を指定します。``qe2respack`` が対称性で畳まれていない一様 k メッシュを要求するためで、``K_POINTS`` も ``option: crystal`` により全 k 点を列挙する形式にします。
+- ``nbnd`` は Wannier 関数の構成と cRPA 遮蔽計算に必要な空バンド数を確保する物理パラメータで、ユーザーが指定します (この例では 60)。
+
+RESPACK テンプレート
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``respack`` タスクは、``template`` に指定した RESPACK の namelist 雛形と結晶構造から ``input.in`` を生成します。テンプレートは ``&param_*`` namelist のみで構成します (namelist の外側に内容を書くことはできません)。
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/respack.in_tmpl
+   :language: fortran
+
+物理量はユーザーがテンプレートで与えます: ``N_wannier = 3`` (V の t2g 軌道)、エネルギー窓 ``Lower_energy_window`` / ``Upper_energy_window``、補間 k メッシュ ``dense``、および ``&param_chiqw`` の cRPA 設定 (``flg_cRPA = 1``) です。一方、``&param_interpolation`` の高対称 k 経路 (``N_sym_points`` と座標ブロック) は cif2x が結晶構造から自動生成し、Wannier 関数の初期推定は SCDM (``N_initial_guess = 0``) に固定されます。
+
+擬ポテンシャルの準備
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+RESPACK は Kohn-Sham 波動関数を直接扱うため、ノルム保存 (ONCV) 擬ポテンシャルを使用します。この例では SG15 ONCV (PBE, v1.0) を使用します。cif2x は擬ポテンシャルファイル名を ``<元素>.<名前>.UPF`` の形式で組み立てるため、ダウンロード後にリネームして ``optional.pseudo_dir`` (この例では ``./pseudo``) に配置します。
+
+.. code-block:: bash
+
+  $ cd pseudo
+  $ for el in Sr V O; do
+  >   curl -LO "http://www.quantum-simulation.org/potentials/sg15_oncv/upf/${el}_ONCV_PBE-1.0.upf"
+  >   mv ${el}_ONCV_PBE-1.0.upf ${el}.ONCV_PBE-1.0.UPF
+  > done
+
+元素種と擬ポテンシャル名の対応付けは ``optional.pp_file`` (``pp.csv``) で行います。
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/pp.csv
+
+ONCV の UPF ヘッダーにはカットオフの推奨値が含まれないため、この例ではカットオフを ``optional.cutoff_file`` (``cutoff.csv``) で与えます (``ecutwfc`` = 80 Ry, ``ecutrho`` = 320 Ry。値は目安であり、実際の計算では収束を確認してください)。
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/cutoff.csv
+
+入力ファイルを生成する
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+  $ cif2x -t respack input.yaml SrVO3.cif
+
+SCF 計算用の入力ファイルが ``scf/scf.in`` に書き出されます。
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/scf/scf.in
+   :language: fortran
+
+NSCF 計算用の入力ファイル ``nscf/nscf.in`` では、``calculation = 'nscf'`` に加えて ``nosym``, ``noinv``, ``nbnd`` が設定され、``K_POINTS crystal`` に全 k 点が列挙されます (紙面の都合で k 点リストは省略します)。
+
+RESPACK 用の制御ファイルは ``input.in`` に書き出されます。``&param_interpolation`` の namelist 終端 (``/``) の直後に、高対称 k 経路の座標ブロックが自動生成されている点に注意してください。
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/input.in
+   :language: fortran
+
+次のステップ: RESPACK の実行
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+生成した入力ファイルを使った計算は次の順で実行します (コマンドのみ示します。実行方法・並列化の詳細は Quantum ESPRESSO および RESPACK のドキュメントを参照してください)。
+
+.. code-block:: bash
+
+  $ pw.x -in scf/scf.in > scf.out                # SCF 計算
+  $ pw.x -in nscf/nscf.in > nscf.out             # NSCF 計算
+  $ qe2respack.py work/pwscf.save                # QE 出力を RESPACK 形式に変換
+  $ calc_wannier < input.in > log.wannier        # Wannier 関数の構成
+  $ calc_chiqw < input.in > log.chiqw            # cRPA 分極関数
+  $ calc_w3d < input.in > log.w3d                # 有効クーロン相互作用 W
+  $ calc_j3d < input.in > log.j3d                # 有効交換相互作用 J
