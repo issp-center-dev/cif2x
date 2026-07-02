@@ -148,6 +148,7 @@ RESPACK consumes the Kohn-Sham wavefunctions directly, so norm-conserving (ONCV)
 
 .. code-block:: bash
 
+  $ mkdir -p pseudo
   $ cd pseudo
   $ for el in Sr V O; do
   >   curl -LO "http://www.quantum-simulation.org/potentials/sg15_oncv/upf/${el}_ONCV_PBE-1.0.upf"
