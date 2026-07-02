@@ -95,3 +95,36 @@ def test_nscf_without_nosym_warns(tmp_path, monkeypatch, caplog):
         _run_cif2x(monkeypatch, tmp_path)
 
     assert [r for r in caplog.records if "nosym" in r.message]
+
+
+def test_nscf_without_noinv_warns(tmp_path, monkeypatch, caplog):
+    _setup_case(tmp_path)
+    text = (tmp_path / "input.yaml").read_text()
+    text = text.replace("noinv: true", "noinv: false")
+    (tmp_path / "input.yaml").write_text(text)
+
+    with caplog.at_level(logging.WARNING):
+        _run_cif2x(monkeypatch, tmp_path)
+
+    assert [r for r in caplog.records if "nosym" in r.message]
+
+
+def test_nscf_nosym_via_template_does_not_warn(tmp_path, monkeypatch, caplog):
+    # nosym/noinv supplied through a QE template (a supported input shape)
+    # must satisfy the qe2respack advisory: the check has to look at the
+    # merged template+content namelist, not only at the inline content.
+    _setup_case(tmp_path)
+    (tmp_path / "nscf.in_tmpl").write_text(
+        "&control\n/\n&system\n nosym = .true.\n noinv = .true.\n/\n")
+    text = (tmp_path / "input.yaml").read_text()
+    text = text.replace("          nosym: true\n          noinv: true\n", "")
+    assert "nosym" not in text
+    text = text.replace("  - mode: nscf\n",
+                        "  - mode: nscf\n    template: nscf.in_tmpl\n")
+    (tmp_path / "input.yaml").write_text(text)
+
+    with caplog.at_level(logging.WARNING):
+        _run_cif2x(monkeypatch, tmp_path)
+
+    assert "nosym = .true." in (tmp_path / "nscf.in").read_text()
+    assert not [r for r in caplog.records if "nosym" in r.message]
