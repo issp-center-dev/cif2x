@@ -3,6 +3,7 @@ logger = logging.getLogger(__name__)
 
 from .cards import *
 from .tools import *
+from cif2x.input_validator import InputValidationError
 
 def create_modeproc(mode, qe):
     if mode in ["scf", "nscf", "relax", "vc-relax", "bands"]:
@@ -62,8 +63,14 @@ class QEmode_pw(QEmode_base):
         }
 
     def update_namelist(self, content):
-        if not content.namelist:
-            return
+        system = content.namelist.get("system") if content.namelist else None
+        if not isinstance(system, dict):
+            # pw.x cannot run without a &system namelist (ecutwfc, nat and
+            # ntyp live there); a bare "system:" in YAML parses to None and
+            # is equally unusable: reject instead of emitting invalid input
+            raise InputValidationError(
+                "pw.x input requires a &system namelist; add one to the "
+                "template or content.namelist.system")
         self._update_struct_info(content)
         self._update_cutoff_info(content)
         self._update_nspin_info(content)
@@ -102,13 +109,41 @@ class QEmode_pw(QEmode_base):
                 content.namelist["system"]["ntyp"] = len(self.qe.struct.atom_types)
 
     def _update_cutoff_info(self, content):
-        if "system" in content.namelist:
-            if is_empty_key(content.namelist["system"], "ecutwfc") or is_empty_key(content.namelist["system"], "ecutrho"):
-                ecutwfc, ecutrho = self.qe._find_cutoff_info()
-                if content.namelist["system"]["ecutwfc"] is None:
-                    content.namelist["system"]["ecutwfc"] = ecutwfc
-                if content.namelist["system"]["ecutrho"] is None:
-                    content.namelist["system"]["ecutrho"] = ecutrho
+        system = content.namelist["system"]
+        # ecutwfc is mandatory for pw.x: fill it also when the template
+        # omits the key entirely, not only on a blank placeholder
+        wfc_absent = "ecutwfc" not in system
+        need_wfc = wfc_absent or system["ecutwfc"] is None
+        # an absent ecutrho normally means "leave it to pw.x", but when the
+        # template carries no cutoff keys at all it has no say on cutoffs,
+        # so a suggested ecutrho (vital for ultrasoft pseudos) is resolved too
+        need_rho = is_empty_key(system, "ecutrho") or \
+            (wfc_absent and "ecutrho" not in system)
+        if need_wfc or need_rho:
+            known_wfc = None
+            if not need_wfc:
+                # the user-supplied value feeds the 4*ecutwfc floor and the
+                # generated input: reject non-numeric values with a clear error
+                try:
+                    known_wfc = float(system["ecutwfc"])
+                except (TypeError, ValueError):
+                    raise InputValidationError(
+                        "content.namelist.system.ecutwfc must be numeric, "
+                        "got {!r}".format(system["ecutwfc"]))
+                # write the normalized number back so a numeric string
+                # ("100") is not rendered as a quoted Fortran string
+                system["ecutwfc"] = known_wfc
+            ecutwfc, ecutrho = self.qe._find_cutoff_info(need_wfc, need_rho,
+                                                         known_wfc)
+            if need_wfc:
+                system["ecutwfc"] = ecutwfc
+            if need_rho:
+                if ecutrho is None:
+                    # ecutrho is optional in QE: drop the key and let
+                    # pw.x default to 4*ecutwfc
+                    system.pop("ecutrho", None)
+                else:
+                    system["ecutrho"] = ecutrho
 
     def _update_nspin_info(self, content):
         if "system" in content.namelist:
