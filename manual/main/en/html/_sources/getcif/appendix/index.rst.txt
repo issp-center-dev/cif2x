@@ -103,7 +103,7 @@ The following notation is also available:
       - List[str]
       - A list of elements.
     * - energy_above_hull
-      - Tuple[int,int]
+      - Tuple[float,float]
       - Minimum and maximum energy above the hull in eV/atom to consider.
     * - equilibrium_reaction_energy
       - Tuple[float,float]
@@ -112,7 +112,7 @@ The following notation is also available:
       - List[str]
       - List of elements to exclude.
     * - formation_energy
-      - Tuple[int,int]
+      - Tuple[float,float]
       - Minimum and maximum formation energy in eV/atom to consider.
     * - formula
       - str | List[str]
@@ -196,7 +196,7 @@ The following notation is also available:
       - bool
       - Whether the material is theoretical.
     * - total_energy
-      - Tuple[int,int]
+      - Tuple[float,float]
       - Minimum and maximum corrected total energy in eV/atom to consider.
     * - total_magnetization
       - Tuple[float,float]
@@ -208,7 +208,7 @@ The following notation is also available:
       - Tuple[float,float]
       - Minimum and maximum total magnetization values normalized by volume to consider.
     * - uncorrected_energy
-      - Tuple[int,int]
+      - Tuple[float,float]
       - Minimum and maximum uncorrected total energy in eV/atom to consider.
     * - volume
       - Tuple[float,float]
@@ -318,3 +318,21 @@ The items available for the ``fields`` section for retrieving from the database 
     weighted_surface_energy_EV_PER_ANG2
     weighted_work_function
     xas
+
+
+Troubleshooting
+----------------------------------------------------------------
+
+Common issues that may occur when running ``getcif`` and how to resolve them are summarized below.
+
+- **The search returns no results**
+
+  When the search conditions are too narrow, no material may match and the result becomes empty. Relax the conditions in ``properties``, or check the actual query sent to the database with the ``--dry-run`` option and revise the conditions.
+
+- **API key not found**
+
+  If no API key can be obtained, the connection to the Materials Project fails. ``getcif`` first reads the ``.key`` file specified by ``api_key_file`` in the ``database`` section (default ``materials_project.key``); a present file takes precedence and its first non-comment line is used (which must be non-empty). If it is not found (or its first non-comment line is empty), key resolution is delegated to ``MPRester``, which falls back to the ``MP_API_KEY`` environment variable or the ``PMG_MAPI_KEY`` entry in the pymatgen configuration file ``~/.config/.pmgrc.yaml``. Make sure a valid API key is provided by one of these means (see "Getting an API key" in the tutorial).
+
+- **fields check failed / unknown query key**
+
+  Specifying a non-existent item name in ``fields`` raises ``unknown field name`` followed by a ``fields check failed`` error. Likewise, specifying an unknown search-condition key in ``properties`` raises an ``unknown query key`` error. Refer to the list of fields and the table of search-condition keywords in this chapter, and check the spelling of the item names.

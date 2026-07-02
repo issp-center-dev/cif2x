@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>5. ファイルフォーマット &#8212; cif2x Users Guide 1.1.0 ドキュメント</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
     <script src="../../_static/documentation_options.js?v=6599c6cf"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -59,7 +59,11 @@
 </div></blockquote>
 <p><code class="docutils literal notranslate"><span class="pre">supercell</span></code> (デフォルト値: なし)</p>
 <blockquote>
-<div><p>supercell を設定する場合に supercell のサイズを [<span class="math notranslate nohighlight">\(n_x\)</span>, <span class="math notranslate nohighlight">\(n_y\)</span>, <span class="math notranslate nohighlight">\(n_z\)</span>] で指定します。</p>
+<div><p>supercell を設定する場合に supercell のサイズを [<span class="math notranslate nohighlight">\(n_x\)</span>, <span class="math notranslate nohighlight">\(n_y\)</span>, <span class="math notranslate nohighlight">\(n_z\)</span>] で指定します。例えば各軸方向に 2倍の supercell を作成する場合は次のように指定します。</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">structure</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">supercell</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
 </div></blockquote>
 </div></blockquote>
 </section>
@@ -120,16 +124,24 @@
 <div><p><code class="docutils literal notranslate"><span class="pre">pp_file</span></code></p>
 <blockquote>
 <div><p>元素種と擬ポテンシャルを対応付けるCSV形式のインデックスファイルを指定します。
-ファイルの書式は、元素種、擬ポテンシャルファイルのタイプ、nexclude、orbitals です。例:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Fe</span><span class="p">,</span><span class="n">pbe</span><span class="o">-</span><span class="n">spn</span><span class="o">-</span><span class="n">rrkjus_psl</span><span class="mf">.0.2.1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="n">spd</span>
+ファイルの 1行目はヘッダで、列は <code class="docutils literal notranslate"><span class="pre">element,pseudopotential,nexclude,orbitals</span></code> です。各列の意味は以下のとおりです。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">element</span></code>: 元素記号。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pseudopotential</span></code>: 擬ポテンシャルファイル名のうち、元素記号と拡張子 <code class="docutils literal notranslate"><span class="pre">.UPF</span></code> を除いた部分(name stem)。擬ポテンシャルファイル名は <code class="docutils literal notranslate"><span class="pre">{element}.{pseudopotential}.UPF</span></code> として組み立てられます (スピン軌道相互作用を含む非共線計算では、生成される <code class="docutils literal notranslate"><span class="pre">ATOMIC_SPECIES</span></code> のファイル名が <code class="docutils literal notranslate"><span class="pre">{element}.rel-{pseudopotential}.UPF</span></code> のように <code class="docutils literal notranslate"><span class="pre">rel-</span></code> 付きになります)。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nexclude</span></code>: Wannier 関数によるバンド数の見積り (<code class="docutils literal notranslate"><span class="pre">nbnd</span></code>) で除外する内殻バンド数。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">orbitals</span></code>: Wannier 化の対象とする軌道を <code class="docutils literal notranslate"><span class="pre">s</span></code>, <code class="docutils literal notranslate"><span class="pre">p</span></code>, <code class="docutils literal notranslate"><span class="pre">d</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code> の文字で並べたもの。<code class="docutils literal notranslate"><span class="pre">nbnd</span></code> の計算に用いられます (<code class="docutils literal notranslate"><span class="pre">src/cif2x/struct2qe.py</span></code> の <code class="docutils literal notranslate"><span class="pre">_find_nbnd_info</span></code>)。</p></li>
+</ul>
+<p>例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">element</span><span class="p">,</span><span class="n">pseudopotential</span><span class="p">,</span><span class="n">nexclude</span><span class="p">,</span><span class="n">orbitals</span>
+<span class="n">Fe</span><span class="p">,</span><span class="n">pbe</span><span class="o">-</span><span class="n">spn</span><span class="o">-</span><span class="n">rrkjus_psl</span><span class="mf">.0.2.1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="n">spd</span>
 </pre></div>
 </div>
-<p>擬ポテンシャルファイルのファイル名は Fe.pbe-spn-rrkjus_psl.0.2.1.UPF に対応します。</p>
+<p>この行は擬ポテンシャルファイル <code class="docutils literal notranslate"><span class="pre">Fe.pbe-spn-rrkjus_psl.0.2.1.UPF</span></code> に対応します。</p>
 </div></blockquote>
 <p><code class="docutils literal notranslate"><span class="pre">cutoff_file</span></code></p>
 <blockquote>
 <div><p>擬ポテンシャルファイルとカットオフを対応付けるCSV形式のインデックスファイルを指定します。
-ファイルの書式は、擬ポテンシャルファイル、ecutwfcの値、ecutrhoの値 です。</p>
+列は <code class="docutils literal notranslate"><span class="pre">pseudofile,ecutwfc,ecutrho</span></code> で、それぞれ擬ポテンシャルファイル名、 <code class="docutils literal notranslate"><span class="pre">ecutwfc</span></code> の値、 <code class="docutils literal notranslate"><span class="pre">ecutrho</span></code> の値です。</p>
 </div></blockquote>
 <p><code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code></p>
 <blockquote>
@@ -161,7 +173,7 @@
 <p><strong>ATOMIC_SPECIES</strong></p>
 <ul class="simple">
 <li><p>原子種・原子量・擬ポテンシャルファイル名のリストを出力します。</p></li>
-<li><p>原子種の情報は結晶構造データから取得されます。擬ポテンシャルのファイル名は <code class="docutils literal notranslate"><span class="pre">pp_list</span></code> で指定するCSV形式のインデックスファイルを参照します。</p></li>
+<li><p>原子種の情報は結晶構造データから取得されます。擬ポテンシャルのファイル名は <code class="docutils literal notranslate"><span class="pre">pp_file</span></code> で指定するCSV形式のインデックスファイルを参照します。</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">data</span></code> フィールドに必要なデータを指定した場合はその値が用いられます。</p></li>
 </ul>
 <p><strong>ATOMIC_POSITIONS</strong></p>
@@ -209,7 +221,7 @@
 </div></blockquote>
 <p>以下の <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code> を指定した場合は pymatgen の流儀を無視して擬ポテンシャルの格納ディレクトリを探します。</p>
 <blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">psuedo_dir</span></code></p>
+<div><p><code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code></p>
 <blockquote>
 <div><p>擬ポテンシャルの格納ディレクトリを指定します。擬ポテンシャルファイルのファイル名は <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code>/POTCAR. <em>element</em> (.gz) または <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code>/<em>element</em>/POTCAR です。</p>
 </div></blockquote>
@@ -337,7 +349,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../command/index.html">4. コマンドリファレンス</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">5. ファイルフォーマット</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../appendix/index.html">6. 拡張ガイド</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../getcif/index.html">CIFデータ取得ツール (getcif)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getcif/index.html">7. CIFデータ取得ツール (getcif)</a></li>
 </ul>
 </li>
 </ul>

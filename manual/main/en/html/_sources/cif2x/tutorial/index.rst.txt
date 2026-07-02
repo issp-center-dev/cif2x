@@ -47,9 +47,23 @@ The program ``cif2x`` is executed with the input parameter file (``input.yaml``)
 
   $ cif2x -t QE input.yaml Co3SnS2_nosym.cif
 
-The required pseudo-potential files should be placed in the directory ``./pseudo``, and the index file for the pseudo-potential should be prepared as ``./psudo/pp_psl_pbe_rrkjus.csv``.
+Before running, the following preparation concerning the pseudo-potentials is required.
 
-Run ``cif2x`` and a set of input files for Quantum ESPRESSO will be created. The output file is specified by ``output_file`` parameter of the input parameter file, and stored in the directory given by ``output_dir``. In this example, the input file for SCF calculation is created as ``./scf/scf.in``.
+- **Place the pseudo-potential files (.UPF)**: Put the Quantum ESPRESSO pseudo-potential files (in ``.UPF`` format) used in the calculation into the directory specified by ``optional.pseudo_dir`` in the input parameter file (``./pseudo`` in this example). The pseudo-potential files themselves are not bundled in the repository; obtain the files for the pseudo-potential library you use from sources such as PSlibrary or the official Quantum ESPRESSO pseudo-potential page.
+
+- **Place the index file (CSV)**: Specify the index file that relates the element types to the pseudo-potential names by ``optional.pp_file`` (``./pseudo/pp_psl_pbe_rrkjus.csv`` in this example). The index file for PSlibrary (PBE, RRKJUS) used in this sample is bundled as ``docs/tutorial/cif2x/pseudo/pp_psl_pbe_rrkjus.csv``. When a different pseudo-potential library is used, prepare a similar file accordingly.
+
+Note that ``optional.pseudo_dir`` is the directory in which cif2x looks for ``.UPF`` files to obtain information such as cutoff values, and it is independent of the Quantum ESPRESSO ``control.pseudo_dir`` in the generated input file (the path that ``pw.x`` refers to for pseudo-potentials at run time). The latter is given in the ``namelist`` of ``content``; if left blank, cif2x fills it from ``optional.pseudo_dir`` (``./pseudo`` in this example).
+
+Run ``cif2x`` and a set of input files for Quantum ESPRESSO will be created. The output file is specified by ``output_file`` parameter of the input parameter file, and stored in the directory given by ``output_dir``. In this example, the input file for SCF calculation is created as ``./scf/scf.in``. Its content reads as follows.
+
+.. literalinclude:: ../../../../tutorial/cif2x/scf/scf.in
+   :language: fortran
+   :force:
+
+One can confirm that the cutoff values ``ecutwfc`` and ``ecutrho`` are obtained from the pseudo-potential files, that ``CELL_PARAMETERS``, ``ATOMIC_POSITIONS`` and the species in ``ATOMIC_SPECIES`` are derived from the crystal structure data, that the pseudo-potential file names in ``ATOMIC_SPECIES`` are taken from the ``optional.pp_file`` mapping, and that ``K_POINTS`` is generated from the ``content.K_POINTS`` setting (``grid: [8,8,8]`` in this example).
+
+Samples for VASP, OpenMX, and AkaiKKR are provided under the ``sample/cif2x/`` directory of the repository.
 
 
 Specifying parameter sets
@@ -65,3 +79,122 @@ In some cases, a series of input files should be generated with varying their pa
        grid:   ${ [ [4,4,4], [8,8,8], [12,12,12] ] }
 
 When ``K_POINTS`` is given as above, the input files having the ``grid`` value to be ``[4,4,4]``, ``[8,8,8]``, ``[12,12,12]`` will be generated in the sub-directories,  ``4x4x4/``, ``8x8x8/``, ``12x12x12/``, respectively.
+
+The same ``${...}`` syntax applies to every target, not only Quantum ESPRESSO;
+the output sub-directory name is derived from the swept value. As in the example
+above, each ``content:`` block below belongs to a ``tasks:`` entry. The swept key
+sits wherever the parameter lives in ``content`` — for VASP under ``incar`` (or
+``kpoints``/``poscar``/``potcar``); for OpenMX and AkaiKKR the ``content`` keys are
+flat.
+
+VASP — cutoff convergence:
+
+.. code-block:: yaml
+
+   content:
+     incar:
+       ENCUT: ${ [400, 600, 800] }
+
+generates the input files in ``400/``, ``600/``, ``800/``.
+
+OpenMX — energy-cutoff convergence:
+
+.. code-block:: yaml
+
+   content:
+     scf.energycutoff: ${ [150, 200, 250] }
+
+generates the input files in ``150/``, ``200/``, ``250/``.
+
+AkaiKKR — Brillouin-zone-quality convergence:
+
+.. code-block:: yaml
+
+   content:
+     bzqlty: ${ [12, 16, 20] }
+
+generates the input files in ``12/``, ``16/``, ``20/``.
+
+RESPACK workflow
+----------------------------------------------------------------
+
+cif2x can generate the whole set of input files for a workflow that leads to the cRPA package RESPACK: SCF/NSCF calculations with Quantum ESPRESSO, conversion with ``qe2respack``, and the RESPACK run itself. cif2x's role ends with generating the input files; it does not run any calculation. This section walks through the SrVO3 (cubic perovskite) example in the ``docs/tutorial/cif2x/respack`` directory and generates the three input files ``scf/scf.in``, ``nscf/nscf.in``, and ``input.in``.
+
+Input parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/input.yaml
+   :language: yaml
+
+The ``tasks`` list holds three tasks: ``scf``, ``nscf``, and ``respack``. The ``scf`` / ``nscf`` tasks use the same format as the Quantum ESPRESSO target (``content.namelist`` plus cards). The RESPACK-specific points are:
+
+- ``structure.use_primitive: true`` and ``use_ibrav: false`` are required: the high-symmetry k-path for RESPACK (pymatgen's ``HighSymmKpath``) assumes the standardized primitive cell.
+- The ``nscf`` task sets ``nosym: true`` / ``noinv: true`` in ``system``, because ``qe2respack`` requires a uniform k-mesh that is not folded by symmetry; accordingly ``K_POINTS`` uses ``option: crystal``, which lists every k-point explicitly.
+- ``nbnd`` is a physics parameter that reserves enough empty bands for the Wannier construction and the cRPA screening; the user chooses it (60 in this example).
+
+RESPACK template
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``respack`` task builds ``input.in`` from the RESPACK namelist template given by ``template`` and from the crystal structure. The template consists of ``&param_*`` namelists only (content outside the namelists is not allowed).
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/respack.in_tmpl
+   :language: fortran
+
+The physics is supplied by the user in the template: ``N_wannier = 3`` (the V t2g manifold), the energy window ``Lower_energy_window`` / ``Upper_energy_window``, the interpolation mesh ``dense``, and the cRPA settings in ``&param_chiqw`` (``flg_cRPA = 1``). cif2x auto-generates the high-symmetry k-path of ``&param_interpolation`` (``N_sym_points`` and the coordinate block) from the crystal structure, and the initial guess of the Wannier functions is fixed to SCDM (``N_initial_guess = 0``).
+
+Preparing the pseudopotentials
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+RESPACK consumes the Kohn-Sham wavefunctions directly, so norm-conserving (ONCV) pseudopotentials are used. This example uses the SG15 ONCV set (PBE, v1.0). cif2x composes pseudopotential file names as ``<element>.<name>.UPF``, so rename the downloaded files accordingly and place them in ``optional.pseudo_dir`` (``./pseudo`` in this example).
+
+.. code-block:: bash
+
+  $ mkdir -p pseudo
+  $ cd pseudo
+  $ for el in Sr V O; do
+  >   curl -LO "http://www.quantum-simulation.org/potentials/sg15_oncv/upf/${el}_ONCV_PBE-1.0.upf"
+  >   mv ${el}_ONCV_PBE-1.0.upf ${el}.ONCV_PBE-1.0.UPF
+  > done
+
+``optional.pp_file`` (``pp.csv``) maps the elements to these files:
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/pp.csv
+
+The ONCV UPF headers carry no recommended cutoffs, so this example supplies them via ``optional.cutoff_file`` (``cutoff.csv``): ``ecutwfc`` = 80 Ry and ``ecutrho`` = 320 Ry (indicative values — check convergence for production runs).
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/cutoff.csv
+
+Generating the input files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+  $ cif2x -t respack input.yaml SrVO3.cif
+
+The SCF input file is written to ``scf/scf.in``:
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/scf/scf.in
+   :language: fortran
+   :force:
+
+In the NSCF input file ``nscf/nscf.in``, ``calculation = 'nscf'`` is set together with ``nosym``, ``noinv``, and ``nbnd``, and ``K_POINTS crystal`` lists all k-points explicitly (the k-point list is omitted here for brevity).
+
+The RESPACK control file is written to ``input.in``. Note the coordinate block of the high-symmetry k-path that cif2x appends right after the terminator (``/``) of the ``&param_interpolation`` namelist:
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/input.in
+   :language: fortran
+
+Next step: running RESPACK
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The downstream calculation runs in the following order (commands only; see the Quantum ESPRESSO and RESPACK documentation for execution and parallelization details):
+
+.. code-block:: bash
+
+  $ pw.x -in scf/scf.in > scf.out                # SCF calculation
+  $ pw.x -in nscf/nscf.in > nscf.out             # NSCF calculation
+  $ qe2respack.py work/pwscf.save                # convert the QE output for RESPACK
+  $ calc_wannier < input.in > log.wannier        # Wannier functions
+  $ calc_chiqw < input.in > log.chiqw            # cRPA polarization
+  $ calc_w3d < input.in > log.w3d                # effective Coulomb interaction W
+  $ calc_j3d < input.in > log.j3d                # effective exchange interaction J

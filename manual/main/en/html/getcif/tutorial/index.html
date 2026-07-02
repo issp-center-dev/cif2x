@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>7.2. Tutorial &#8212; cif2x Users Guide 1.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
     <script src="../../_static/documentation_options.js?v=fc837d61"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -50,7 +50,7 @@ Visit the Materials Project website <a class="reference external" href="https://
 </pre></div>
 </div>
 </div></blockquote>
-<p>or editing the file <code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc</span></code> to include the following:</p>
+<p>or editing the file <code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc.yaml</span></code> to include the following:</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>PMG_MAPI_KEY:<span class="w"> </span>&lt;API_KEY&gt;
 </pre></div>
@@ -107,7 +107,7 @@ For the search conditions and data fields, a list may be given by a space-separa
 </div>
 <p>The input parameter file consists of <code class="docutils literal notranslate"><span class="pre">database</span></code>, <code class="docutils literal notranslate"><span class="pre">option</span></code>, <code class="docutils literal notranslate"><span class="pre">properties</span></code>, and <code class="docutils literal notranslate"><span class="pre">fields</span></code> sections.
 The <code class="docutils literal notranslate"><span class="pre">database</span></code> section describes settings about connecting to databases.
-In the example, <code class="docutils literal notranslate"><span class="pre">target</span></code> is set to Materials Project, though this term is not considered at present. <code class="docutils literal notranslate"><span class="pre">api_key</span></code> can be used to set the API key. The key may also be set in the pymatgen configuration file or in the environment variable. The latter is assumed in the tutorial.</p>
+In the example, <code class="docutils literal notranslate"><span class="pre">target</span></code> is set to Materials Project, though this term is not considered at present. To read the API key from a file, <code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> specifies the file name (which must end with <code class="docutils literal notranslate"><span class="pre">.key</span></code>); the default file name is <code class="docutils literal notranslate"><span class="pre">materials_project.key</span></code>. Note that there is no entry in the <code class="docutils literal notranslate"><span class="pre">database</span></code> section to set the API key value directly. Besides <code class="docutils literal notranslate"><span class="pre">api_key_file</span></code>, the API key can be provided through the environment variable <code class="docutils literal notranslate"><span class="pre">MP_API_KEY</span></code> or registered as <code class="docutils literal notranslate"><span class="pre">PMG_MAPI_KEY</span></code> in the pymatgen configuration file (<code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc.yaml</span></code>); see “Getting an API key” above. In this tutorial, <code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> is not specified, and the key is assumed to be provided via the environment variable or the pymatgen configuration file.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">option</span></code> section describes optional settings for the command execution.
 <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> specifies the directory to place the obtained data. The default is the current directory. If <code class="docutils literal notranslate"><span class="pre">dry_run</span></code> is set to <code class="docutils literal notranslate"><span class="pre">true</span></code>, getcif does not connect to the database; instead, it just prints the search conditions and exits. <code class="docutils literal notranslate"><span class="pre">dry_run</span></code> may be specified in the command-line option.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">properties</span></code> section describes search conditions. They are given in the form of <code class="docutils literal notranslate"><span class="pre">keyword:</span> <span class="pre">value</span></code> and treated as AND conditions.

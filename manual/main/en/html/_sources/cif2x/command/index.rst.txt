@@ -10,13 +10,14 @@ SYNOPSIS:
 
   .. code-block:: bash
 
-    cif2x [-v][-q] -t target input_yaml material.cif
+    cif2x [-v][-q][--dry-run] -t target input_yaml material.cif
+    cif2x [-v][-q][--dry-run] -t target --mp-id ID [--symprec PREC][--api-key-file FILE] input_yaml
     cif2x -h
     cif2x --version
 
 DESCRIPTION:
 
-  This program reads an input parameter file specified by ``input_yaml`` and a crystal data file specified by ``material.cif``, and generates a set of input files for first-principles calculation software. In the current version, the supported software includes Quantum ESPRESSO, VASP, and OpenMX.
+  This program reads an input parameter file specified by ``input_yaml`` and a crystal data file specified by ``material.cif``, and generates a set of input files for first-principles calculation software. In the current version, the supported software includes Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
   It takes the following command line options.
 
   - ``-v``
@@ -39,13 +40,35 @@ DESCRIPTION:
 
     - ``AkaiKKR``: generates input files for AkaiKKR.
 
+    - ``respack``: generates the RESPACK workflow — the Quantum ESPRESSO inputs (``scf``/``nscf`` tasks, plus an optional ``bands`` task) and the RESPACK control file ``input.in`` (a ``mode: respack`` task). The structure must be the **standardized primitive cell** that pymatgen's high-symmetry k-path assumes — set ``structure.use_primitive: true`` and ``use_ibrav: false``, and provide a standardized primitive structure; for non-cubic cells a mismatched cell makes the written k-path inconsistent with the QE cell (cif2x logs a warning). ``N_wannier`` and the energy windows are user physics supplied in the ``content``/template; initial guesses use SCDM (``N_initial_guess = 0``), targeting the ``respack-wannier-py`` port. The ``nscf`` task must set ``nosym = .true.``/``noinv = .true.`` for ``qe2respack``. Run order: ``scf`` → ``nscf`` → ``qe2respack`` → ``respack``.
+
+  - ``--dry-run``
+
+    prints the generated input files to standard output instead of writing them to disk. This is useful for previewing the result without creating any files or directories.
+
   - ``input_yaml``
 
     specifies an input parameter file in YAML format.
 
   - ``material.cif``
 
-    specifies crystal structure data file. It is in CIF (Crystallographic Information Framework) format, or other format supported by pymatgen.
+    specifies crystal structure data file, in CIF (Crystallographic Information Framework) format or another format supported by pymatgen. It is optional when ``--mp-id`` is given.
+
+  - ``--mp-id`` *ID*
+
+    fetches the crystal structure for the Materials Project material id *ID* (for example ``mp-149``) directly, instead of reading ``material.cif``. Provide exactly one of ``material.cif`` or ``--mp-id``. The API key is resolved from ``--api-key-file`` (default ``materials_project.key``), then the ``MP_API_KEY`` environment variable, then the ``PMG_MAPI_KEY`` entry in the pymatgen configuration (``~/.config/.pmgrc.yaml``) -- the same way as ``getcif``.
+
+  - ``--symprec`` *PREC*
+
+    symmetry tolerance applied when writing the fetched structure (default ``0.1``, matching the Materials Project). ``--symprec 0`` disables symmetry refinement. Used only with ``--mp-id``.
+
+  - ``--api-key-file`` *FILE*
+
+    file containing the Materials Project API key, one key per non-``#`` line (default ``materials_project.key``). Used only with ``--mp-id``.
+
+  .. note::
+
+     ``--mp-id`` reproduces the ``getcif`` then ``cif2x`` flow by writing the fetched structure to a temporary CIF and reading it back; the Materials Project final structure is used (not a conventionalized cell). Because the structure passes through CIF, site properties such as magnetic moments are not carried over, and disordered (partial-occupancy) structures are rejected by the Quantum ESPRESSO generator -- the same limitations as the two-step flow.
 
   - ``-h``
 

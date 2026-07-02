@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>5. File format &#8212; cif2x Users Guide 1.1.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
     <script src="../../_static/documentation_options.js?v=fc837d61"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -58,7 +58,11 @@
 </div></blockquote>
 <p><code class="docutils literal notranslate"><span class="pre">supercell</span></code> (default value: none)</p>
 <blockquote>
-<div><p>This parameter specifies the size of supercell, when it is adopted, in the form of  [<span class="math notranslate nohighlight">\(n_x\)</span>, <span class="math notranslate nohighlight">\(n_y\)</span>, <span class="math notranslate nohighlight">\(n_z\)</span>].</p>
+<div><p>This parameter specifies the size of supercell, when it is adopted, in the form of  [<span class="math notranslate nohighlight">\(n_x\)</span>, <span class="math notranslate nohighlight">\(n_y\)</span>, <span class="math notranslate nohighlight">\(n_z\)</span>]. For example, to build a supercell doubled along each axis:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">structure</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">supercell</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
 </div></blockquote>
 </div></blockquote>
 </section>
@@ -116,16 +120,23 @@ In the current version, <code class="docutils literal notranslate"><span class="
 <blockquote>
 <div><p><code class="docutils literal notranslate"><span class="pre">pp_file</span></code></p>
 <blockquote>
-<div><p>This parameter specifies the index file in CSV format that relates the element type and the pseudo-potential file. This file contains the following columns: element name, type of pseudo-potential, nexclude, orbitals. An example line is given as:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Fe</span><span class="p">,</span><span class="n">pbe</span><span class="o">-</span><span class="n">spn</span><span class="o">-</span><span class="n">rrkjus_psl</span><span class="mf">.0.2.1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="n">spd</span>
+<div><p>This parameter specifies the index file in CSV format that relates the element type and the pseudo-potential file. The first line is a header, and the columns are <code class="docutils literal notranslate"><span class="pre">element,pseudopotential,nexclude,orbitals</span></code>. The meaning of each column is:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">element</span></code>: the element symbol.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pseudopotential</span></code>: the name stem of the pseudo-potential file, i.e. the part of the file name excluding the element symbol and the <code class="docutils literal notranslate"><span class="pre">.UPF</span></code> extension. The pseudo-potential file name is assembled as <code class="docutils literal notranslate"><span class="pre">{element}.{pseudopotential}.UPF</span></code> (for SOC runs, i.e. noncollinear with spin-orbit coupling, the generated <code class="docutils literal notranslate"><span class="pre">ATOMIC_SPECIES</span></code> filename uses the <code class="docutils literal notranslate"><span class="pre">rel-</span></code> variant, e.g. <code class="docutils literal notranslate"><span class="pre">{element}.rel-{pseudopotential}.UPF</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nexclude</span></code>: the number of core bands to exclude when counting the number of bands (<code class="docutils literal notranslate"><span class="pre">nbnd</span></code>) for Wannier functions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">orbitals</span></code>: the orbitals to be Wannierized, given as a string of the characters <code class="docutils literal notranslate"><span class="pre">s</span></code>, <code class="docutils literal notranslate"><span class="pre">p</span></code>, <code class="docutils literal notranslate"><span class="pre">d</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code>. It is used to compute <code class="docutils literal notranslate"><span class="pre">nbnd</span></code> (see <code class="docutils literal notranslate"><span class="pre">_find_nbnd_info</span></code> in <code class="docutils literal notranslate"><span class="pre">src/cif2x/struct2qe.py</span></code>).</p></li>
+</ul>
+<p>An example line is given as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">element</span><span class="p">,</span><span class="n">pseudopotential</span><span class="p">,</span><span class="n">nexclude</span><span class="p">,</span><span class="n">orbitals</span>
+<span class="n">Fe</span><span class="p">,</span><span class="n">pbe</span><span class="o">-</span><span class="n">spn</span><span class="o">-</span><span class="n">rrkjus_psl</span><span class="mf">.0.2.1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="n">spd</span>
 </pre></div>
 </div>
-<p>The name of the pseudo-potential file corresponding to the above example reads
-Fe.pbe-spn-rrkjus_psl.0.2.1.UPF .</p>
+<p>This line corresponds to the pseudo-potential file <code class="docutils literal notranslate"><span class="pre">Fe.pbe-spn-rrkjus_psl.0.2.1.UPF</span></code>.</p>
 </div></blockquote>
 <p><code class="docutils literal notranslate"><span class="pre">cutoff_file</span></code></p>
 <blockquote>
-<div><p>This parameter specifies the index file in CSV format that relates the pseudo-potential file and the cutoff values. This file contains the following columns: name of pseudo-potential file, <code class="docutils literal notranslate"><span class="pre">ecutwfc</span></code> value, <code class="docutils literal notranslate"><span class="pre">ecutrho</span></code> value.</p>
+<div><p>This parameter specifies the index file in CSV format that relates the pseudo-potential file and the cutoff values. The columns are <code class="docutils literal notranslate"><span class="pre">pseudofile,ecutwfc,ecutrho</span></code>: the name of the pseudo-potential file, the <code class="docutils literal notranslate"><span class="pre">ecutwfc</span></code> value, and the <code class="docutils literal notranslate"><span class="pre">ecutrho</span></code> value, respectively.</p>
 </div></blockquote>
 <p><code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code></p>
 <blockquote>
@@ -158,7 +169,7 @@ It is indenepent from the <code class="docutils literal notranslate"><span class
 <p><strong>ATOMIC_SPECIES</strong></p>
 <ul class="simple">
 <li><p>This block exports a list of atom species, atomic mass, and the file name of the pseudo-potential data.</p></li>
-<li><p>The information of the atoms are obtained from the crystal structure data. The file names of the pseudo-potential data are referred from the CSV-formatted index file specified by <code class="docutils literal notranslate"><span class="pre">pp_list</span></code> parameter.</p></li>
+<li><p>The information of the atoms are obtained from the crystal structure data. The file names of the pseudo-potential data are referred from the CSV-formatted index file specified by <code class="docutils literal notranslate"><span class="pre">pp_file</span></code> parameter.</p></li>
 <li><p>When the <code class="docutils literal notranslate"><span class="pre">data</span></code> field is defined and contains the required data, these values will be used instead.</p></li>
 </ul>
 <p><strong>ATOMIC_POSITIONS</strong></p>
@@ -210,7 +221,7 @@ where
 </div></blockquote>
 <p>When the <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code> parameter is specified, it is used as the directory that holds the pseudo-potential files, ignoring the convention of pymatgen.</p>
 <blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">psuedo_dir</span></code></p>
+<div><p><code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code></p>
 <blockquote>
 <div><p>This parameter specifies the directory that holds the pseudo-potential files. The paths to the pseudo-potential file turn to <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code>/POTCAR.{element}(.gz), or <code class="docutils literal notranslate"><span class="pre">pseudo_dir</span></code>/{element}/POTCAR.</p>
 </div></blockquote>
