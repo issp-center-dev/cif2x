@@ -113,3 +113,86 @@ AkaiKKR — Brillouin-zone-quality convergence:
      bzqlty: ${ [12, 16, 20] }
 
 generates the input files in ``12/``, ``16/``, ``20/``.
+
+RESPACK workflow
+----------------------------------------------------------------
+
+cif2x can generate the whole set of input files for a workflow that leads to the cRPA package RESPACK: SCF/NSCF calculations with Quantum ESPRESSO, conversion with ``qe2respack``, and the RESPACK run itself. cif2x's role ends with generating the input files; it does not run any calculation. This section walks through the SrVO3 (cubic perovskite) example in the ``docs/tutorial/cif2x/respack`` directory and generates the three input files ``scf/scf.in``, ``nscf/nscf.in``, and ``input.in``.
+
+Input parameter file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/input.yaml
+   :language: yaml
+
+The ``tasks`` list holds three tasks: ``scf``, ``nscf``, and ``respack``. The ``scf`` / ``nscf`` tasks use the same format as the Quantum ESPRESSO target (``content.namelist`` plus cards). The RESPACK-specific points are:
+
+- ``structure.use_primitive: true`` and ``use_ibrav: false`` are required: the high-symmetry k-path for RESPACK (pymatgen's ``HighSymmKpath``) assumes the standardized primitive cell.
+- The ``nscf`` task sets ``nosym: true`` / ``noinv: true`` in ``system``, because ``qe2respack`` requires a uniform k-mesh that is not folded by symmetry; accordingly ``K_POINTS`` uses ``option: crystal``, which lists every k-point explicitly.
+- ``nbnd`` is a physics parameter that reserves enough empty bands for the Wannier construction and the cRPA screening; the user chooses it (60 in this example).
+
+RESPACK template
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``respack`` task builds ``input.in`` from the RESPACK namelist template given by ``template`` and from the crystal structure. The template consists of ``&param_*`` namelists only (content outside the namelists is not allowed).
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/respack.in_tmpl
+   :language: fortran
+
+The physics is supplied by the user in the template: ``N_wannier = 3`` (the V t2g manifold), the energy window ``Lower_energy_window`` / ``Upper_energy_window``, the interpolation mesh ``dense``, and the cRPA settings in ``&param_chiqw`` (``flg_cRPA = 1``). cif2x auto-generates the high-symmetry k-path of ``&param_interpolation`` (``N_sym_points`` and the coordinate block) from the crystal structure, and the initial guess of the Wannier functions is fixed to SCDM (``N_initial_guess = 0``).
+
+Preparing the pseudopotentials
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+RESPACK consumes the Kohn-Sham wavefunctions directly, so norm-conserving (ONCV) pseudopotentials are used. This example uses the SG15 ONCV set (PBE, v1.0). cif2x composes pseudopotential file names as ``<element>.<name>.UPF``, so rename the downloaded files accordingly and place them in ``optional.pseudo_dir`` (``./pseudo`` in this example).
+
+.. code-block:: bash
+
+  $ mkdir -p pseudo
+  $ cd pseudo
+  $ for el in Sr V O; do
+  >   curl -LO "http://www.quantum-simulation.org/potentials/sg15_oncv/upf/${el}_ONCV_PBE-1.0.upf"
+  >   mv ${el}_ONCV_PBE-1.0.upf ${el}.ONCV_PBE-1.0.UPF
+  > done
+
+``optional.pp_file`` (``pp.csv``) maps the elements to these files:
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/pp.csv
+
+The ONCV UPF headers carry no recommended cutoffs, so this example supplies them via ``optional.cutoff_file`` (``cutoff.csv``): ``ecutwfc`` = 80 Ry and ``ecutrho`` = 320 Ry (indicative values — check convergence for production runs).
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/cutoff.csv
+
+Generating the input files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+  $ cif2x -t respack input.yaml SrVO3.cif
+
+The SCF input file is written to ``scf/scf.in``:
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/scf/scf.in
+   :language: fortran
+
+In the NSCF input file ``nscf/nscf.in``, ``calculation = 'nscf'`` is set together with ``nosym``, ``noinv``, and ``nbnd``, and ``K_POINTS crystal`` lists all k-points explicitly (the k-point list is omitted here for brevity).
+
+The RESPACK control file is written to ``input.in``. Note the coordinate block of the high-symmetry k-path that cif2x appends right after the terminator (``/``) of the ``&param_interpolation`` namelist:
+
+.. literalinclude:: ../../../../tutorial/cif2x/respack/input.in
+   :language: fortran
+
+Next step: running RESPACK
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The downstream calculation runs in the following order (commands only; see the Quantum ESPRESSO and RESPACK documentation for execution and parallelization details):
+
+.. code-block:: bash
+
+  $ pw.x -in scf/scf.in > scf.out                # SCF calculation
+  $ pw.x -in nscf/nscf.in > nscf.out             # NSCF calculation
+  $ qe2respack.py work/pwscf.save                # convert the QE output for RESPACK
+  $ calc_wannier < input.in > log.wannier        # Wannier functions
+  $ calc_chiqw < input.in > log.chiqw            # cRPA polarization
+  $ calc_w3d < input.in > log.w3d                # effective Coulomb interaction W
+  $ calc_j3d < input.in > log.j3d                # effective exchange interaction J
