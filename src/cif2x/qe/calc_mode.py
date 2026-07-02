@@ -104,14 +104,21 @@ class QEmode_pw(QEmode_base):
     def _update_cutoff_info(self, content):
         if "system" in content.namelist:
             system = content.namelist["system"]
-            need_wfc = is_empty_key(system, "ecutwfc")
+            # ecutwfc is mandatory for pw.x: fill it also when the template
+            # omits the key entirely, not only on a blank placeholder
+            need_wfc = system.get("ecutwfc", None) is None
             need_rho = is_empty_key(system, "ecutrho")
             if need_wfc or need_rho:
                 ecutwfc, ecutrho = self.qe._find_cutoff_info(need_wfc, need_rho)
                 if need_wfc:
                     system["ecutwfc"] = ecutwfc
                 if need_rho:
-                    system["ecutrho"] = ecutrho
+                    if ecutrho is None:
+                        # ecutrho is optional in QE: drop the placeholder and
+                        # let pw.x default to 4*ecutwfc
+                        del system["ecutrho"]
+                    else:
+                        system["ecutrho"] = ecutrho
 
     def _update_nspin_info(self, content):
         if "system" in content.namelist:

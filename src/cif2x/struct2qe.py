@@ -20,6 +20,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _normalize_cutoff(value):
+    # blank CSV cells arrive as NaN and ld1.x-generated UPFs may carry the
+    # cutoff attribute with a literal 0.0; both mean "not specified"
+    if value is None:
+        return None
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return None
+    if np.isnan(value) or value <= 0.0:
+        return None
+    return value
+
+
 class Struct2QE:
     def __init__(self, info, struct):
         logger.debug("__init__")
@@ -83,28 +97,37 @@ class Struct2QE:
         cutoffs = [ self._find_elem_cutoff(ename, need_wfc, need_rho)
                     for ename in self.struct.elem_names ]
         ecutwfc_max = max(wfc for wfc, _ in cutoffs) if need_wfc else None
-        ecutrho_max = max(rho for _, rho in cutoffs) if need_rho else None
+        ecutrho_max = None
+        if need_rho:
+            if all(rho is None for _, rho in cutoffs):
+                # no pseudopotential suggests a charge-density cutoff (typical
+                # for norm-conserving sets): leave ecutrho to the pw.x default
+                logger.info("ecutrho not suggested by any pseudopotential; "
+                            "left to the QE default (4*ecutwfc)")
+            else:
+                # elements without a suggested ecutrho fall under QE's default
+                # 4*ecutwfc, which must compete against the suggested values
+                candidates = [rho if rho is not None else 4.0 * wfc
+                              for wfc, rho in cutoffs
+                              if rho is not None or wfc is not None]
+                ecutrho_max = max(candidates)
         return ecutwfc_max, ecutrho_max
 
     def _find_elem_cutoff(self, ename, need_wfc=True, need_rho=True):
-        ecutwfc, ecutrho = None, None
+        ecutwfc, ecutrho = self._find_elem_cutoff_from_table(ename)
 
         if ecutwfc is None or ecutrho is None:
-            ecutwfc, ecutrho = self._find_elem_cutoff_from_table(ename)
-
-        if ecutwfc is None or ecutrho is None:
-            ecutwfc, ecutrho = self._find_elem_cutoff_from_file(ename)
+            file_wfc, file_rho = self._find_elem_cutoff_from_file(ename)
+            if ecutwfc is None:
+                ecutwfc = file_wfc
+            if ecutrho is None:
+                ecutrho = file_rho
 
         if need_wfc and ecutwfc is None:
             raise InputValidationError(
                 "cutoff information (ecutwfc) not found for element '{}'. "
                 "Provide it via optional.cutoff_file or set "
-                "content.system.ecutwfc explicitly.".format(ename))
-        if need_rho and ecutrho is None:
-            raise InputValidationError(
-                "cutoff information (ecutrho) not found for element '{}'. "
-                "Provide it via optional.cutoff_file or set "
-                "content.system.ecutrho explicitly.".format(ename))
+                "content.namelist.system.ecutwfc explicitly.".format(ename))
 
         return ecutwfc, ecutrho
 
@@ -120,8 +143,8 @@ class Struct2QE:
         if self.cutoff_list is not None and self.pp_list is not None:
             pseudo_file = self._pp_filename(ename)
             if pseudo_file in self.cutoff_list.index:
-                ecutwfc = self.cutoff_list.at[pseudo_file, "ecutwfc"]
-                ecutrho = self.cutoff_list.at[pseudo_file, "ecutrho"]
+                ecutwfc = _normalize_cutoff(self.cutoff_list.at[pseudo_file, "ecutwfc"])
+                ecutrho = _normalize_cutoff(self.cutoff_list.at[pseudo_file, "ecutrho"])
                 logger.debug(f"cutoff: from csv: elem={ename}, ecutwfc={ecutwfc}, ecutrho={ecutrho}")
             else:
                 logger.debug(f"cutoff: from csv: entry not found: {pseudo_file}")
@@ -146,18 +169,18 @@ class Struct2QE:
 
         if bs and bs.upf and bs.upf.pp_header:
             if bs.upf.pp_header.has_attr("wfc_cutoff"):
-                ecutwfc = float(bs.upf.pp_header["wfc_cutoff"])
+                ecutwfc = _normalize_cutoff(bs.upf.pp_header["wfc_cutoff"])
             if bs.upf.pp_header.has_attr("rho_cutoff"):
-                ecutrho = float(bs.upf.pp_header["rho_cutoff"])
+                ecutrho = _normalize_cutoff(bs.upf.pp_header["rho_cutoff"])
         if ecutwfc is None or ecutrho is None:
             if bs and bs.upf and bs.upf.pp_info:
                 lines = str(bs.upf.pp_info).splitlines()
                 sg = [s for s in lines if "Suggested" in s]
                 for s in sg:
                     if "wavefunctions" in s:
-                        ecutwfc = float(s.split()[5])
+                        ecutwfc = _normalize_cutoff(s.split()[5])
                     elif "charge density" in s:
-                        ecutrho = float(s.split()[6])
+                        ecutrho = _normalize_cutoff(s.split()[6])
 
         return ecutwfc, ecutrho
 
