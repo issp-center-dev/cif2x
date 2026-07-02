@@ -63,9 +63,11 @@ class QEmode_pw(QEmode_base):
         }
 
     def update_namelist(self, content):
-        if "system" not in content.namelist:
+        system = content.namelist.get("system") if content.namelist else None
+        if not isinstance(system, dict):
             # pw.x cannot run without a &system namelist (ecutwfc, nat and
-            # ntyp live there): reject instead of emitting an invalid input
+            # ntyp live there); a bare "system:" in YAML parses to None and
+            # is equally unusable: reject instead of emitting invalid input
             raise InputValidationError(
                 "pw.x input requires a &system namelist; add one to the "
                 "template or content.namelist.system")
@@ -118,7 +120,19 @@ class QEmode_pw(QEmode_base):
         need_rho = is_empty_key(system, "ecutrho") or \
             (wfc_absent and "ecutrho" not in system)
         if need_wfc or need_rho:
-            known_wfc = None if need_wfc else system["ecutwfc"]
+            known_wfc = None
+            if not need_wfc:
+                # the user-supplied value feeds the 4*ecutwfc floor and the
+                # generated input: reject non-numeric values with a clear error
+                try:
+                    known_wfc = float(system["ecutwfc"])
+                except (TypeError, ValueError):
+                    raise InputValidationError(
+                        "content.namelist.system.ecutwfc must be numeric, "
+                        "got {!r}".format(system["ecutwfc"]))
+                # write the normalized number back so a numeric string
+                # ("100") is not rendered as a quoted Fortran string
+                system["ecutwfc"] = known_wfc
             ecutwfc, ecutrho = self.qe._find_cutoff_info(need_wfc, need_rho,
                                                          known_wfc)
             if need_wfc:

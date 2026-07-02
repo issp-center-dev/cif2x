@@ -32,6 +32,14 @@ def test_zero_header_cutoff_treated_as_missing(tmp_path):
     assert read_pseudo_cutoff(str(upf)) == [str(upf), 40.0, ""]
 
 
+def test_absent_rho_attribute_yields_blank_cell(tmp_path):
+    # No rho_cutoff anywhere (header or pp_info): the row is still emitted,
+    # with a blank ecutrho cell, instead of dropping the pseudopotential.
+    upf = tmp_path / "Fe.UPF"
+    _write_upf(upf, header_attrs='wfc_cutoff="40.0"')
+    assert read_pseudo_cutoff(str(upf)) == [str(upf), 40.0, ""]
+
+
 def test_missing_wfc_cutoff_returns_none(tmp_path):
     upf = tmp_path / "Fe.UPF"
     _write_upf(upf, header_attrs='rho_cutoff="320.0"')

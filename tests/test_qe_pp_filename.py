@@ -334,6 +334,56 @@ def test_pw_mode_requires_system_namelist():
         _pw_mode(qe).update_namelist(content)
 
 
+def test_pw_mode_rejects_none_namelist():
+    # Content() initializes namelist to None; the &system guard must raise the
+    # clear InputValidationError, not a TypeError from `"system" in None`.
+    from types import SimpleNamespace
+    qe = _qe(False)
+    content = SimpleNamespace(namelist=None, cards=None)
+    with pytest.raises(InputValidationError, match="system"):
+        _pw_mode(qe).update_namelist(content)
+
+
+def test_pw_mode_rejects_non_mapping_system():
+    # YAML "system:" with no body parses to None: it passes a bare membership
+    # check but crashes the update helpers, so reject it like a missing block.
+    from types import SimpleNamespace
+    qe = _qe(False)
+    content = SimpleNamespace(namelist={"system": None}, cards=None)
+    with pytest.raises(InputValidationError, match="system"):
+        _pw_mode(qe).update_namelist(content)
+
+
+def test_numeric_string_ecutwfc_normalized_in_output():
+    # A numeric string ("100") is accepted leniently, but the namelist value
+    # must be written back as a number so f90nml does not quote it.
+    from types import SimpleNamespace
+    qe = _qe(cutoff_list=_fe_cutoff_csv(40.0, 160.0))
+    qe.struct = SimpleNamespace(elem_names=["Fe"])
+
+    content = SimpleNamespace(
+        namelist={"system": {"ecutwfc": "100", "ecutrho": None}})
+    _pw_mode(qe)._update_cutoff_info(content)
+
+    assert content.namelist["system"]["ecutwfc"] == 100.0
+    assert isinstance(content.namelist["system"]["ecutwfc"], float)
+    assert content.namelist["system"]["ecutrho"] == 400.0
+
+
+def test_non_numeric_user_ecutwfc_rejected():
+    # A non-numeric user value reaching the 4*ecutwfc floor must produce a
+    # clear InputValidationError, not a TypeError from 4.0 * "80 Ry"
+    # (numeric strings like "100" are accepted leniently via float()).
+    from types import SimpleNamespace
+    qe = _qe(cutoff_list=_fe_cutoff_csv(40.0, 160.0))
+    qe.struct = SimpleNamespace(elem_names=["Fe"])
+
+    content = SimpleNamespace(
+        namelist={"system": {"ecutwfc": "80 Ry", "ecutrho": None}})
+    with pytest.raises(InputValidationError, match="ecutwfc"):
+        _pw_mode(qe)._update_cutoff_info(content)
+
+
 def test_file_fallback_skipped_when_missing_field_not_needed():
     # ecutrho supplied by the user (need_rho=False) and ecutwfc resolved from
     # the CSV: the UPF file must not be opened just because the CSV rho cell
