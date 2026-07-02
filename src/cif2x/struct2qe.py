@@ -28,6 +28,7 @@ def _normalize_cutoff(value):
     try:
         value = float(value)
     except (TypeError, ValueError):
+        logger.warning(f"unparseable cutoff value {value!r}; treated as unspecified")
         return None
     if np.isnan(value) or value <= 0.0:
         return None
@@ -93,30 +94,44 @@ class Struct2QE:
             else:
                 content.write_input(filename, Path(dirname, key))
 
-    def _find_cutoff_info(self, need_wfc=True, need_rho=True):
+    def _find_cutoff_info(self, need_wfc=True, need_rho=True, known_wfc=None):
         cutoffs = [ self._find_elem_cutoff(ename, need_wfc, need_rho)
                     for ename in self.struct.elem_names ]
         ecutwfc_max = max(wfc for wfc, _ in cutoffs) if need_wfc else None
         ecutrho_max = None
         if need_rho:
-            if all(rho is None for _, rho in cutoffs):
+            suggested = [rho for _, rho in cutoffs if rho is not None]
+            if not suggested:
                 # no pseudopotential suggests a charge-density cutoff (typical
                 # for norm-conserving sets): leave ecutrho to the pw.x default
                 logger.info("ecutrho not suggested by any pseudopotential; "
                             "left to the QE default (4*ecutwfc)")
             else:
-                # elements without a suggested ecutrho fall under QE's default
-                # 4*ecutwfc, which must compete against the suggested values
-                candidates = [rho if rho is not None else 4.0 * wfc
-                              for wfc, rho in cutoffs
-                              if rho is not None or wfc is not None]
-                ecutrho_max = max(candidates)
+                bare = [ename for ename, (_, rho)
+                        in zip(self.struct.elem_names, cutoffs) if rho is None]
+                if bare:
+                    logger.warning("ecutrho not suggested for element(s) {}; "
+                                   "covered by the 4*ecutwfc floor"
+                                   .format(", ".join(bare)))
+                # an explicit ecutrho must never fall below QE's own default,
+                # 4 * the ecutwfc actually written to the input (the resolved
+                # maximum, or the user-supplied value when need_wfc is False)
+                ecutrho_max = max(suggested)
+                final_wfc = ecutwfc_max if need_wfc else known_wfc
+                if final_wfc is not None:
+                    floor = 4.0 * final_wfc
+                    # cutoff CSVs often store a rounded print of exactly
+                    # 4*ecutwfc: keep the stored value over a rounding-level
+                    # difference, lift only when genuinely below the default
+                    if ecutrho_max < floor and \
+                            not np.isclose(ecutrho_max, floor, rtol=1.0e-6):
+                        ecutrho_max = floor
         return ecutwfc_max, ecutrho_max
 
     def _find_elem_cutoff(self, ename, need_wfc=True, need_rho=True):
         ecutwfc, ecutrho = self._find_elem_cutoff_from_table(ename)
 
-        if ecutwfc is None or ecutrho is None:
+        if (need_wfc and ecutwfc is None) or (need_rho and ecutrho is None):
             file_wfc, file_rho = self._find_elem_cutoff_from_file(ename)
             if ecutwfc is None:
                 ecutwfc = file_wfc
@@ -164,7 +179,7 @@ class Struct2QE:
             with open(pseudo_file, "r") as fp:
                 bs = BeautifulSoup(fp, "html.parser")
         except Exception as e:
-            logger.error(f"{pseudo_file}: {e}")
+            logger.warning(f"{pseudo_file}: {e}")
             pass
 
         if bs and bs.upf and bs.upf.pp_header:
@@ -173,13 +188,15 @@ class Struct2QE:
             if bs.upf.pp_header.has_attr("rho_cutoff"):
                 ecutrho = _normalize_cutoff(bs.upf.pp_header["rho_cutoff"])
         if ecutwfc is None or ecutrho is None:
+            # fill only the fields the header did not provide; a "Suggested"
+            # line may itself carry an unset 0.0 and must not clobber them
             if bs and bs.upf and bs.upf.pp_info:
                 lines = str(bs.upf.pp_info).splitlines()
                 sg = [s for s in lines if "Suggested" in s]
                 for s in sg:
-                    if "wavefunctions" in s:
+                    if "wavefunctions" in s and ecutwfc is None:
                         ecutwfc = _normalize_cutoff(s.split()[5])
-                    elif "charge density" in s:
+                    elif "charge density" in s and ecutrho is None:
                         ecutrho = _normalize_cutoff(s.split()[6])
 
         return ecutwfc, ecutrho

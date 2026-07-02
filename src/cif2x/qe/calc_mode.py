@@ -3,6 +3,7 @@ logger = logging.getLogger(__name__)
 
 from .cards import *
 from .tools import *
+from cif2x.input_validator import InputValidationError
 
 def create_modeproc(mode, qe):
     if mode in ["scf", "nscf", "relax", "vc-relax", "bands"]:
@@ -62,8 +63,12 @@ class QEmode_pw(QEmode_base):
         }
 
     def update_namelist(self, content):
-        if not content.namelist:
-            return
+        if "system" not in content.namelist:
+            # pw.x cannot run without a &system namelist (ecutwfc, nat and
+            # ntyp live there): reject instead of emitting an invalid input
+            raise InputValidationError(
+                "pw.x input requires a &system namelist; add one to the "
+                "template or content.namelist.system")
         self._update_struct_info(content)
         self._update_cutoff_info(content)
         self._update_nspin_info(content)
@@ -102,23 +107,29 @@ class QEmode_pw(QEmode_base):
                 content.namelist["system"]["ntyp"] = len(self.qe.struct.atom_types)
 
     def _update_cutoff_info(self, content):
-        if "system" in content.namelist:
-            system = content.namelist["system"]
-            # ecutwfc is mandatory for pw.x: fill it also when the template
-            # omits the key entirely, not only on a blank placeholder
-            need_wfc = system.get("ecutwfc", None) is None
-            need_rho = is_empty_key(system, "ecutrho")
-            if need_wfc or need_rho:
-                ecutwfc, ecutrho = self.qe._find_cutoff_info(need_wfc, need_rho)
-                if need_wfc:
-                    system["ecutwfc"] = ecutwfc
-                if need_rho:
-                    if ecutrho is None:
-                        # ecutrho is optional in QE: drop the placeholder and
-                        # let pw.x default to 4*ecutwfc
-                        del system["ecutrho"]
-                    else:
-                        system["ecutrho"] = ecutrho
+        system = content.namelist["system"]
+        # ecutwfc is mandatory for pw.x: fill it also when the template
+        # omits the key entirely, not only on a blank placeholder
+        wfc_absent = "ecutwfc" not in system
+        need_wfc = wfc_absent or system["ecutwfc"] is None
+        # an absent ecutrho normally means "leave it to pw.x", but when the
+        # template carries no cutoff keys at all it has no say on cutoffs,
+        # so a suggested ecutrho (vital for ultrasoft pseudos) is resolved too
+        need_rho = is_empty_key(system, "ecutrho") or \
+            (wfc_absent and "ecutrho" not in system)
+        if need_wfc or need_rho:
+            known_wfc = None if need_wfc else system["ecutwfc"]
+            ecutwfc, ecutrho = self.qe._find_cutoff_info(need_wfc, need_rho,
+                                                         known_wfc)
+            if need_wfc:
+                system["ecutwfc"] = ecutwfc
+            if need_rho:
+                if ecutrho is None:
+                    # ecutrho is optional in QE: drop the key and let
+                    # pw.x default to 4*ecutwfc
+                    system.pop("ecutrho", None)
+                else:
+                    system["ecutrho"] = ecutrho
 
     def _update_nspin_info(self, content):
         if "system" in content.namelist:

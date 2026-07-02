@@ -162,10 +162,12 @@ def test_find_cutoff_info_omits_rho_when_no_pseudo_suggests_one(tmp_path):
     assert qe._find_cutoff_info() == (40.0, None)
 
 
-def test_find_cutoff_info_mixed_rho_covers_default_of_bare_elements(tmp_path):
+def test_find_cutoff_info_mixed_rho_covers_default_of_bare_elements(tmp_path, caplog):
     # One pseudo suggests ecutrho, another does not: the element without a
     # suggestion needs QE's default 4*ecutwfc, so the aggregate takes
-    # max(suggested rho, 4*wfc of the bare elements) = max(160, 4*50) = 200.
+    # max(suggested rho, 4*resolved ecutwfc) = max(160, 4*50) = 200, and the
+    # bare element is called out in a warning.
+    import logging
     from types import SimpleNamespace
     qe = Struct2QE.__new__(Struct2QE)
     qe.is_soc = False
@@ -177,7 +179,10 @@ def test_find_cutoff_info_mixed_rho_covers_default_of_bare_elements(tmp_path):
         index=["Fe.pbe-a.UPF", "Sr.pbe-b.UPF"],
     )
     qe.struct = SimpleNamespace(elem_names=["Fe", "Sr"])
-    assert qe._find_cutoff_info() == (50.0, 200.0)
+    with caplog.at_level(logging.WARNING, logger="cif2x.struct2qe"):
+        assert qe._find_cutoff_info() == (50.0, 200.0)
+    assert any("Sr" in r.message and "ecutrho" in r.message
+               for r in caplog.records)
 
 
 def test_update_cutoff_info_fills_ecutwfc_absent_from_template():
@@ -211,6 +216,131 @@ def test_update_cutoff_info_drops_unresolved_rho_placeholder(tmp_path):
 
     assert content.namelist["system"]["ecutwfc"] == 40.0
     assert "ecutrho" not in content.namelist["system"]
+
+
+def test_rho_competition_floored_by_user_ecutwfc(tmp_path):
+    # The emitted ecutrho must never fall below QE's own default, which is
+    # 4 * the ecutwfc actually written -- here the user's 100, not the
+    # pseudopotentials' suggested 40/50.
+    from types import SimpleNamespace
+    qe = Struct2QE.__new__(Struct2QE)
+    qe.is_soc = False
+    qe.pseudo_dir = str(tmp_path)  # no UPF files; CSV is the only source
+    qe.pp_list = pd.DataFrame(
+        {"pseudopotential": ["pbe-a", "pbe-b"]}, index=["Fe", "Sr"])
+    qe.cutoff_list = pd.DataFrame(
+        {"ecutwfc": [40.0, 50.0], "ecutrho": [float("nan"), 160.0]},
+        index=["Fe.pbe-a.UPF", "Sr.pbe-b.UPF"],
+    )
+    qe.struct = SimpleNamespace(elem_names=["Fe", "Sr"])
+
+    content = SimpleNamespace(
+        namelist={"system": {"ecutwfc": 100.0, "ecutrho": None}})
+    _pw_mode(qe)._update_cutoff_info(content)
+
+    assert content.namelist["system"]["ecutwfc"] == 100.0
+    assert content.namelist["system"]["ecutrho"] == 400.0
+
+
+def test_rho_floor_tolerates_csv_rounding():
+    # Cutoff CSVs often store ecutrho as a rounded print of exactly 4*ecutwfc;
+    # the floor must not replace such a value over a last-digit difference
+    # (the sample scf.in_ref fixtures compare cutoffs textually).
+    from types import SimpleNamespace
+    qe = _qe(cutoff_list=_fe_cutoff_csv(40.7227652304711, 162.891060921884))
+    qe.struct = SimpleNamespace(elem_names=["Fe"])
+
+    content = SimpleNamespace(
+        namelist={"system": {"ecutwfc": None, "ecutrho": None}})
+    _pw_mode(qe)._update_cutoff_info(content)
+
+    assert content.namelist["system"]["ecutrho"] == 162.891060921884
+
+
+def test_rho_suggested_above_floor_wins():
+    # A suggested ecutrho larger than the 4*ecutwfc floor is kept as-is.
+    from types import SimpleNamespace
+    qe = _qe(cutoff_list=_fe_cutoff_csv(40.0, 500.0))
+    qe.struct = SimpleNamespace(elem_names=["Fe"])
+
+    content = SimpleNamespace(
+        namelist={"system": {"ecutwfc": 100.0, "ecutrho": None}})
+    _pw_mode(qe)._update_cutoff_info(content)
+
+    assert content.namelist["system"]["ecutrho"] == 500.0
+
+
+def test_update_cutoff_info_resolves_rho_when_no_cutoff_keys():
+    # Template carries no cutoff keys at all: not only the mandatory ecutwfc
+    # but also a suggested ecutrho (vital for ultrasoft pseudos) must be
+    # resolved and written, not silently left to pw.x's 4*ecutwfc default.
+    from types import SimpleNamespace
+    qe = _qe(cutoff_list=_fe_cutoff_csv(40.0, 320.0))
+    qe.struct = SimpleNamespace(elem_names=["Fe"])
+
+    content = SimpleNamespace(namelist={"system": {"occupations": "smearing"}})
+    _pw_mode(qe)._update_cutoff_info(content)
+
+    assert content.namelist["system"]["ecutwfc"] == 40.0
+    assert content.namelist["system"]["ecutrho"] == 320.0
+
+
+def test_update_cutoff_info_no_cutoff_keys_and_unresolved_rho(tmp_path):
+    # Template has no cutoff keys and no pseudo suggests ecutrho: ecutwfc is
+    # filled and no ecutrho key is invented (must not raise on the absent key).
+    pytest.importorskip("bs4")
+    from types import SimpleNamespace
+    qe = _qe(pseudo_dir=tmp_path)
+    qe.struct = SimpleNamespace(elem_names=["Fe"])
+    _write_upf(tmp_path, 'wfc_cutoff="40.0"')
+
+    content = SimpleNamespace(namelist={"system": {"occupations": "smearing"}})
+    _pw_mode(qe)._update_cutoff_info(content)
+
+    assert content.namelist["system"]["ecutwfc"] == 40.0
+    assert "ecutrho" not in content.namelist["system"]
+
+
+def test_pp_info_fills_only_missing_fields(tmp_path):
+    # A valid header wfc_cutoff must not be overwritten by the pp_info
+    # "Suggested" fallback (which may carry an unset 0.0); only the field
+    # missing from the header is filled from pp_info.
+    pytest.importorskip("bs4")
+    qe = _qe(pseudo_dir=tmp_path)
+    (tmp_path / FE_UPF).write_text(
+        '<UPF><PP_INFO>\n'
+        ' Suggested minimum cutoff for wavefunctions:    0.0 Ry\n'
+        ' Suggested minimum cutoff for charge density: 320.0 Ry\n'
+        '</PP_INFO><PP_HEADER wfc_cutoff="40.0"/></UPF>')
+    assert qe._find_elem_cutoff_from_file("Fe") == (40.0, 320.0)
+
+
+def test_normalize_cutoff_warns_on_unparseable_value(caplog):
+    import logging
+    from cif2x.struct2qe import _normalize_cutoff
+    with caplog.at_level(logging.WARNING, logger="cif2x.struct2qe"):
+        assert _normalize_cutoff("garbage") is None
+    assert any("garbage" in r.message for r in caplog.records)
+
+
+def test_pw_mode_requires_system_namelist():
+    # scf/nscf inputs cannot be valid without a &system namelist (ecutwfc,
+    # nat, ntyp live there): reject at generation time instead of emitting
+    # an input pw.x cannot run.
+    from types import SimpleNamespace
+    qe = _qe(False)
+    content = SimpleNamespace(namelist={"control": {}}, cards={})
+    with pytest.raises(InputValidationError, match="system"):
+        _pw_mode(qe).update_namelist(content)
+
+
+def test_file_fallback_skipped_when_missing_field_not_needed():
+    # ecutrho supplied by the user (need_rho=False) and ecutwfc resolved from
+    # the CSV: the UPF file must not be opened just because the CSV rho cell
+    # is blank (pseudo_dir is unset here, so an attempted read would raise).
+    qe = _qe(cutoff_list=_fe_cutoff_csv(40.0, float("nan")))
+    ecutwfc, ecutrho = qe._find_elem_cutoff("Fe", need_wfc=True, need_rho=False)
+    assert ecutwfc == 40.0
 
 
 def test_update_cutoff_info_keeps_user_wfc_and_fills_rho(tmp_path):
