@@ -57,6 +57,7 @@ Quantum ESPRESSO の入力ファイルは、 ``&keyword`` で始まる Fortran90
 
 .. literalinclude:: ../../../../tutorial/cif2x/scf/scf.in
    :language: fortran
+   :force:
 
 カットオフ ``ecutwfc``, ``ecutrho`` の値が擬ポテンシャルファイルから取得され、 ``CELL_PARAMETERS``, ``ATOMIC_POSITIONS`` および ``ATOMIC_SPECIES`` の元素種が結晶構造データから決まり、 ``ATOMIC_SPECIES`` の擬ポテンシャルファイル名が ``optional.pp_file`` の対応付けから決まり、 ``K_POINTS`` が ``content.K_POINTS`` の設定(この例では ``grid: [8,8,8]``)から生成されていることが確認できます。
 
@@ -172,6 +173,7 @@ SCF 計算用の入力ファイルが ``scf/scf.in`` に書き出されます。
 
 .. literalinclude:: ../../../../tutorial/cif2x/respack/scf/scf.in
    :language: fortran
+   :force:
 
 NSCF 計算用の入力ファイル ``nscf/nscf.in`` では、``calculation = 'nscf'`` に加えて ``nosym``, ``noinv``, ``nbnd`` が設定され、``K_POINTS crystal`` に全 k 点が列挙されます (紙面の都合で k 点リストは省略します)。
 

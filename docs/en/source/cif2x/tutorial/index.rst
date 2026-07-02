@@ -59,6 +59,7 @@ Run ``cif2x`` and a set of input files for Quantum ESPRESSO will be created. The
 
 .. literalinclude:: ../../../../tutorial/cif2x/scf/scf.in
    :language: fortran
+   :force:
 
 One can confirm that the cutoff values ``ecutwfc`` and ``ecutrho`` are obtained from the pseudo-potential files, that ``CELL_PARAMETERS``, ``ATOMIC_POSITIONS`` and the species in ``ATOMIC_SPECIES`` are derived from the crystal structure data, that the pseudo-potential file names in ``ATOMIC_SPECIES`` are taken from the ``optional.pp_file`` mapping, and that ``K_POINTS`` is generated from the ``content.K_POINTS`` setting (``grid: [8,8,8]`` in this example).
 
@@ -174,6 +175,7 @@ The SCF input file is written to ``scf/scf.in``:
 
 .. literalinclude:: ../../../../tutorial/cif2x/respack/scf/scf.in
    :language: fortran
+   :force:
 
 In the NSCF input file ``nscf/nscf.in``, ``calculation = 'nscf'`` is set together with ``nosym``, ``noinv``, and ``nbnd``, and ``K_POINTS crystal`` lists all k-points explicitly (the k-point list is omitted here for brevity).
 

@@ -56,7 +56,7 @@ cif2x
 
   - ``--mp-id`` *ID*
 
-    ``material.cif`` を読む代わりに、Materials Project の物質 ID *ID*(例: ``mp-149``)の結晶構造を直接取得します。``material.cif`` と ``--mp-id`` はいずれか一方のみを指定してください。API キーは ``--api-key-file``(既定 ``materials_project.key``)、続いて環境変数 ``MP_API_KEY``、pymatgen 設定ファイル(``~/.config/.pmgrc.yaml``)の ``PMG_MAPI_KEY`` の順に、``getcif`` と同じ方法で解決されます。
+    ``material.cif`` を読む代わりに、Materials Project の物質 ID *ID* (例: ``mp-149``)の結晶構造を直接取得します。``material.cif`` と ``--mp-id`` はいずれか一方のみを指定してください。API キーは ``--api-key-file``(既定 ``materials_project.key``)、続いて環境変数 ``MP_API_KEY``、pymatgen 設定ファイル(``~/.config/.pmgrc.yaml``)の ``PMG_MAPI_KEY`` の順に、``getcif`` と同じ方法で解決されます。
 
   - ``--symprec`` *PREC*
 
