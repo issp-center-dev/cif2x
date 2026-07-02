@@ -314,10 +314,13 @@ def test_respack_requires_primitive_cell(monkeypatch, tmp_path, caplog):
 
 def test_respack_nscf_warns_without_nosym(monkeypatch, tmp_path, caplog):
     pytest.importorskip("pymatgen")
+    from types import SimpleNamespace
 
     class _Dummy:
         def __init__(self, *a, **k):
-            pass
+            # the advisory inspects the merged (template + content) namelist
+            # on the generator's contents; expose one without nosym/noinv
+            self.contents = [("", SimpleNamespace(namelist={"system": {}}))]
 
         def write_input(self, *a, **k):
             pass
