@@ -11,8 +11,10 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.repository == 'issp-center-dev/cif2x'
+    permissions:
+      contents: write
     steps:
     - name: Inject slug/short variables
       uses: rlespinasse/github-slug-action@v4.x
@@ -51,13 +53,6 @@ jobs:
           make latexpdf
         done
 
-    - name: Deploy Configuration
-      run: |
-          mkdir ~/.ssh
-          ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-          echo "${{ secrets.GH_ACTIONS_DEPLOY_KEY }}" > ~/.ssh/id_rsa
-          chmod 400 ~/.ssh/id_rsa
-
     - name: Push
       env:
         GIT_USER: "HTP-tools Developers"
@@ -74,7 +69,6 @@ jobs:
           cd gh-pages
           git config --local user.name "${GIT_USER}"
           git config --local user.email "${GIT_EMAIL}"
-          git remote set-url origin git@github.com:${GITHUB_REPOSITORY}.git
           git add manual
           if git commit -m "Deploy docs to ${TARGET_NAME} by GitHub Actions triggered by ${GITHUB_SHA}"
           then
