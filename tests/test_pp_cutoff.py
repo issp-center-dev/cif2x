@@ -1,8 +1,18 @@
+import importlib.util
+from pathlib import Path
+
 import pytest
 
 pytest.importorskip("bs4")
 
-from utils.pp_cutoff import read_pseudo_cutoff
+# src/utils/pp_cutoff.py is a standalone helper script, not part of the
+# installed cif2x distribution, so load it by file path: this works both
+# against the src/ tree and when CIF2X_TEST_INSTALLED tests the wheel.
+_PP_CUTOFF_PATH = Path(__file__).resolve().parent.parent / "src" / "utils" / "pp_cutoff.py"
+_spec = importlib.util.spec_from_file_location("pp_cutoff", _PP_CUTOFF_PATH)
+_pp_cutoff = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_pp_cutoff)
+read_pseudo_cutoff = _pp_cutoff.read_pseudo_cutoff
 
 
 def _write_upf(path, header_attrs="", pp_info=""):
