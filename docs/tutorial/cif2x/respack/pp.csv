@@ -1,0 +1,4 @@
+element,pseudopotential,nexclude,orbitals
+Sr,ONCV_PBE-1.0,0,
+V,ONCV_PBE-1.0,0,
+O,ONCV_PBE-1.0,0,
