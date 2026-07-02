@@ -8,7 +8,7 @@ Pseudopotentials are **not** bundled. Download the SG15 ONCV set (PBE, v1.0)
 and rename the files to the `<element>.<name>.UPF` convention cif2x expects:
 
 ```bash
-cd pseudo
+mkdir -p pseudo && cd pseudo
 for el in Sr V O; do
   curl -LO "http://www.quantum-simulation.org/potentials/sg15_oncv/upf/${el}_ONCV_PBE-1.0.upf"
   mv ${el}_ONCV_PBE-1.0.upf ${el}.ONCV_PBE-1.0.UPF
