@@ -29,7 +29,7 @@ database
 
   This parameter specifies a name of a file that contains the API key to access to the database.
   The suffix of the file name must be ``.key``.
-  If the file does not exist or it does not contain a valid value, the API key is obtained from the environment variable ``MP_API_KEY``, or from the parameter ``PMG_MAPI_KEY`` of the pymatgen configuration file in ``~/.config/.pmgrc``.
+  A present ``.key`` file takes precedence: its first non-comment line is used (it must be non-empty, as leading blank lines are not skipped). If the file does not exist or its first non-comment line is empty, the API key is obtained from the environment variable ``MP_API_KEY``, or from the parameter ``PMG_MAPI_KEY`` of the pymatgen configuration file in ``~/.config/.pmgrc.yaml``.
 
   The API key file is a text file. A line starting with ``#`` is regarded as a comment. The heading and trailing spaces are ignored. When the file contains more than one line, the API key is taken from the first valid line.
     

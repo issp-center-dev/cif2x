@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>7.4. ファイルフォーマット &#8212; cif2x Users Guide 1.1.0 ドキュメント</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=94bc0932" />
     <script src="../../_static/documentation_options.js?v=6599c6cf"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
@@ -57,7 +57,7 @@
 <p><code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> (デフォルト値: <code class="docutils literal notranslate"><span class="pre">materials_project.key</span></code>)</p>
 <blockquote>
 <div><p>データベースに接続する際の APIキーを格納したファイルのファイル名を指定します。ファイル名の拡張子は <code class="docutils literal notranslate"><span class="pre">.key</span></code> とします。
-ファイルが存在しない、または有効なAPIキーが見つからない場合は、環境変数 <code class="docutils literal notranslate"><span class="pre">MP_API_KEY</span></code> または pymatgen の設定ファイル <code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc</span></code> の <code class="docutils literal notranslate"><span class="pre">PMG_MAPI_KEY</span></code> からAPIキーを取得します。</p>
+<code class="docutils literal notranslate"><span class="pre">.key</span></code> ファイルが存在する場合はそれが優先され、先頭のコメント行以外の行が使われます(空行はスキップされないため、先頭の非コメント行は空であってはいけません)。ファイルが存在しない、または先頭の非コメント行が空の場合は、環境変数 <code class="docutils literal notranslate"><span class="pre">MP_API_KEY</span></code> または pymatgen の設定ファイル <code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc.yaml</span></code> の <code class="docutils literal notranslate"><span class="pre">PMG_MAPI_KEY</span></code> からAPIキーを取得します。</p>
 <p>APIキーファイルはテキスト形式です。 <code class="docutils literal notranslate"><span class="pre">#</span></code> から始まる行はコメントとして扱われます。前後の空白は無視されます。複数行からなる場合は最初の有効な行からキーを取得します。</p>
 </div></blockquote>
 </div></blockquote>
@@ -139,7 +139,7 @@
 <li><p>ワイルドカード</p>
 <blockquote>
 <div><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">formula</span></code> には元素種にワイルドカード <code class="docutils literal notranslate"><span class="pre">*</span></code> を指定できます。その場合は値を <code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">&quot;</span></code> で囲みます。例:</dt><dd><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">formula</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**O3&quot;</span>
+<dt><code class="docutils literal notranslate"><span class="pre">formula</span></code> には元素種にワイルドカード <code class="docutils literal notranslate"><span class="pre">*</span></code> を指定できます。その場合は値を <code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">&quot;</span></code> で囲みます。例:</dt><dd><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">formula</span><span class="p">:</span><span class="w"> </span><span class="s">"**O3"</span>
 </pre></div>
 </div>
 </dd>

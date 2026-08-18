@@ -29,7 +29,12 @@ structure
 
   ``supercell`` (デフォルト値: なし)
 
-    supercell を設定する場合に supercell のサイズを [:math:`n_x`, :math:`n_y`, :math:`n_z`] で指定します。
+    supercell を設定する場合に supercell のサイズを [:math:`n_x`, :math:`n_y`, :math:`n_z`] で指定します。例えば各軸方向に 2倍の supercell を作成する場合は次のように指定します。
+
+    .. code-block:: yaml
+
+      structure:
+        supercell: [2, 2, 2]
 
 optional
 --------
@@ -88,18 +93,26 @@ optionalセクション
   ``pp_file``
 
     元素種と擬ポテンシャルを対応付けるCSV形式のインデックスファイルを指定します。
-    ファイルの書式は、元素種、擬ポテンシャルファイルのタイプ、nexclude、orbitals です。例:
+    ファイルの 1行目はヘッダで、列は ``element,pseudopotential,nexclude,orbitals`` です。各列の意味は以下のとおりです。
+
+    - ``element``: 元素記号。
+    - ``pseudopotential``: 擬ポテンシャルファイル名のうち、元素記号と拡張子 ``.UPF`` を除いた部分(name stem)。擬ポテンシャルファイル名は ``{element}.{pseudopotential}.UPF`` として組み立てられます (スピン軌道相互作用を含む非共線計算では、生成される ``ATOMIC_SPECIES`` のファイル名が ``{element}.rel-{pseudopotential}.UPF`` のように ``rel-`` 付きになります)。
+    - ``nexclude``: Wannier 関数によるバンド数の見積り (``nbnd``) で除外する内殻バンド数。
+    - ``orbitals``: Wannier 化の対象とする軌道を ``s``, ``p``, ``d``, ``f`` の文字で並べたもの。``nbnd`` の計算に用いられます (``src/cif2x/struct2qe.py`` の ``_find_nbnd_info``)。
+
+    例:
 
     .. code-block::
 
+      element,pseudopotential,nexclude,orbitals
       Fe,pbe-spn-rrkjus_psl.0.2.1,4,spd
 
-    擬ポテンシャルファイルのファイル名は Fe.pbe-spn-rrkjus_psl.0.2.1.UPF に対応します。
+    この行は擬ポテンシャルファイル ``Fe.pbe-spn-rrkjus_psl.0.2.1.UPF`` に対応します。
 
   ``cutoff_file``
 
     擬ポテンシャルファイルとカットオフを対応付けるCSV形式のインデックスファイルを指定します。
-    ファイルの書式は、擬ポテンシャルファイル、ecutwfcの値、ecutrhoの値 です。
+    列は ``pseudofile,ecutwfc,ecutrho`` で、それぞれ擬ポテンシャルファイル名、 ``ecutwfc`` の値、 ``ecutrho`` の値です。
 
   ``pseudo_dir``
 
@@ -133,7 +146,7 @@ content
 
   - 原子種・原子量・擬ポテンシャルファイル名のリストを出力します。
 
-  - 原子種の情報は結晶構造データから取得されます。擬ポテンシャルのファイル名は ``pp_list`` で指定するCSV形式のインデックスファイルを参照します。
+  - 原子種の情報は結晶構造データから取得されます。擬ポテンシャルのファイル名は ``pp_file`` で指定するCSV形式のインデックスファイルを参照します。
 
   - ``data`` フィールドに必要なデータを指定した場合はその値が用いられます。
 
@@ -185,7 +198,7 @@ pymatgen では、擬ポテンシャルファイルを
 
 以下の ``pseudo_dir`` を指定した場合は pymatgen の流儀を無視して擬ポテンシャルの格納ディレクトリを探します。
     
-  ``psuedo_dir``
+  ``pseudo_dir``
 
     擬ポテンシャルの格納ディレクトリを指定します。擬ポテンシャルファイルのファイル名は ``pseudo_dir``/POTCAR. *element* (.gz) または ``pseudo_dir``/*element*/POTCAR です。
 
