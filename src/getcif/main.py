@@ -21,7 +21,8 @@ from getcif.mp import resolve_api_key, _import_mprester
 logger = logging.getLogger("getcif")
 
 try:
-    __version__ = version("htp-tools-getcif")
+    # getcif ships in the HTP-tools-cif2x distribution (see pyproject.toml)
+    __version__ = version("HTP-tools-cif2x")
 except PackageNotFoundError:
     __version__ = "develop"
 
