@@ -83,7 +83,7 @@ The format of the parameter values is shown below. It follows the YAML specifica
 
     .. code:: yaml
 
-	element: Sr Ti
+	elements: Sr Ti
 
 - a range of numerical value
 

@@ -14,7 +14,7 @@ cif2xは、cifファイルから第一原理計算用の入力ファイルを生
 入力パラメータを雛形として、物質の種類や計算条件によって変わる箇所を結晶構造データなどから構成します。
 特定の計算条件に応じた複数の入力ファイルを生成することが可能です。
 現在は、
-`VASP <https://www.vasp.at>`_, `Quantum ESPRESSO  <https://www.quantum-espresso.org>`_, `OpenMX <http://www.openmx-square.org>`_, `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>`_ に対応しています。
+`VASP <https://www.vasp.at>`_, `Quantum ESPRESSO  <https://www.quantum-espresso.org>`_, `OpenMX <http://www.openmx-square.org>`_, `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>`_ に対応しているほか、 `RESPACK <https://sites.google.com/view/kazuma7k6r>`_ ワークフロー向けに Quantum ESPRESSO と RESPACK の入力を生成できます。
 
 付属プログラムとして、物質材料データベースから結晶構造データ等を取得するツール getcif を用意しています。現在は Materials Project からのデータ取得に対応しています。物質の組成や対称性、バンドギャップなどの物性値をもとにデータベースを検索し、データを取得することができます。
 

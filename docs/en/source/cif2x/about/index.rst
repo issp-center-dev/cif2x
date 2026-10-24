@@ -12,7 +12,7 @@ Therefore, the development of tools and environments for the rapid generation of
 Cif2x is a tool that generates input files for first-principles calculations from cif files.
 It constructs parts that vary depending on the type of material and computational conditions from crystal structure data, using input parameters as a template.
 It is capable of generating multiple input files tailored to specific computational conditions.
-Currently, it supports `VASP <https://www.vasp.at>`_, `Quantum ESPRESSO <https://www.quantum-espresso.org>`_, `OpenMX <http://www.openmx-square.org>`_, and `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>`_.
+Currently, it supports `VASP <https://www.vasp.at>`_, `Quantum ESPRESSO <https://www.quantum-espresso.org>`_, `OpenMX <http://www.openmx-square.org>`_, and `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>`_, and it generates the Quantum ESPRESSO and `RESPACK <https://sites.google.com/view/kazuma7k6r>`_ inputs of a RESPACK workflow.
 
 License
 ----------------------------------------------------------------

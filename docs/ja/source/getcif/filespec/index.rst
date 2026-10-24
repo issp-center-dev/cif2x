@@ -76,7 +76,7 @@ properties
 
      .. code:: yaml
 
-         element: Sr Ti
+         elements: Sr Ti
 
 - 数値の範囲
 

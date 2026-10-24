@@ -58,17 +58,29 @@ from the task ``mode`` for ``scf``, ``nscf``, ``relax``, ``vc-relax``, and
 make sure they are present, as ``pw.x`` errors without them.
 
 For ``bands``, set the K_POINTS option to ``crystal_b`` in ``content``; the path
-is generated from the crystal symmetry with ``pymatgen``'s high-symmetry k-path,
-for example:
+is generated from the crystal symmetry with ``pymatgen``'s high-symmetry k-path.
+As for every pw.x task, the ``&control``, ``&system``, and ``&electrons``
+namelists must come from a template or from ``content.namelist``, and the
+structure cards must be listed in ``content`` to be generated. For example:
 
 .. code-block:: yaml
+
+    structure:
+      use_primitive: true
+      use_ibrav: false
 
     tasks:
       - mode: bands
         output_file: bands.in
+        template: pw.in_tmpl      # holds the &control, &system, &electrons namelists
         content:
-          system:
-            nbnd: 16        # set explicitly if conduction bands are wanted
+          namelist:
+            system:
+              nbnd: 16        # set explicitly if conduction bands are wanted
+          CELL_PARAMETERS:
+          ATOMIC_SPECIES:
+          ATOMIC_POSITIONS:
+            option: crystal
           K_POINTS:
             option: crystal_b
             line_npoints: 30   # points generated between high-symmetry points
@@ -80,8 +92,8 @@ so ``bands.x`` does not interpolate across the gap. To use a custom path, give a
 k-path).
 
 Quantum ESPRESSO computes only the occupied (valence) bands by default, so set
-``nbnd`` explicitly in ``content.system`` to include conduction bands in the band
-structure.
+``nbnd`` explicitly in ``content.namelist.system`` to include conduction bands in
+the band structure.
 
 The high-symmetry coordinates are defined in the **standardized primitive cell**,
 so ``bands`` requires the structure to be that cell — use ``use_primitive: true``
@@ -99,10 +111,29 @@ in its template/``content``:
     tasks:
       - mode: scf
         output_file: scf.in
-        content: { K_POINTS: { option: automatic, grid: [8, 8, 8] } }
+        template: pw.in_tmpl      # holds the &control, &system, &electrons namelists
+        content:
+          CELL_PARAMETERS:
+          ATOMIC_SPECIES:
+          ATOMIC_POSITIONS:
+            option: crystal
+          K_POINTS:
+            option: automatic
+            grid: [8, 8, 8]
       - mode: nscf
         output_file: nscf.in
-        content: { K_POINTS: { option: automatic, grid: [16, 16, 16] } }
+        template: pw.in_tmpl
+        content:
+          namelist:
+            system:
+              occupations: tetrahedra
+          CELL_PARAMETERS:
+          ATOMIC_SPECIES:
+          ATOMIC_POSITIONS:
+            option: crystal
+          K_POINTS:
+            option: automatic
+            grid: [16, 16, 16]
       - mode: dos
         template: dos.in_tmpl     # contains the &DOS namelist
         output_file: dos.in
@@ -121,15 +152,15 @@ Common errors that may occur when running ``cif2x`` and how to resolve them are 
 
 - **unsupported target '...'**
 
-  Reported when the ``-t``/``--target`` value is not one of ``quantum_espresso`` (``qe``, ``espresso``), ``vasp``, ``openmx``, or ``akaikkr``. The message lists the valid choices.
+  Reported when the ``-t``/``--target`` value is not one of ``quantum_espresso`` (``qe``, ``espresso``), ``vasp``, ``openmx``, ``akaikkr``, or ``respack``. The message lists the valid choices.
 
-- **task N: 'mode' is required for target 'quantum_espresso'**
+- **task N: 'mode' is required for target '...'**
 
-  Reported for a Quantum ESPRESSO run when an element of ``tasks`` does not have ``mode``. Specify ``mode`` (such as ``scf`` or ``nscf``) for each task.
+  Reported for a Quantum ESPRESSO or RESPACK run when an element of ``tasks`` does not have ``mode``. Specify ``mode`` (such as ``scf`` or ``nscf``) for each task.
 
 - **task N: 'output_file' is required for target '...'**
 
-  Reported when a task that needs an output file name does not have ``output_file``. Specify the output file name by ``output_file`` for each task. (Required for ``quantum_espresso``, ``openmx``, and ``akaikkr``.)
+  Reported when a task that needs an output file name does not have ``output_file``. Specify the output file name by ``output_file`` for each task. (Required for ``quantum_espresso``, ``openmx``, ``akaikkr``, and ``respack``.)
 
 - **task N: unknown key '...' for target '...'**
 

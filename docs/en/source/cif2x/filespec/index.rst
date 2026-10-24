@@ -21,11 +21,15 @@ structure
 
   ``use_ibrav`` (default value: ``false``)
 
-    This parameter specifies whether ``ibrav`` parameter is used for Quantum ESPRESSO as the input of the crystal structure. When it is set to ``true``, the lattice is transformed to match the convention of Quantum ESPRESSO, and the lattice parameters ``a``, ``b``, ``c``, ``cosab``, ``cosac``, and ``cosbc`` are written to the input file as needed.
+    This parameter specifies whether ``ibrav`` parameter is used for Quantum ESPRESSO as the input of the crystal structure. When it is set to ``true``, the lattice is transformed to match the convention of Quantum ESPRESSO, and the lattice parameters ``a``, ``b``, ``c``, ``cosab``, ``cosac``, and ``cosbc`` are written to the input file as needed. The reconstructed structure is checked against the original one with a fixed tolerance of ``0.01``; the ``tolerance`` parameter below does not affect this check.
+
+  ``use_primitive`` (default value: ``false``)
+
+    When it is set to ``true``, the structure is reduced to the primitive cell (by ``get_primitive_structure`` of pymatgen) before the input files are generated. It is required for the ``respack`` target and for the ``bands`` mode of Quantum ESPRESSO, because the high-symmetry k-path is defined in the standardized primitive cell.
 
   ``tolerance`` (default value: 0.01)
 
-    This parameter specifies the tolerance in the difference between the reconstructed Structure data and the original data when ``use_ibrav`` is set to ``true``.
+    This parameter specifies the tolerance used in the primitive-cell reduction when ``use_primitive`` is set to ``true``. It has no effect otherwise.
 
   ``supercell`` (default value: none)
 
@@ -35,7 +39,15 @@ structure
 
       structure:
         supercell: [2, 2, 2]
-    
+
+  ``cell_shape`` (required for molecular structure data)
+
+    When the structure file holds an isolated molecule (for example an XYZ file) instead of a periodic structure, this parameter specifies the box in which the molecule is placed, centered. It takes a scalar ``L`` (a cubic box of side ``L`` angstrom), a list ``[Lx, Ly, Lz]`` (box lengths in angstrom), or ``auto``. With ``auto``, a tentative cubic box of 10 angstrom is used and, for OpenMX, the ``Atoms.UnitVectors`` block is omitted so that OpenMX determines the cell automatically. ``cif2x`` stops with an error when a molecular structure is given without ``cell_shape``.
+
+  ``tol_deg`` (default value: 5.0)
+
+    When the structure data carries magnetic moments (for example an mCIF file), this parameter specifies the angle tolerance in degrees used to decide whether the moments are collinear. If they are not collinear, a noncollinear calculation is enforced for Quantum ESPRESSO even when ``nspin = 2`` is given.
+
 
 optional
 --------
@@ -46,14 +58,14 @@ tasks
 This section defines contents of the input files. It is organized as a list of blocks, each corresponding to an input file, to allow for generating a set of input files for an input. The terms described in each block are explained in the following.
 
 
-  ``mode`` (Quantum ESPRESSO)
+  ``mode`` (Quantum ESPRESSO, RESPACK)
 
-    This parameter specifies the type of calculation. In the current version, the supported mode includes ``scf`` and ``nscf`` for pw.x of Quantum ESPRESSO. If an unsupported mode is specified, the settings in ``content`` will be exported as is.
+    This parameter specifies the type of calculation. For pw.x of Quantum ESPRESSO, ``scf``, ``nscf``, ``relax``, ``vc-relax``, and ``bands`` are supported; the value is written to the ``calculation`` parameter of ``&control``. If an unsupported mode is specified, the settings in ``content`` will be exported as is. For the ``respack`` target, the tasks with ``scf``, ``nscf``, and ``bands`` are generated as Quantum ESPRESSO inputs, and a task with ``respack`` generates the RESPACK input (see :ref:`sec-cif2x-filespec-respack`).
 
-  ``output_file`` (Quantum ESPRESSO)
+  ``output_file`` (required for Quantum ESPRESSO, OpenMX, AkaiKKR, and RESPACK)
 
-    This parameter specifies the file name of the output.
-    
+    This parameter specifies the file name of the output. For VASP, the file names are fixed (``INCAR``, ``KPOINTS``, ``POSCAR``, ``POTCAR``) and this parameter is not used.
+
   ``output_dir``
 
     This parameter specifies the directory name of the output. The default value is the current directory.
@@ -63,12 +75,16 @@ This section defines contents of the input files. It is organized as a list of b
     This parameter describes the content of the output.
     For Quantum ESPRESSO, it contains the namelist data (blocks starting from ``&system``, ``&control``, etc.) in ``namelist`` block, and other card data (such as ``K_POINTS``) as individual blocks. Some card data may take parameters.
 
-  ``template`` (Quantum ESPRESSO)
+  ``template`` (Quantum ESPRESSO, OpenMX, AkaiKKR, RESPACK)
 
   ``template_dir`` (VASP)
 
     These parameters specifies the template file and the template directory for the input files, respectively. If they are not given, templates will not be used. The content of the template file is merged with those of ``content``. The entries in the template file will be superseded by those of ``content`` if the entries of the same keys appear both.
-    
+
+  ``precision`` (OpenMX)
+
+    This parameter specifies the set of pseudo-atomic orbitals listed in Tables 1 and 2 of Section 10.6 of the OpenMX manual. It is one of ``quick``, ``standard``, or ``precise``. The default value is ``quick``. Note that it is a parameter of the task itself, not of ``content``.
+
 
 Specifying parameter set
 ----------------------------------------
@@ -87,7 +103,7 @@ Parameters for Quantum ESPRESSO
 ===============================
 
 The entries of ``optional`` section and ``content`` part of the ``tasks`` section specific to Quantum ESPRESSO are explained below.
-In the current version, ``scf`` mode and ``nscf`` mode of ``pw.x`` are supported.
+In the current version, the ``scf``, ``nscf``, ``relax``, ``vc-relax``, and ``bands`` modes of ``pw.x`` are supported.
 
 optional section
 ------------------
@@ -141,23 +157,19 @@ content
 
   - This block will not be generated if ``use_ibrav`` is set to ``true``. Otherwise, the lattice vectors are exported in units of angstrom.
 
-  - The information of the lattice vectors are obtained from the crystal structure data. When the ``data`` field is defined and contains a 3x3 matrix, that value will be used for the set of lattice vectors instead.
+  - The lattice vectors are always obtained from the crystal structure data; they cannot be overridden from the input parameter file.
 
   **ATOMIC_SPECIES**
 
   - This block exports a list of atom species, atomic mass, and the file name of the pseudo-potential data.
 
-  - The information of the atoms are obtained from the crystal structure data. The file names of the pseudo-potential data are referred from the CSV-formatted index file specified by ``pp_file`` parameter.
-
-  - When the ``data`` field is defined and contains the required data, these values will be used instead.
+  - The information of the atoms are obtained from the crystal structure data. The file names of the pseudo-potential data are referred from the CSV-formatted index file specified by ``pp_file`` parameter. ``pp_file`` is required to generate this block.
 
   **ATOMIC_POSITIONS**
 
-  - This block exports the atomic species and their fractional coordinates.
+  - This block exports the atomic species and their fractional coordinates. The coordinate type is given by the ``option`` parameter (default: ``crystal``).
 
   - When ``ignore_species`` is given to specify an atomic species or a list of species, the values of ``if_pos`` for these species will be set to ``0``. It is used for MD or structure relaxations.
-
-  - When the ``data`` field is defined and contains the required data, these values will be used instead.
 
   **K_POINTS**
 
@@ -169,13 +181,15 @@ content
 
     - ``automatic``: generates a mesh of k points. It is given by the ``grid`` parameter, or derived from the ``vol_density`` or ``k_resolution`` parameters. The shift is obtained from the ``kshifts`` parameter.
 
+    - ``crystal_b``: generates a band path from the high-symmetry k-path of the crystal (``HighSymmKpath`` of pymatgen). The number of points between high-symmetry points is given by ``line_npoints`` (default: 20), and a custom path may be given by ``path`` as a list of label sequences. This option is required for the ``bands`` mode. See :ref:`sec-cif2x-appendix` for details.
+
   - The mesh width is determined in the following order:
 
     - the ``grid`` parameter, specified by a list of :math:`n_x, n_y, n_z`, or a scalar value :math:`n`. For the latter, :math:`n_x = n_y = n_z = n` is assumed.
     - derived from the ``vol_density`` parameter.
     - derived from the ``k_resolution`` parameter, whose default value is 0.15.
 
-  - When the ``data`` field is defined and contains the required data, these values will be used.
+  - The ``data`` field is honoured only for the band-path options ``crystal_b`` and ``tpiba_b`` (and for an unrecognized ``option``, which is passed through as written). In these cases, the rows given in ``data`` are written as they are instead of being generated. For the other options, and for the other cards above, the data are always generated from the crystal structure.
 
 
 Parameters for VASP
@@ -227,39 +241,47 @@ content
 
   - ``type``
 
-    The ``type`` parameter describes how KPOINTS are specified. The following values are allowed, with some types accepting parameters. See pymatgen.io.vasp manual for further details.
+    The ``type`` parameter describes how KPOINTS are specified. The default value is ``gamma_automatic``. The following values are allowed, with some types accepting parameters; the parameter names below are the keys to be written under ``kpoints`` (they are case-insensitive). See pymatgen.io.vasp manual for the meaning of each scheme.
 
     - ``automatic``
 
-      parameter: ``grid``
+      parameter: ``grid`` (a single integer, the subdivision length; default: 1)
 
     - ``gamma_automatic``
 
-      parameter: ``grid``, ``shift``
+      parameter: ``kpoints`` (a list :math:`[n_x, n_y, n_z]`; default: ``[1, 1, 1]``), ``shift`` (default: ``[0, 0, 0]``)
 
     - ``monkhorst_automatic``
 
-      parameter: ``grid``, ``shift``
+      parameter: ``kpoints`` (a list :math:`[n_x, n_y, n_z]`; default: ``[2, 2, 2]``), ``shift`` (default: ``[0, 0, 0]``)
 
     - ``automatic_density``
 
-      parameter: ``kppa``, ``force_gamma``
+      parameter: ``grid_density`` (k points per reciprocal atom; default: 0.1), ``force_gamma`` (default: ``false``)
 
     - ``automatic_gamma_density``
 
-      parameter: ``grid_density``
+      parameter: ``grid_density`` (default: 0.1)
 
     - ``automatic_density_by_vol``
 
-      parameter: ``grid_density``, ``force_gamma``
+      parameter: ``grid_density`` (k points per reciprocal volume; default: 1), ``force_gamma`` (default: ``false``)
 
     - ``automatic_density_by_lengths``
 
-      parameter: ``length_density``, ``force_gamma``
+      parameter: ``length_density`` (a list of three lengths; default: ``[10.0, 10.0, 10.0]``), ``force_gamma`` (default: ``false``)
 
     - ``automatic_linemode``
 
-      parameter: ``division``, ``path_type`` (corresponding to the ``path_type`` parameter of HighSymmKpath.)
+      parameter: ``division`` (default: 1), ``path_type`` (corresponding to the ``path_type`` parameter of HighSymmKpath.)
+
+    For example, a :math:`6 \times 6 \times 6` :math:`\Gamma`-centered mesh is written as:
+
+    .. code-block:: yaml
+
+      kpoints:
+        type: gamma_automatic
+        kpoints: [6, 6, 6]
 
 
 Parameters for OpenMX
@@ -274,12 +296,26 @@ optional
 
     This parameter specifies the name of directory that holds files for pseudo-atomic orbitals and pseudo-potentials. It corresponds to the ``DATA.PATH`` parameter.
 
-content
---------
+tasks
+-----
 
   ``precision``
 
-    This parameter specifies the set of pseudo-atomic orbitals listed in Tables 1 and 2 of Section 10.6 of the OpenMX manual. It is one of ``quick``, ``standard``, or ``precise``. The default value is ``quick``.
+    This parameter specifies the set of pseudo-atomic orbitals listed in Tables 1 and 2 of Section 10.6 of the OpenMX manual. It is one of ``quick``, ``standard``, or ``precise``. The default value is ``quick``. It is written at the same level as ``output_file`` and ``template``, not inside ``content``:
+
+    .. code-block:: yaml
+
+      tasks:
+        - output_file: openmx.dat
+          template: template.in
+          precision: precise
+          content:
+            system.name: NaCl
+
+content
+--------
+
+The ``content`` part contains OpenMX keywords, written to the output file as they are (a list value is written as a block ``<Key ... Key>``). The following keywords are generated from the crystal structure data and overwrite the values in the template or ``content``: ``Species.Number``, ``Definition.of.Atomic.Species``, ``Atoms.Number``, ``Atoms.SpeciesAndCoordinates.Unit``, ``Atoms.SpeciesAndCoordinates``, ``Atoms.UnitVectors.Unit``, and ``Atoms.UnitVectors``. ``System.Name`` defaults to the base name of the structure file when it is not given.
 
 Parameters for AkaiKKR
 ===============================
@@ -310,3 +346,54 @@ The parameter values listed below are replaced by the values obtained from the c
 - element information, ``natm``, ``atmicx``, ``atmtyp``.
 
 For ``rmt`` and ``field``, the values specified in the input parameter file will be used only when they are lists having the same number of elements as ``ntyp``.
+
+
+.. _sec-cif2x-filespec-respack:
+
+Parameters for RESPACK
+===============================
+
+The ``respack`` target generates the inputs of a RESPACK workflow: the ``scf`` and ``nscf`` (and optionally ``bands``) runs of Quantum ESPRESSO, followed by the RESPACK control file. The ``structure`` section must have ``use_primitive: true`` and ``use_ibrav: false``, because the high-symmetry k-path written to the RESPACK input is defined in the standardized primitive cell.
+
+tasks
+-----
+
+Each task is distinguished by ``mode``:
+
+- ``scf``, ``nscf``, ``bands``: generated exactly as for the Quantum ESPRESSO target, with the parameters described in :ref:`sec-cif2x-fileformat` above (``optional`` with ``pp_file``, ``cutoff_file``, ``pseudo_dir`` and ``content`` with ``namelist`` and the cards). The ``nscf`` task should set ``nosym: true`` and ``noinv: true`` in ``content.namelist.system``, as required by ``qe2respack``; ``cif2x`` warns when they are missing.
+
+- ``respack``: generates the RESPACK control file. ``output_file`` and ``template`` are required. The parameter-set syntax ``${...}`` is not expanded for this task.
+
+template and content (``mode: respack``)
+----------------------------------------
+
+The template is a namelist-only file: it may contain only the RESPACK namelists ``&param_chiqw``, ``&param_wannier``, ``&param_interpolation``, ``&param_visualization``, and ``&param_calc_int``. Any other namelist, or any text outside the namelists (such as a k-point block), is rejected, because ``cif2x`` generates the k-path block itself.
+
+``content`` holds the same namelists as mappings; its values are merged over those of the template (the ``content`` value wins for the same key). Namelist and parameter names are case-insensitive.
+
+.. code-block:: yaml
+
+  - mode: respack
+    output_file: input.in
+    template: respack.in_tmpl
+    content:
+      param_wannier:
+        N_wannier: 3
+      param_interpolation:
+        dense: [8, 8, 8]
+
+The following conditions are checked, and the run stops with an error when they are not met:
+
+- ``N_wannier`` in ``&param_wannier`` must be a positive integer. It is the number of Wannier functions chosen by the user and is not derived automatically.
+
+- ``Lower_energy_window`` and ``Upper_energy_window`` in ``&param_wannier`` must be numbers with ``Lower_energy_window < Upper_energy_window``.
+
+- ``N_initial_guess`` in ``&param_wannier`` must be ``0`` or omitted; the initial guess is always SCDM, and ``N_initial_guess = 0`` is written.
+
+- ``dense`` in ``&param_interpolation`` must be an integer :math:`n` (used as :math:`n \times n \times n`) or a list of three integers.
+
+- ``reading_sk_format`` in ``&param_interpolation`` must be ``0`` (the default).
+
+The following are generated by ``cif2x`` and written to the output: ``N_sym_points`` in ``&param_interpolation`` (the number of high-symmetry points of each segment of the path), and the block of high-symmetry k-point coordinates that follows the ``&param_interpolation`` namelist, obtained from ``HighSymmKpath`` of pymatgen. The namelists are written in the order ``&param_chiqw``, ``&param_wannier``, ``&param_interpolation``, ``&param_visualization``, ``&param_calc_int``; a namelist is written only when it appears in the template or ``content``.
+
+A complete example is given in ``docs/tutorial/cif2x/respack/`` and in ``sample/cif2x/respack/`` of the repository.

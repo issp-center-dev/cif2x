@@ -98,7 +98,7 @@ Installation and basic usage
 
 **Basic usage**
 
-  ``cif2x`` is a tool to generate a set of input files for first-principles calculation software. It takes an input parameter file as a template, and generates parameter items that may vary by materials and calculation conditions from crystallographic data. In the present version, ``cif2x`` supports Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
+  ``cif2x`` is a tool to generate a set of input files for first-principles calculation software. It takes an input parameter file as a template, and generates parameter items that may vary by materials and calculation conditions from crystallographic data. In the present version, ``cif2x`` supports Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR, and the RESPACK workflow (Quantum ESPRESSO and RESPACK inputs).
 
   #. Prepare input parameter file
 
@@ -114,7 +114,7 @@ Installation and basic usage
 
   #. Run command
 
-      Run ``cif2x`` command with the input parameter file and the crystal structure data as arguments. To generate input files for Quantum ESPRESSO, the target option ``-t QE`` should be specified. The option turns to ``-t VASP`` for VASP, ``-t OpenMX`` for OpenMX, and ``-t AkaiKKR`` for AkaiKKR.
+      Run ``cif2x`` command with the input parameter file and the crystal structure data as arguments. To generate input files for Quantum ESPRESSO, the target option ``-t QE`` should be specified. The option turns to ``-t VASP`` for VASP, ``-t OpenMX`` for OpenMX, ``-t AkaiKKR`` for AkaiKKR, and ``-t respack`` for the RESPACK workflow.
 
       .. code-block:: bash
 
