@@ -1,6 +1,8 @@
 import logging
 logger = logging.getLogger(__name__)
 
+import numpy as np
+
 from .cards import *
 from .tools import *
 from cif2x.input_validator import InputValidationError
@@ -29,7 +31,8 @@ class QEmode_base:
             if key in self.card_table.keys() and self.card_table[key] is not None:
                 proc = self.card_table[key]
                 logger.debug(f"card_input = {card}")
-                d = proc(self.qe, card)
+                # a bare "K_POINTS:" in YAML parses to None: generate with defaults
+                d = proc(self.qe, card if card is not None else {})
                 logger.debug(f"card_result = {d}")
                 new_cards[key] = d
             else:
@@ -158,6 +161,49 @@ class QEmode_pw(QEmode_base):
                 pass
             if self.qe.is_soc:
                 content.namelist["system"]["lspinorb"] = True
+            if self.qe.struct.is_mag and (self.qe.is_col or self.qe.is_noncol):
+                self._update_magnetization_info(content)
+
+    def _update_magnetization_info(self, content):
+        """Write starting_magnetization(i) (and angle1/angle2 for noncollinear
+        runs) from the magnetic moments of the structure data.
+
+        QE's starting_magnetization is the spin polarization as a fraction of
+        the valence charge, so the moment (in Bohr magnetons) is divided by the
+        valence charge of the pseudopotential (see Struct2QE._find_elem_zvalence).
+        Keys already given by the user (a literal ``starting_magnetization(i)``
+        or a bare ``starting_magnetization`` list) are left untouched.
+        """
+        system = content.namelist["system"]
+        struct = self.qe.struct
+        if "starting_magnetization" in system:
+            logger.info("starting_magnetization given as a list; not generated from the structure")
+            return
+        noncol = self.qe.is_noncol
+        vecs = struct.vector_moments(per_type=True)
+        scalars = struct.collinear_moments(per_type=True)
+        for i, ename in enumerate(struct.elem_names, start=1):
+            key = f"starting_magnetization({i})"
+            if system.get(key) is not None:
+                logger.info(f"{key} given explicitly; kept")
+                continue
+            vec = np.array(vecs[i - 1], dtype=float)
+            mag = float(np.linalg.norm(vec)) if noncol else scalars[i - 1]
+            if abs(mag) < 1.0e-8:
+                continue
+            zval = self.qe._find_elem_zvalence(ename, i)
+            value = mag / zval
+            if abs(value) > 1.0:
+                logger.warning(f"{key}: moment {mag:.3f} muB exceeds the valence "
+                               f"charge {zval:g} of {ename}; clipped to {np.sign(value):+.0f}")
+                value = float(np.sign(value))
+            system[key] = round(value, 6)
+            if noncol:
+                theta = float(np.degrees(np.arccos(np.clip(vec[2] / mag, -1.0, 1.0))))
+                phi = float(np.degrees(np.arctan2(vec[1], vec[0])))
+                for akey, aval in ((f"angle1({i})", theta), (f"angle2({i})", phi)):
+                    if system.get(akey) is None:
+                        system[akey] = round(aval, 6)
 
     def _update_nbnd_info(self, content):
         if "system" in content.namelist:

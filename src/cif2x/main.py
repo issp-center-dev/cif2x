@@ -53,6 +53,10 @@ def main():
     except InputValidationError as e:
         logger.error(str(e))
         sys.exit(1)
+    except OSError as e:
+        # a file could not be read or written (permissions, disk full, ...)
+        logger.error(f"file error: {e}")
+        sys.exit(1)
 
 
 def _require_one_source(args):

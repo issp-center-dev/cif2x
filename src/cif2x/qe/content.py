@@ -26,13 +26,12 @@ class Content:
         return buf.getvalue()
 
     def write_input(self, filename, dirname="."):
+        # an OSError (unwritable directory, disk full, ...) propagates so that
+        # the CLI reports it and exits with a non-zero status
         logger.debug(f"write_input: dir={dirname}, file={filename}")
-        try:
-            os.makedirs(Path(dirname), exist_ok=True)
-            with open(Path(dirname, filename), "w") as fp:
-                fp.write(self.render())
-        except Exception as e:
-            logger.error("write_input failed: {}".format(e))
+        os.makedirs(Path(dirname), exist_ok=True)
+        with open(Path(dirname, filename), "w") as fp:
+            fp.write(self.render())
 
     def _write_namelist(self, fp):
         logger.debug("_write_namelist")

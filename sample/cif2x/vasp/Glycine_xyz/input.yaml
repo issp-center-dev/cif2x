@@ -22,4 +22,5 @@ tasks:
       kpoints:
         type: gamma_automatic
       #poscar:
-      #potcar:
+      potcar:
+        skip: true   # no POTCAR files ship with the sample; remove this to generate POTCAR

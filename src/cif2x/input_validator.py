@@ -5,10 +5,13 @@ directly to the user (main() logs it and exits without a traceback).
 """
 
 
-class InputValidationError(Exception):
-    """Raised when the target name or input.yaml is invalid.
+class InputValidationError(ValueError):
+    """Raised for every problem caused by the user's input: the target name,
+    input.yaml, the structure file, templates, or missing pseudopotential data.
 
-    The exception message is user-facing.
+    The exception message is user-facing; main() logs it and exits with
+    status 1 without a traceback. It subclasses ValueError so that callers
+    that catch ValueError keep working.
     """
 
 

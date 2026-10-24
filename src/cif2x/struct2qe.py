@@ -42,8 +42,10 @@ class Struct2QE:
         self.struct = copy.deepcopy(struct)
 
         if struct.is_composite:
-            logger.error("init: composite material is not supported")
-            raise ValueError("unsupported material type")
+            raise InputValidationError(
+                "the structure has partially occupied (disordered) sites, which "
+                "Quantum ESPRESSO input generation does not support; use an "
+                "ordered structure or the akaikkr target.")
 
         #XXX
         self.pseudo_dir = None
@@ -201,14 +203,60 @@ class Struct2QE:
 
         return ecutwfc, ecutrho
 
+    def _find_elem_zvalence(self, ename, itype=None):
+        """Valence charge of the pseudopotential of ``ename``.
+
+        Looked up in a ``zval`` (or ``z_valence``) column of pp_file first, then
+        in the ``z_valence`` attribute of the UPF header in pseudo_dir. Needed to
+        convert a magnetic moment to QE's starting_magnetization.
+        """
+        if self.pp_list is not None and ename in self.pp_list.index:
+            for col in ("zval", "z_valence"):
+                if col in self.pp_list.columns:
+                    value = _normalize_cutoff(self.pp_list.at[ename, col])
+                    if value is not None:
+                        return value
+
+        if self.pp_list is not None and self.pseudo_dir is not None:
+            from bs4 import BeautifulSoup
+            pseudo_file = "{}/{}".format(self.pseudo_dir, self._pp_filename(ename))
+            try:
+                with open(pseudo_file, "r") as fp:
+                    bs = BeautifulSoup(fp, "html.parser")
+            except OSError as e:
+                logger.warning(f"{pseudo_file}: {e}")
+                bs = None
+            if bs and bs.upf and bs.upf.pp_header and bs.upf.pp_header.has_attr("z_valence"):
+                value = _normalize_cutoff(bs.upf.pp_header["z_valence"])
+                if value is not None:
+                    return value
+
+        key = "starting_magnetization({})".format(itype if itype is not None else "i")
+        raise InputValidationError(
+            f"cannot determine the valence charge of '{ename}', needed to convert "
+            f"its magnetic moment to {key}: add a 'zval' column to pp_file, make "
+            "the pseudopotential file available in pseudo_dir, or set "
+            f"content.namelist.system.{key} explicitly.")
+
     def _set_nspin_info(self, content):
         if "system" in content.namelist:
             if is_empty_key(content.namelist["system"], "nspin"):
-                logger.error("nspin left blank")
-                raise ValueError("empty nspin")
+                raise InputValidationError(
+                    "content.namelist.system.nspin is left blank; give 1 or 2, "
+                    "or remove the key to let cif2x decide from the structure.")
             nspin = content.namelist["system"].get("nspin", None)
             is_noncolin = content.namelist["system"].get("noncolin", False)
             is_lspinorb = content.namelist["system"].get("lspinorb", False)
+
+            if self.struct.is_mag and nspin is None and not is_noncolin:
+                # magnetic structure data with no spin setting from the user:
+                # choose the polarization from the moments themselves
+                if self.struct._are_collinear():
+                    nspin = 2
+                    logger.info("magnetic structure: nspin = 2 chosen (collinear moments)")
+                else:
+                    is_noncolin = True
+                    logger.info("magnetic structure: noncolin chosen (non-collinear moments)")
 
             self.is_col = nspin == 2
             self.is_noncol = nspin is None and is_noncolin
@@ -223,10 +271,17 @@ class Struct2QE:
 
     def _find_nbnd_info(self):
         if self.pp_list is None:
-            logger.error("find_nbnd_info: pp_file not specified")
-            raise RuntimeError("find_nbnd_info: pp_file not specified")
-            return 0
-        
+            raise InputValidationError(
+                "nbnd is left blank but optional.pp_file (with 'nexclude' and "
+                "'orbitals' columns) is not available; specify nbnd explicitly "
+                "or provide pp_file.")
+        missing = [c for c in ("nexclude", "orbitals") if c not in self.pp_list.columns]
+        if missing:
+            raise InputValidationError(
+                "nbnd is left blank but pp_file lacks the column(s) {}; add them "
+                "or specify content.namelist.system.nbnd explicitly.".format(
+                    ", ".join(f"'{c}'" for c in missing)))
+
         # determine the number of bands
         spinor_factor = 2 if self.is_col or self.is_noncol else 1
         species = self.struct.structure.species
@@ -285,9 +340,8 @@ class Struct2QE:
             try:
                 with open(tmpl, "r") as fp:
                     content = fp.read()
-            except Exception as e:
-                logger.error("{}".format(e))
-                raise RuntimeError(f"cannot read template file {tmpl}")
+            except OSError as e:
+                raise InputValidationError(f"cannot read template file {tmpl}: {e}") from e
             try:
                 qe_input = QEInputGeneral(content)
             except InputValidationError as e:
@@ -537,7 +591,9 @@ class Struct2QE:
                 [c*cosac, c*(cosbc - cosac*cosab)/sinab, c*np.sqrt(1 + 2*cosbc*cosac*cosab - cosab**2 - cosac**2 - cosbc**2)/sinab]
             ]
         else:
-            raise Exception(f"Failed to set ibrav. space group {sp_num} is not implemented.")
+            raise InputValidationError(
+                f"use_ibrav: space group {sp_num} is not supported; set "
+                "structure.use_ibrav: false.")
         # a_i = lattice.matrix[i, :], cartesian_coord = frac_coord@lattice.matrix
         new_lattice = np.array(qe_latt)
         if conv_mat is None:
@@ -578,8 +634,10 @@ class Struct2QE:
         logger.debug("system = {}".format(system))
 
         if not primitive_structure.matches(new_structure, ltol=0.01, stol=0.01, angle_tol=0.1, primitive_cell=False):
-            logger.error("ibrav structure does not match original structure.")
-            raise Exception("ibrav structure does not match original structure.")
+            raise InputValidationError(
+                "use_ibrav: the structure rebuilt in the Quantum ESPRESSO "
+                "ibrav convention does not match the original structure; set "
+                "structure.use_ibrav: false to write CELL_PARAMETERS instead.")
 
         #self.structure = new_structure
         return new_structure, system

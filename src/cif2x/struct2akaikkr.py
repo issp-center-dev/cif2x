@@ -10,6 +10,7 @@ from pymatgen.core import SETTINGS
 import copy
 
 from cif2x.cif2struct import Cif2Struct
+from cif2x.input_validator import InputValidationError
 from cif2x.utils import *
 
 from cif2x.akaikkr.run_cif2kkr import ak_struct2kkr
@@ -77,7 +78,11 @@ class Struct2AkaiKKR:
         logger.debug("_setup_content")
 
         if "template" in self.info:
-            infile = read_input_file(Path(self.info["template"]))
+            try:
+                infile = read_input_file(Path(self.info["template"]))
+            except OSError as e:
+                raise InputValidationError(
+                    f"cannot read template file {self.info['template']}: {e}") from e
         else:
             infile = None
 
