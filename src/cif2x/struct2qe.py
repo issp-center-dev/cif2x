@@ -288,7 +288,10 @@ class Struct2QE:
             except Exception as e:
                 logger.error("{}".format(e))
                 raise RuntimeError(f"cannot read template file {tmpl}")
-            qe_input = QEInputGeneral(content)
+            try:
+                qe_input = QEInputGeneral(content)
+            except InputValidationError as e:
+                raise InputValidationError(f"template file {tmpl}: {e}") from e
             logger.debug(f"namelist = {qe_input.namelist}")
             logger.debug(f"cards = {qe_input.cards}")
             return qe_input.namelist, qe_input.cards
