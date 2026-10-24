@@ -1,8 +1,5 @@
 import pytest
 
-# qeutil imports qe_tools at module load; skip cleanly if it is unavailable.
-pytest.importorskip("qe_tools")
-
 from cif2x.qe.qeutil import parse_cards
 
 

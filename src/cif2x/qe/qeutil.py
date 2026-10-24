@@ -1,16 +1,48 @@
+"""Read a Quantum ESPRESSO input template into namelists and cards.
+
+Namelists are parsed with f90nml (already a cif2x dependency); cards (the free
+text after the last namelist) are split by the regex in :func:`parse_cards`.
+Namelist and key names are lowercased; card names are uppercased.
+"""
+
 import re
-from qe_tools.parsers.qeinputparser import QeInputFile, parse_namelists
+import f90nml
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class QEInputGeneral(QeInputFile):
+class QEInputGeneral:
     def __init__(self, pwinput):
-        super().__init__(pwinput)
-
-        self.namelist = { k.lower(): v for k,v in parse_namelists(self.input_txt).items() }
+        self.input_txt = pwinput
+        self.namelist = parse_namelists(self.input_txt)
         self.cards = { k.upper(): v for k,v in parse_cards(self.input_txt).items() }
+
+
+def parse_namelists(txt):
+    """Return ``{namelist_name: {key: value}}`` for every ``&name ... /`` block.
+
+    Names and keys are lowercased. Indexed keys such as ``celldm(1)`` are
+    returned by f90nml as a list under the bare key (``celldm: [10.2]``); a
+    1-based Fortran array assignment is reproduced when the namelist is written
+    back. Text outside the namelists (the cards) is ignored. Returns ``{}`` when
+    the text holds no namelist.
+    """
+    try:
+        nml = f90nml.reads(txt)
+    except Exception as e:
+        raise ValueError("failed to parse namelists in QE template: {}".format(e))
+    return { str(name).lower(): _as_plain_dict(section) for name, section in nml.items() }
+
+
+def _as_plain_dict(section):
+    out = {}
+    for key, value in section.items():
+        if isinstance(value, f90nml.Namelist):
+            value = _as_plain_dict(value)
+        out[str(key).lower()] = value
+    return out
+
 
 def parse_cards(txt):
     namelist_re = re.compile(
@@ -41,14 +73,3 @@ def parse_cards(txt):
 
         cardlist[key] = item
     return cardlist
-    
-    
-if __name__ == "__main__":
-
-    with open("./scf.in_sample", "r") as fp:
-        content = fp.read()
-    
-    qe = QEInputGeneral(content)
-
-    print(qe.namelist)
-    print(qe.cards)

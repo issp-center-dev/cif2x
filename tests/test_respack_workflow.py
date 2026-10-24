@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("qe_tools")
 pytest.importorskip("bs4")
 pymatgen = pytest.importorskip("pymatgen.core")
 

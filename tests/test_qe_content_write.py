@@ -85,19 +85,19 @@ def test_write_namelist_section_with_all_none_keys_emitted_empty(tmp_path):
 
 
 def test_write_namelist_roundtrips_through_qe_parser(tmp_path):
-    # the emitted text must remain parseable by the QE parser stack, with the
+    # the emitted text must remain parseable by the template reader, with the
     # required section order and omitted None keys not reappearing
-    qeparser = pytest.importorskip("qe_tools.parsers.qeinputparser")
+    from cif2x.qe.qeutil import parse_namelists
     text = _write(tmp_path, {
         "control": {"calculation": "scf"},
         "electrons": {"conv_thr": 1e-8, "mixing_beta": None},
         "system": {"ibrav": 0, "nat": 7},
     })
-    parsed = qeparser.parse_namelists(text)
+    parsed = parse_namelists(text)
     sections = list(parsed.keys())
-    assert sections.index("SYSTEM") < sections.index("ELECTRONS")
-    assert "mixing_beta" not in parsed["ELECTRONS"]
-    assert parsed["SYSTEM"]["nat"] == 7
+    assert sections.index("system") < sections.index("electrons")
+    assert "mixing_beta" not in parsed["electrons"]
+    assert parsed["system"]["nat"] == 7
 
 
 def test_write_namelist_preserves_nested_value(tmp_path):

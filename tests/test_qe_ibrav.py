@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-pytest.importorskip("qe_tools")
 pytest.importorskip("pymatgen")
 
 from pymatgen.core import Lattice, Structure

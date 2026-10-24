@@ -11,7 +11,6 @@ Installation and basic usage
   - pandas module
   - pymatgen module
   - f90nml module
-  - qe-tools module
   - beautifulsoup4 module
   - mp_api module
   - phonopy module

@@ -3,8 +3,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("qe_tools")  # main imports struct2qe -> qeutil -> qe_tools
-
 import cif2x.main as main_mod
 
 

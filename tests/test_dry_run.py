@@ -30,7 +30,6 @@ def test_qe_content_render_matches_written_file(tmp_path):
 
 
 def test_qe_writer_dry_run_prints_and_writes_nothing(tmp_path, capsys):
-    pytest.importorskip("qe_tools")
     from cif2x.struct2qe import Struct2QE
     from cif2x.qe.content import Content
 
@@ -115,7 +114,6 @@ def test_vasp_writer_dry_run_skips_none_and_prints(tmp_path, capsys, monkeypatch
 
 
 def test_cli_dry_run_propagates_to_writer(monkeypatch, tmp_path):
-    pytest.importorskip("qe_tools")
     import sys
     import cif2x.main as main_mod
 

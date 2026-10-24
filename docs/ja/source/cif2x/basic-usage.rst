@@ -11,7 +11,6 @@
   - pandas モジュール
   - pymatgen モジュール
   - f90nml モジュール
-  - qe-tools モジュール
   - beautifulsoup4 モジュール
   - mp_api モジュール
   - phonopy モジュール

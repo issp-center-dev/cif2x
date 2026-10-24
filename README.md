@@ -20,7 +20,7 @@ Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
 
 ## Requirement
 
-Python3 with pymatgen, qe-tools, AkaiKKRPythonUtil, and other library packages.
+Python3 with pymatgen, f90nml, and other library packages. For AkaiKKR, AkaiKKRPythonUtil (pyakaikkr) and seaborn must be installed separately; see the user guide.
 
 getcif requires mp-api, pymatgen, and other library packages.
 
