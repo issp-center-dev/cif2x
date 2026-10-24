@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "HTP-tools-cif2x"
 version = "1.1.0"
-description = "High-ThroughtPut calculation tools"
+description = "High-Throughput calculation tools"
 authors = ["HTP-tools developers <htp-tools-dev@issp.u-tokyo.ac.jp>"]
 license = "GPL-3.0-or-later"
 
@@ -17,7 +17,9 @@ packages = [
 python = "^3.11"
 numpy = ">=1.20"
 pandas = ">=1.4"
-pymatgen = ">=2019.12.3"
+# mp_api needs pymatgen > 2024.2.20 and getcif/cif2x use the mp_api client;
+# verified with pymatgen 2026.10.24
+pymatgen = ">=2024.2.20"
 f90nml = "^1.4"
 beautifulsoup4 = "^4"
 mp_api = ">=0.40"
