@@ -14,6 +14,8 @@ It constructs parts that vary depending on the type of material and computationa
 It is capable of generating multiple input files tailored to specific computational conditions.
 Currently, it supports `VASP <https://www.vasp.at>`_, `Quantum ESPRESSO <https://www.quantum-espresso.org>`_, `OpenMX <http://www.openmx-square.org>`_, and `AkaiKKR <http://kkr.issp.u-tokyo.ac.jp>`_, and it generates the Quantum ESPRESSO and `RESPACK <https://sites.google.com/view/kazuma7k6r>`_ inputs of a RESPACK workflow.
 
+As an accompanying program, getcif retrieves crystal structure data and other properties of materials from databases. It currently supports the Materials Project: the database can be searched by composition, symmetry, or physical properties such as the band gap, and the matching data are downloaded.
+
 License
 ----------------------------------------------------------------
 
@@ -48,6 +50,9 @@ This software was developed by the following contributors.
 
 Release history
 ----------------------------------------------------------------
+
+  ver.1.2.0
+    In development (not yet released)
 
   ver.1.1.0
     Released on 2024/09/14

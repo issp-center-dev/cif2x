@@ -11,13 +11,14 @@
   - pandas モジュール
   - pymatgen モジュール
   - f90nml モジュール
-  - qe-tools モジュール
   - beautifulsoup4 モジュール
   - mp_api モジュール
   - phonopy モジュール
   - ruamel.yaml モジュール
 
   AkaiKKR 向けの入力ファイルを生成する場合は、上記に加えて AkaiKKRPythonUtil モジュールが必要です。これは自動ではインストールされないため、別途インストールします (下記参照)。
+
+  本リリースは Python 3.11〜3.14、pymatgen 2026.10、f90nml 1.5、mp-api 0.47 で動作を確認しています。AkaiKKRPythonUtil 2023.2.1 は pymatgen の非推奨インタフェースに依存しており、pymatgen 2026.10 では動作しますが、将来の pymatgen で動かなくなる可能性があります。
 
 **ソースコード配布サイト**
 
@@ -40,7 +41,7 @@
      $ cd ./cif2x
      $ python3 -m pip install .
 
-  実行プログラム ``cif2x``, ``getcif`` がインストールされます。
+  実行プログラム ``cif2x``, ``getcif``, ``cif2x-pp-cutoff`` がインストールされます。
 
   なお、AkaiKKRPythonUtil モジュールは別途インストールが必要です。
   以下の手順で `配布サイト <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_ からソースコードを取得しインストールします。また、必要な seaborn モジュールもインストールしておきます。
@@ -58,40 +59,49 @@
   ::
 
      .
+     |-- CHANGELOG.md
      |-- LICENSE
      |-- README.md
      |-- pyproject.toml
      |-- docs/
+     |   |-- en/
      |   |-- ja/
      |   |-- tutorial/
+     |-- sample/
+     |   |-- cif2x/
+     |   |-- getcif/
      |-- src/
      |   |-- cif2x/
-     |       |-- __init__.py
-     |       |-- main.py
-     |       |-- cif2struct.py
-     |       |-- struct2qe.py
-     |       |-- qe/
-     |       |   |-- __init__.py
-     |	     |   |-- calc_mode.py
-     |	     |   |-- cards.py
-     |	     |   |-- content.py
-     |	     |   |-- qeutils.py
-     |	     |   |-- tools.py
-     |       |-- struct2vasp.py
-     |       |-- struct2openmx.py
-     |       |-- openmx/
-     |       |   |-- __init__.py
-     |       |   |-- vps_table.py
-     |       |-- struct2akaikkr.py
-     |       |-- akaikkr/
-     |       |   |-- make_input.py
-     |       |   |-- read_input.py
-     |       |   |-- run_cif2kkr.py
-     |       |-- utils.py
+     |   |   |-- __init__.py
+     |   |   |-- main.py
+     |   |   |-- input_validator.py
+     |   |   |-- cif2struct.py
+     |   |   |-- mp_source.py
+     |   |   |-- utils.py
+     |   |   |-- pp_cutoff.py
+     |   |   |-- struct2qe.py
+     |   |   |-- qe/
+     |   |   |   |-- __init__.py
+     |   |   |   |-- calc_mode.py
+     |   |   |   |-- cards.py
+     |   |   |   |-- content.py
+     |   |   |   |-- qeutil.py
+     |   |   |   |-- tools.py
+     |   |   |-- struct2vasp.py
+     |   |   |-- struct2openmx.py
+     |   |   |-- openmx/
+     |   |   |   |-- vps_table.py
+     |   |   |-- struct2akaikkr.py
+     |   |   |-- akaikkr/
+     |   |   |   |-- make_input.py
+     |   |   |   |-- read_input.py
+     |   |   |   |-- run_cif2kkr.py
+     |   |   |-- struct2respack.py
      |   |-- getcif/
      |       |-- __init__.py
      |       |-- main.py
-     |-- sample/
+     |       |-- mp.py
+     |-- tests/
 
 
 **基本的な使用方法**

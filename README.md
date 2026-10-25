@@ -2,7 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 [![Documentation](https://img.shields.io/badge/docs-online-brightgreen.svg)](https://issp-center-dev.github.io/cif2x/manual/main/en/html/)
 
 In recent years, the use of machine learning for predicting material properties and designing substances (known as materials informatics) has gained considerable attention.
@@ -45,6 +45,11 @@ parameter file. The target code is selected with `-t`
 ``` bash
 cif2x -t quantum_espresso input.yaml structure.cif
 ```
+
+`--mp-id mp-149` fetches the structure from the Materials Project instead of
+reading a CIF file, and `--dry-run` prints the generated files instead of
+writing them. The companion command `cif2x-pp-cutoff` builds the cutoff index
+CSV from UPF pseudopotential files.
 
 ### getcif
 

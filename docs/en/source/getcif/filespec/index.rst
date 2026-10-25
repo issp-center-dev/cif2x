@@ -133,4 +133,4 @@ The available types of data conform to the ``field`` parameter of the Materials 
 
 The types ``material_id`` and ``formula_pretty`` are retrieved automatically.
 
-The obtained data are placed in the directory specified by ``output_dir`` parameter under the subdirectories of the material_id for each material. Each item is stored as a separate file of the item name. The crystal structure data (``structure``) is stored in a file ``structure.cif`` in CIF format.
+The obtained data are placed in the directory specified by ``output_dir`` parameter under the subdirectories of the material_id for each material. Each item is stored as a separate file of the item name (``formula_pretty`` is stored as ``formula``). The crystal structure data (``structure``) is stored in a file ``structure.cif`` in CIF format.

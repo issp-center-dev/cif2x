@@ -141,7 +141,7 @@ optional section
 
   ``cutoff_file``
 
-    This parameter specifies the index file in CSV format that relates the pseudo-potential file and the cutoff values. The columns are ``pseudofile,ecutwfc,ecutrho``: the name of the pseudo-potential file, the ``ecutwfc`` value, and the ``ecutrho`` value, respectively.
+    This parameter specifies the index file in CSV format that relates the pseudo-potential file and the cutoff values. The columns are ``pseudofile,ecutwfc,ecutrho``: the name of the pseudo-potential file, the ``ecutwfc`` value, and the ``ecutrho`` value, respectively. The command ``cif2x-pp-cutoff``, installed with cif2x, builds this file from UPF files (``cif2x-pp-cutoff -o cutoff.csv pseudo/*.UPF``; see ``cif2x-pp-cutoff -h``).
 
   ``pseudo_dir``
 

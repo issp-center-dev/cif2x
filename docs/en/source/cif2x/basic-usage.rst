@@ -11,13 +11,14 @@ Installation and basic usage
   - pandas module
   - pymatgen module
   - f90nml module
-  - qe-tools module
   - beautifulsoup4 module
   - mp_api module
   - phonopy module
   - ruamel.yaml module
 
   To generate input files for AkaiKKR, the AkaiKKRPythonUtil module is additionally required. It is not installed automatically and must be installed separately (see below).
+
+  This release was checked with Python 3.11 to 3.14, pymatgen 2026.10, f90nml 1.5, and mp-api 0.47. AkaiKKRPythonUtil 2023.2.1 relies on pymatgen interfaces that are deprecated; it works with pymatgen 2026.10, but a future pymatgen release may stop supporting it.
 
 
 **Official pages**
@@ -41,7 +42,7 @@ Installation and basic usage
      $ cd ./cif2x
      $ python3 -m pip install .
 
-  The executable files ``cif2x`` and ``getcif`` will be installed.
+  The executable files ``cif2x``, ``getcif``, and ``cif2x-pp-cutoff`` will be installed.
   You may need to add ``--user`` option next to ``install`` keyword above in case you are not allowed to install packages system-wide.
 
   AkaiKKRPythonUtil module need to be installed separately. The source package is available from `the repository <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_. Then follow the steps below to install the module along with the required seaborn module:
@@ -59,41 +60,49 @@ Installation and basic usage
   ::
 
      .
+     |-- CHANGELOG.md
      |-- LICENSE
      |-- README.md
      |-- pyproject.toml
      |-- docs/
-     |   |-- ja/
      |   |-- en/
+     |   |-- ja/
      |   |-- tutorial/
+     |-- sample/
+     |   |-- cif2x/
+     |   |-- getcif/
      |-- src/
      |   |-- cif2x/
-     |       |-- __init__.py
-     |       |-- main.py
-     |       |-- cif2struct.py
-     |       |-- struct2qe.py
-     |       |-- qe/
-     |       |   |-- __init__.py
-     |	     |   |-- calc_mode.py
-     |	     |   |-- cards.py
-     |	     |   |-- content.py
-     |	     |   |-- qeutils.py
-     |	     |   |-- tools.py
-     |       |-- struct2vasp.py
-     |       |-- struct2openmx.py
-     |       |-- openmx/
-     |       |   |-- __init__.py
-     |       |   |-- vps_table.py
-     |       |-- struct2akaikkr.py
-     |       |-- akaikkr/
-     |       |   |-- make_input.py
-     |       |   |-- read_input.py
-     |       |   |-- run_cif2kkr.py
-     |       |-- utils.py
+     |   |   |-- __init__.py
+     |   |   |-- main.py
+     |   |   |-- input_validator.py
+     |   |   |-- cif2struct.py
+     |   |   |-- mp_source.py
+     |   |   |-- utils.py
+     |   |   |-- pp_cutoff.py
+     |   |   |-- struct2qe.py
+     |   |   |-- qe/
+     |   |   |   |-- __init__.py
+     |   |   |   |-- calc_mode.py
+     |   |   |   |-- cards.py
+     |   |   |   |-- content.py
+     |   |   |   |-- qeutil.py
+     |   |   |   |-- tools.py
+     |   |   |-- struct2vasp.py
+     |   |   |-- struct2openmx.py
+     |   |   |-- openmx/
+     |   |   |   |-- vps_table.py
+     |   |   |-- struct2akaikkr.py
+     |   |   |-- akaikkr/
+     |   |   |   |-- make_input.py
+     |   |   |   |-- read_input.py
+     |   |   |   |-- run_cif2kkr.py
+     |   |   |-- struct2respack.py
      |   |-- getcif/
      |       |-- __init__.py
      |       |-- main.py
-     |-- sample/
+     |       |-- mp.py
+     |-- tests/
 
 
 **Basic usage**
