@@ -173,7 +173,7 @@ cif2x は入力ファイルを生成する前に、ターゲット名と ``input
 
 - **cutoff information (ecutwfc) not found for element '...'**
 
-  ``ecutwfc`` を空欄 (または未記載) にしたが、その元素について解決できなかった場合に出力されます。 ``cutoff_file`` にその擬ポテンシャルファイルの行がなく、 ``pseudo_dir`` 内の ``.UPF`` ファイルにもカットオフ情報がない状態です。 ``cutoff_file`` に行を追加する、 ``.UPF`` ファイルを配置する、または ``content.namelist.system.ecutwfc`` を明示的に指定してください。 ``ecutrho`` が解決できない場合はエラーにならず、キーを省いて ``pw.x`` のデフォルト (``4 * ecutwfc``) に任せます。
+  ``ecutwfc`` を空欄 (または未記載) にしたが、その元素について解決できなかった場合に出力されます。 ``pp_file`` が指定されていないか、 ``cutoff_file`` にその擬ポテンシャルファイルの行がなく、 ``pseudo_dir`` 内の ``.UPF`` ファイルにもカットオフ情報がない状態です。 ``cutoff_file`` に行を追加する、 ``.UPF`` ファイルを配置する、または ``content.namelist.system.ecutwfc`` を明示的に指定してください。 ``ecutrho`` が解決できない場合はエラーにならず、キーを省いて ``pw.x`` のデフォルト (``4 * ecutwfc``) に任せます。
 
 - **cannot determine the valence charge of '...'**
 
@@ -181,7 +181,7 @@ cif2x は入力ファイルを生成する前に、ターゲット名と ``input
 
 - **POTCAR: ...** (VASP)
 
-  POTCAR を組み立てられなかった場合に出力されます。 ``pp_file`` に元素の行がない、POTCAR ファイルが読めない、 ``pp_file`` も ``PMG_VASP_PSP_DIR`` も設定されていない、のいずれかです。 ``optional`` セクションを修正するか (ファイルフォーマットの章を参照)、意図的に POTCAR を省く場合は ``content.potcar.skip: true`` を指定してください。
+  POTCAR を組み立てられなかった場合に出力されます。 ``pp_file`` が読めない、 ``pp_file`` に元素の行がない、POTCAR ファイルが読めない、 ``pp_file`` も ``PMG_VASP_PSP_DIR`` も設定されていない、pymatgen が汎関数とシンボルに対応する POTCAR を見つけられない、のいずれかです。 ``optional`` セクションを修正するか (ファイルフォーマットの章を参照)、意図的に POTCAR を省く場合は ``content.potcar.skip: true`` を指定してください。
 
 - **the structure has partially occupied (disordered) sites**
 

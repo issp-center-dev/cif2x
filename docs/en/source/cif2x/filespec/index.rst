@@ -51,7 +51,7 @@ structure
 
 optional
 --------
-This section contains global settings needed for the first-principles calculation software. The available parameters are described in the corresponding sections below. A task may carry its own ``optional`` block with the same keys; a task-level entry overrides the global one, so one task can use, for example, a different ``pseudo_dir``.
+This section contains global settings needed for the first-principles calculation software. The available parameters are described in the corresponding sections below. A task may carry its own ``optional`` block with the same keys; a task-level entry overrides the global one, so one task can use, for example, a different ``pseudo_dir``. Entries whose value is a mapping (such as ``vps_variant``) are merged key by key rather than replaced as a whole.
 
 tasks
 -----
@@ -100,11 +100,11 @@ An input parameter may be given a list or range of parameters. In this case, a s
 
 - a range: ``${range(N)}``, ``${range(start, end, step)}``
 
-  a range of parameter is given by the keyword ``range``. The former specifies the values from ``0`` to ``N-1``, and the latter from ``start`` up to but **not including** ``end`` with every ``step``, as Python's ``range`` and NumPy's ``arange`` do. (If ``step`` is omitted, it is assumed to be ``1``.) ``N``, ``start``, ``end``, and ``step`` may be integers or floats.
+  a range of parameter is given by the keyword ``range``. The former specifies the values from ``0`` to ``N-1``, and the latter from ``start`` up to but **not including** ``end`` with every ``step``, as Python's ``range`` does. (If ``step`` is omitted, it is assumed to be ``1``.) ``N``, ``start``, ``end``, and ``step`` may be integers or floats; with a float step the values are rounded (to 10 decimals), so ``${range(0.1, 0.4, 0.1)}`` gives exactly ``0.1``, ``0.2``, ``0.3``.
 
 The following rules apply:
 
-- The ``${...}`` expression must be the whole value of the parameter (``ecutwfc: ${range(30, 60, 10)}``). It is not expanded inside a longer string (``prefix: run_${[1, 2]}`` is left as it is).
+- The ``${...}`` expression must be the whole value of the parameter (``ecutwfc: ${range(30, 60, 10)}``). A ``${...}`` inside a longer string (``prefix: run_${[1, 2]}``) is an error.
 
 - Every ``${...}`` in a task is expanded independently, and an input file is generated for every combination. The files of one combination are written to a sub-directory of ``output_dir`` named after the values, joined with ``_`` in the order of appearance; the elements of a list value are joined with ``x`` (for example ``40_8x8x8`` for ``ecutwfc: 40`` and ``grid: [8, 8, 8]``).
 
@@ -128,7 +128,7 @@ optional section
     - ``pseudopotential``: the name stem of the pseudo-potential file, i.e. the part of the file name excluding the element symbol and the ``.UPF`` extension. The pseudo-potential file name is assembled as ``{element}.{pseudopotential}.UPF`` (for SOC runs, i.e. noncollinear with spin-orbit coupling, the generated ``ATOMIC_SPECIES`` filename uses the ``rel-`` variant, e.g. ``{element}.rel-{pseudopotential}.UPF``).
     - ``nexclude``: the number of core bands to exclude when counting the number of bands (``nbnd``) for Wannier functions. Needed only when ``nbnd`` is left blank in the namelist.
     - ``orbitals``: the orbitals to be Wannierized, given as a string of the characters ``s``, ``p``, ``d``, ``f``. It is used together with ``nexclude`` to compute a blank ``nbnd``.
-    - ``zval``: the valence charge of the pseudo-potential. Needed only for magnetic structure data, to convert the magnetic moments to ``starting_magnetization``; when the column is absent, the value is read from the ``z_valence`` attribute of the UPF file in ``pseudo_dir``.
+    - ``zval`` (or ``z_valence``): the valence charge of the pseudo-potential. Needed only for magnetic structure data, to convert the magnetic moments to ``starting_magnetization``; when the column is absent, the value is read from the UPF file in ``pseudo_dir`` (the ``z_valence`` attribute of UPF v2, or the "Z valence" header line of UPF v1).
 
     An example line is given as:
 
@@ -162,19 +162,17 @@ content
     - ``use_ibrav = true``:
       ``ibrab`` is set to the index of Bravais lattices obtained from the crystal structure data. The Structure data will be reconstructed to match the convention of Quantum ESPRESSO.
 
-  - ``nat`` (the number of atoms) and ``ntyp`` (the number of element types) will be superseded by the values obtained from the crystal structure data. For magnetic structure data, atoms of the same element with different moments count as different types and are labelled ``Fe0``, ``Fe1``, and so on.
+  - ``nat`` (the number of atoms) and ``ntyp`` (the number of element types) will be superseded by the values obtained from the crystal structure data. For magnetic structure data, atoms of the same element with different moments count as different types; every type label then carries a running number (``Fe0``, ``Fe1``, ``O0``), including elements with a single moment.
 
-  - ``calculation`` in ``&control`` is always set to the task ``mode``.
+  - For the pw.x modes (``scf``, ``nscf``, ``relax``, ``vc-relax``, ``bands``), ``calculation`` in ``&control`` is set to the task ``mode``, and a blank ``pseudo_dir`` in ``&control`` is filled with ``optional.pseudo_dir`` (both only when the template or ``content`` has a ``&control`` namelist).
 
-  - ``pseudo_dir`` in ``&control``, when left blank, is filled with ``optional.pseudo_dir``.
+  - The cutoff values ``ecutwfc`` and ``ecutrho`` are resolved when they are left blank (``ecutwfc`` also when the key is absent; ``ecutrho`` also when both keys are absent). For each element, the values are looked up first in ``cutoff_file``, then in the ``wfc_cutoff`` / ``rho_cutoff`` attributes or the "Suggested minimum cutoff" lines of the UPF file in ``pseudo_dir``; the largest values over the elements are written. Both lookups need ``pp_file``. ``ecutwfc`` must be resolvable, otherwise ``cif2x`` stops with an error asking for ``cutoff_file`` or an explicit value. When ``ecutrho`` cannot be resolved the key is omitted and ``pw.x`` applies its default (``4 * ecutwfc``); a looked-up ``ecutrho`` below that default is raised to it, while an explicit ``ecutrho`` is written as given.
 
-  - The cutoff values ``ecutwfc`` and ``ecutrho`` are resolved when they are left blank (``ecutwfc`` also when the key is absent). For each element, the values are looked up first in ``cutoff_file``, then in the ``wfc_cutoff`` / ``rho_cutoff`` attributes or the "Suggested minimum cutoff" lines of the UPF file in ``pseudo_dir``; the largest values over the elements are written. ``ecutwfc`` must be resolvable, otherwise ``cif2x`` stops with an error asking for ``cutoff_file`` or an explicit value. When ``ecutrho`` cannot be resolved the key is omitted and ``pw.x`` applies its default (``4 * ecutwfc``); an explicit ``ecutrho`` below that default is raised to it.
-
-  - ``nbnd``, when left blank, is estimated from the ``nexclude`` and ``orbitals`` columns of ``pp_file`` (the number of Wannier orbitals plus a margin); the estimate is doubled for noncollinear runs. Give ``nbnd`` explicitly when the columns are not available.
+  - ``nbnd``, when left blank, is estimated from the ``nexclude`` and ``orbitals`` columns of ``pp_file`` as ``nexclude + 2 W + ceil(W/2)`` (rounded up to an even number) with ``W`` the number of orbitals to be Wannierized, i.e. roughly two and a half times ``W`` above the core bands; ``nexclude`` and ``W`` are doubled for noncollinear runs. Give ``nbnd`` explicitly when the columns are not available.
 
   - ``nspin``, ``noncolin``, and ``lspinorb`` are rewritten consistently: ``nspin = 2`` is written for a collinear spin-polarized run, ``noncolin = .true.`` (and ``lspinorb`` when given) for a noncollinear run, and nothing for a non-magnetic run. When the structure data carry magnetic moments and none of these keys is given, ``nspin = 2`` or ``noncolin`` is chosen from the moments themselves (see ``tol_deg``); ``nspin = 2`` with non-collinear moments is turned into ``noncolin``.
 
-  - For magnetic structure data, ``starting_magnetization(i)`` is written for every atom type ``i`` with a finite moment, as the moment in Bohr magnetons divided by the valence charge of the pseudo-potential (the ``zval`` column of ``pp_file`` or the ``z_valence`` attribute of the UPF file; otherwise an error asks for one of them). For a noncollinear run ``angle1(i)`` and ``angle2(i)`` (degrees) are written as well. Values given in the template or ``content`` (``starting_magnetization(1)``, or a bare ``starting_magnetization`` list) are kept and not generated. Nothing is generated when ``nspin: 1`` is given explicitly.
+  - For magnetic structure data, ``starting_magnetization(i)`` is written for every atom type ``i`` with a finite moment, as the moment in Bohr magnetons divided by the valence charge of the pseudo-potential (the ``zval`` column of ``pp_file`` or the UPF file; otherwise an error asks for one of them). A value beyond ``±1`` is clipped to ``±1`` with a warning. For a noncollinear run ``angle1(i)`` (polar angle from z) and ``angle2(i)`` (azimuth from x), in degrees, are written as well; with ``use_ibrav`` the moments are rotated together with the cell. A value given in the template or ``content`` for one type (``starting_magnetization(1)``) is kept and the other types are still generated; a bare ``starting_magnetization`` list disables the generation altogether. Nothing is generated when ``nspin: 1`` is given explicitly. An explicit ``noncolin: false`` on non-collinear moments is respected (the moments are projected on the axis of the first finite moment, with a warning).
 
   **CELL_PARAMETERS**
 
@@ -209,7 +207,7 @@ content
   - The mesh width is determined in the following order:
 
     - the ``grid`` parameter, specified by a list of :math:`n_x, n_y, n_z`, or a scalar value :math:`n`. For the latter, :math:`n_x = n_y = n_z = n` is assumed.
-    - derived from the ``vol_density`` parameter (k points per reciprocal volume, as in pymatgen's ``automatic_density_by_vol``; the mesh is :math:`\Gamma`-centered).
+    - derived from the ``vol_density`` parameter (k points per reciprocal volume, as in pymatgen's ``automatic_density_by_vol``; only the subdivisions are taken from it, the shift comes from ``kshifts``).
     - derived from the ``k_resolution`` parameter, the largest allowed spacing of k points in units of 1/angstrom (default: 0.15): :math:`n_i = \lceil |\mathbf{b}_i| / k_\mathrm{resolution} \rceil` with :math:`\mathbf{b}_i` the reciprocal lattice vectors (including the factor :math:`2\pi`).
 
   - The ``data`` field is honoured only for the band-path options ``crystal_b`` and ``tpiba_b`` (and for an unrecognized ``option``, which is passed through as written). In these cases, the rows given in ``data`` are written as they are instead of being generated. For the other options, and for the other cards above, the data are always generated from the crystal structure.
@@ -253,7 +251,7 @@ The ``optional`` section tells where the POTCAR files come from. There are two w
 
     A CSV file with the columns ``element,symbol`` that maps an element to the POTCAR symbol to use (for example ``Na,Na_pv``). Elements not listed use their plain symbol.
 
-If the POTCAR cannot be assembled (an element missing from ``pp_file``, a POTCAR file that cannot be read, or ``PMG_VASP_PSP_DIR`` not set), ``cif2x`` stops with an error so that an input set is never written without its POTCAR by accident. To omit the POTCAR deliberately, for example when it is added later on the compute node, set ``skip: true`` in the ``potcar`` part of ``content`` (see below).
+If the POTCAR cannot be assembled (``pp_file`` itself unreadable, an element missing from ``pp_file``, a POTCAR file that cannot be read, ``PMG_VASP_PSP_DIR`` not set, or pymatgen unable to find a POTCAR for the functional and symbol), ``cif2x`` stops with an error so that an input set is never written without its POTCAR by accident. To omit the POTCAR deliberately, for example when it is added later on the compute node, set ``skip: true`` in the ``potcar`` part of ``content`` (see below).
 
 tasks
 -----
@@ -339,7 +337,7 @@ optional
 
   ``vps_variant``
 
-    Some elements (Fe, Co, Ni, Cu, Zn) have two pseudo-potentials in the OpenMX database: a hard one (``Fe_PBE19H``, more valence electrons) and a soft one (``Fe_PBE19S``). This parameter maps an element to the variant to use, by the suffix ``H`` / ``S`` or by the full name; the hard one is used when not given.
+    Some elements (Fe, Co, Ni, Cu, Zn) have two pseudo-potentials in the OpenMX database: a hard one (``Fe_PBE19H``, more valence electrons) and a soft one (``Fe_PBE19S``). This parameter maps an element to the variant to use, by the suffix ``H`` / ``S`` or by the full name (case-insensitive); the hard one is used when not given.
 
     .. code-block:: yaml
 

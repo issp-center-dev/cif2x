@@ -172,7 +172,7 @@ Common errors that may occur when running ``cif2x`` and how to resolve them are 
 
 - **cutoff information (ecutwfc) not found for element '...'**
 
-  ``ecutwfc`` was left blank (or omitted) and could not be resolved for the element: ``cutoff_file`` has no row for its pseudo-potential file and the ``.UPF`` file in ``pseudo_dir`` carries no cutoff information. Add the row to ``cutoff_file``, make the ``.UPF`` file available, or set ``content.namelist.system.ecutwfc`` explicitly. A missing ``ecutrho`` is not an error: the key is omitted and ``pw.x`` uses ``4 * ecutwfc``.
+  ``ecutwfc`` was left blank (or omitted) and could not be resolved for the element: ``pp_file`` is not given, or ``cutoff_file`` has no row for its pseudo-potential file and the ``.UPF`` file in ``pseudo_dir`` carries no cutoff information. Add the row to ``cutoff_file``, make the ``.UPF`` file available, or set ``content.namelist.system.ecutwfc`` explicitly. A missing ``ecutrho`` is not an error: the key is omitted and ``pw.x`` uses ``4 * ecutwfc``.
 
 - **cannot determine the valence charge of '...'**
 
@@ -180,7 +180,7 @@ Common errors that may occur when running ``cif2x`` and how to resolve them are 
 
 - **POTCAR: ...** (VASP)
 
-  The POTCAR could not be assembled: an element has no row in ``pp_file``, a POTCAR file could not be read, or neither ``pp_file`` nor ``PMG_VASP_PSP_DIR`` is set. Fix the ``optional`` section (see the file format page), or set ``content.potcar.skip: true`` to omit the POTCAR deliberately.
+  The POTCAR could not be assembled: ``pp_file`` could not be read, an element has no row in ``pp_file``, a POTCAR file could not be read, neither ``pp_file`` nor ``PMG_VASP_PSP_DIR`` is set, or pymatgen found no POTCAR for the functional and symbol. Fix the ``optional`` section (see the file format page), or set ``content.potcar.skip: true`` to omit the POTCAR deliberately.
 
 - **the structure has partially occupied (disordered) sites**
 

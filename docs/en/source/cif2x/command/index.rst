@@ -64,7 +64,7 @@ DESCRIPTION:
 
   - ``--api-key-file`` *FILE*
 
-    file containing the Materials Project API key (default ``materials_project.key``). The first line that is not blank and does not start with ``#`` is used; the file name is free. The default file may be absent, in which case the key is taken from the environment or the pymatgen configuration; a file given explicitly must exist, otherwise ``cif2x`` stops with an error. Used only with ``--mp-id``.
+    file containing the Materials Project API key (default ``materials_project.key``). The first line that is not blank and does not start with ``#`` is used; the file name is free. The default file may be absent (also when its name is given explicitly), in which case the key is taken from the environment or the pymatgen configuration; any other file given explicitly must exist, otherwise ``cif2x`` stops with an error. Used only with ``--mp-id``.
 
   .. note::
 
