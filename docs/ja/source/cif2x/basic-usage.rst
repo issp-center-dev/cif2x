@@ -18,7 +18,7 @@
 
   AkaiKKR 向けの入力ファイルを生成する場合は、上記に加えて AkaiKKRPythonUtil モジュールが必要です。これは自動ではインストールされないため、別途インストールします (下記参照)。
 
-  本リリースは Python 3.11〜3.14、pymatgen 2026.10、f90nml 1.5、mp-api 0.47 で動作を確認しています。AkaiKKRPythonUtil 2023.2.1 は pymatgen の非推奨インタフェースに依存しており、pymatgen 2026.10 では動作しますが、将来の pymatgen で動かなくなる可能性があります。
+  本バージョンは Python 3.11〜3.14、pymatgen 2026.10、f90nml 1.5、mp-api 0.47 で動作を確認しています。AkaiKKRPythonUtil 2023.2.1 は pymatgen と spglib の非推奨インタフェースに依存しており、pymatgen 2026.10 では動作しますが、これらのライブラリの将来の版で動かなくなる可能性があります。
 
 **ソースコード配布サイト**
 

@@ -18,7 +18,7 @@ Installation and basic usage
 
   To generate input files for AkaiKKR, the AkaiKKRPythonUtil module is additionally required. It is not installed automatically and must be installed separately (see below).
 
-  This release was checked with Python 3.11 to 3.14, pymatgen 2026.10, f90nml 1.5, and mp-api 0.47. AkaiKKRPythonUtil 2023.2.1 relies on pymatgen interfaces that are deprecated; it works with pymatgen 2026.10, but a future pymatgen release may stop supporting it.
+  This version was checked with Python 3.11 to 3.14, pymatgen 2026.10, f90nml 1.5, and mp-api 0.47. AkaiKKRPythonUtil 2023.2.1 relies on pymatgen and spglib interfaces that are deprecated; it works with pymatgen 2026.10, but a future release of those libraries may stop supporting it.
 
 
 **Official pages**

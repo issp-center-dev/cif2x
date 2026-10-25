@@ -141,7 +141,7 @@ optionalセクション
   ``cutoff_file``
 
     擬ポテンシャルファイルとカットオフを対応付けるCSV形式のインデックスファイルを指定します。
-    列は ``pseudofile,ecutwfc,ecutrho`` で、それぞれ擬ポテンシャルファイル名、 ``ecutwfc`` の値、 ``ecutrho`` の値です。このファイルは cif2x と一緒にインストールされるコマンド ``cif2x-pp-cutoff`` で UPF ファイルから作成できます (``cif2x-pp-cutoff -o cutoff.csv pseudo/*.UPF`` 。詳細は ``cif2x-pp-cutoff -h``)。
+    列は ``pseudofile,ecutwfc,ecutrho`` で、それぞれ擬ポテンシャルファイル名、 ``ecutwfc`` の値、 ``ecutrho`` の値です。``pseudofile`` 列はディレクトリを含まないファイル名 (``Fe.pbe-spn-rrkjus_psl.0.2.1.UPF``) で、 ``ATOMIC_SPECIES`` に書き出される名前と同じです。このファイルは cif2x と一緒にインストールされるコマンド ``cif2x-pp-cutoff`` で UPF ファイルから作成でき、名前はこの形式で書き出されます (``cif2x-pp-cutoff -o cutoff.csv pseudo/*.UPF`` 。詳細は ``cif2x-pp-cutoff -h``)。
 
   ``pseudo_dir``
 
