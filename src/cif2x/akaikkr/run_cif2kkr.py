@@ -1,7 +1,6 @@
 import contextlib
 import io
 import tempfile
-import sys
 from pathlib import Path
 
 from cif2x.input_validator import InputValidationError

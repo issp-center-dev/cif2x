@@ -101,14 +101,14 @@ def _run(args):
         yaml = YAML(typ="safe")
         with open(Path(args.input_file), mode="r") as fp:
             info_dict = yaml.load(fp)
-    except FileNotFoundError:
-        raise InputValidationError(f"input file not found: {args.input_file}")
+    except FileNotFoundError as e:
+        raise InputValidationError(f"input file not found: {args.input_file}") from e
     except InputValidationError:
         raise
     except Exception as e:
         raise InputValidationError(
             f"failed to parse input file '{args.input_file}': {e}"
-        )
+        ) from e
 
     validate_input(info_dict, target)
 

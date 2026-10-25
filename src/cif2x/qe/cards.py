@@ -1,5 +1,4 @@
 import numpy as np
-from pymatgen.core.structure import Structure
 from pymatgen.core.periodic_table import Element
 from pymatgen.io.vasp.inputs import Kpoints
 

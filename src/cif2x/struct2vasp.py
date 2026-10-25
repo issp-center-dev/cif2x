@@ -1,17 +1,14 @@
-from typing import Any, Dict, List, Tuple, Union
 
-import os, sys
 from pathlib import Path
 from pymatgen.io.vasp import VaspInput, Incar, Poscar, Potcar, Kpoints
 from pymatgen.symmetry.bandstructure import HighSymmKpath
 from pymatgen.core import SETTINGS
 from monty.io import zopen
 from monty.os.path import zpath
-from pandas import read_csv, DataFrame
+from pandas import read_csv
 
-from cif2x.cif2struct import Cif2Struct
 from cif2x.input_validator import InputValidationError
-from cif2x.utils import *
+from cif2x.utils import dryrun_emit, inflate, serializer, deserializer
 
 import logging
 logger = logging.getLogger(__name__)
@@ -248,11 +245,11 @@ class Struct2Vasp:
                     def _as_number(s):
                         try:
                             return int(s)
-                        except ValueError as e:
+                        except ValueError:
                             pass
                         try:
                             return float(s)
-                        except ValueError as e:
+                        except ValueError:
                             pass
                         return s
 
@@ -473,7 +470,7 @@ def generate_potcar(vsp, params):
             except Exception as e:
                 logger.warning("read pseudo_map: {}".format(e))
 
-        if not "PMG_VASP_PSP_DIR" in SETTINGS:
+        if "PMG_VASP_PSP_DIR" not in SETTINGS:
             raise InputValidationError(
                 "POTCAR: no pseudopotential source. Give optional.pp_file (with "
                 "optional.pseudo_dir), or set PMG_VASP_PSP_DIR in "
@@ -501,79 +498,3 @@ def generate_potcar(vsp, params):
                 "set content.potcar.skip: true to omit the POTCAR.") from e
 
     return potcar
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-
-    cif_file = 'NaCl.cif'
-
-    struct = Cif2Struct(cif_file, {
-        'use_ibrav': False,
-        'tolerance': 0.01,
-    })
-
-    vsp = Struct2Vasp({}, struct)
-
-    # KPOINTS tests
-    if False:
-        for params in [
-                { "type": "automatic" },
-                { "type": "gamma_automatic", "kpoints": [4,4,4] },
-                { "type": "gamma_automatic", "kpoints": [4,4,4] },
-                { "type": "monkhorst_automatic", "kpoints": [4,4,4] },
-                { "type": "automatic_density", "grid_density": 0.2 },
-                { "type": "automatic_gamma_density", "grid_density": 0.2 },
-                { "type": "automatic_density_by_vol", "grid_density": 4 },
-                { "type": "automatic_density_by_lengths", "length_density": [12.0,12.0,12.0] },
-                { "type": "automatic_linemode", "division": 40 },
-                { "type": "automatic_linemode", "division": 40, "path_type": "latimer_munro" },
-        ]:
-            print(f"param = {params}")
-            x = generate_kpoints(vsp, params)
-            print(str(x))
-            print()
-            # x.write_file(Path("KPATH" + params["type"]))
-
-    # POSCAR tests
-    if False:
-        for params in [
-                {},
-                { "fix_species": [] },
-                { "fix_species": "Na" },
-                { "fix_species": ["Na"] },
-                { "fix_species": ["Na","Cl"] },
-        ]:
-            print(f"seldyn = empty, param = {params}")
-            y = generate_poscar(vsp, params)
-            print(str(y))
-            print()
-
-        vsp.struct.structure.add_site_property("selective_dynamics", [[False,False,False],[True,True,True]])
-        for params in [
-                {},
-                { "fix_species": [] },
-                { "fix_species": "Na" },
-                { "fix_species": ["Na"] },
-                { "fix_species": ["Na","Cl"] },
-        ]:
-            print(f"seldyn = F,T, param = {params}")
-            y = generate_poscar(vsp, params)
-            print(str(y))
-            print()
-
-    # POTCAR tests
-    if False:
-        for params in [
-                {},
-                { "pseudo_dir": "/home/issp/vasp/vasp5/pot" },
-                { "pseudo_dir": "/home/issp/vasp/vasp5/pot", "pseudo_functional": "LDA" },
-        ]:
-            print(f"param = {params}")
-            try:
-                z = generate_potcar(vsp, params)
-                print(str(z))
-            except Exception as e:
-                print(e)
-            print()
-

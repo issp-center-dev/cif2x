@@ -71,7 +71,6 @@ def test_passthrough_card_bare_option_emitted_in_braced_form(tmp_path):
     assert "U  Fe-3d  4.0" in out
 
 
-import numpy as np
 
 from cif2x.qe.cards import generate_k_points
 

@@ -191,15 +191,15 @@ class QueryMaterialsProject:
         else:
             raise ValueError("invalid fields parameter")
 
-        if not "material_id" in fields:
+        if "material_id" not in fields:
             fields.append("material_id")
-        if not "formula_pretty" in fields:
+        if "formula_pretty" not in fields:
             fields.append("formula_pretty")
 
         # check
         err = 0
         for field in fields:
-            if not field in QueryMaterialsProject.available_fields:
+            if field not in QueryMaterialsProject.available_fields:
                 logger.error("unknown field name {}".format(field))
                 err += 1
 
@@ -241,14 +241,14 @@ class QueryMaterialsProject:
                     if w[0] == "<=":
                         return (None, typ(w[1]))
                     if w[0] == "<":
-                        if typ == int:
+                        if typ is int:
                             return (None, typ(w[1])-1)
                         else:
                             return (None, typ(w[1]))
                     if w[0] == ">=":
                         return (typ(w[1]), None)
                     if w[0] == ">":
-                        if typ == int:
+                        if typ is int:
                             return (typ(w[1])+1, None)
                         else:
                             return (typ(w[1]), None)
@@ -336,7 +336,7 @@ class QueryMaterialsProject:
         results = []
         symprec = self.symprec
 
-        for idx, doc in enumerate(docs):
+        for doc in docs:
             m_id = str(doc.material_id)
             m_formula = doc.formula_pretty
             d = dict(doc)

@@ -1,18 +1,15 @@
-from typing import Any, Dict, List, Tuple, Union
 
 from pathlib import Path
 import numpy as np
-from pandas import read_csv, DataFrame
+from pandas import read_csv
 from pymatgen.core import Structure
-from pymatgen.core.periodic_table import Element
 from pymatgen.electronic_structure.core import Magmom
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 import copy
 
-from cif2x.cif2struct import Cif2Struct
-from cif2x.utils import dryrun_emit
+from cif2x.utils import dryrun_emit, normalize_cutoff
 from cif2x.input_validator import InputValidationError
-from cif2x.qe.tools import *
+from cif2x.qe.tools import deepupdate, is_empty_key
 from cif2x.qe.qeutil import QEInputGeneral
 from cif2x.qe.content import Content, inflate
 from cif2x.qe.calc_mode import create_modeproc
@@ -42,19 +39,8 @@ def _symmetry_structure(structure):
     return Structure(structure.lattice, species, structure.frac_coords)
 
 
-def _normalize_cutoff(value):
-    # blank CSV cells arrive as NaN and ld1.x-generated UPFs may carry the
-    # cutoff attribute with a literal 0.0; both mean "not specified"
-    if value is None:
-        return None
-    try:
-        value = float(value)
-    except (TypeError, ValueError):
-        logger.warning(f"unparseable cutoff value {value!r}; treated as unspecified")
-        return None
-    if np.isnan(value) or value <= 0.0:
-        return None
-    return value
+# kept under the old private name for callers and tests
+_normalize_cutoff = normalize_cutoff
 
 
 class Struct2QE:
@@ -446,14 +432,14 @@ class Struct2QE:
         
         self.pseudo_dir = _find_optional(params, "pseudo_dir")
         if self.pseudo_dir is None:
-            logger.warning(f"pseudo_dir not specified")
+            logger.warning("pseudo_dir not specified")
         elif not Path(self.pseudo_dir).exists():
             logger.warning(f"pseudo_dir {self.pseudo_dir} not found")
 
         self.pp_file = _find_optional(params, "pp_file")
         if self.pp_file is None:
             # raise FileNotFoundError(f"pp_file not specified or found")
-            logger.warning(f"pp_file not specified")
+            logger.warning("pp_file not specified")
         elif not Path(self.pp_file).exists():
             logger.warning(f"pp_file {self.pp_file} not found")
         else:
@@ -461,7 +447,7 @@ class Struct2QE:
 
         self.cutoff_file = _find_optional(params, "cutoff_file")
         if self.cutoff_file is None:
-            logger.warning(f"cutoff_file not specified")
+            logger.warning("cutoff_file not specified")
         elif not Path(self.cutoff_file).exists():
             logger.warning(f"cutoff_file {self.cutoff_file} not found")
         else:
@@ -564,23 +550,6 @@ class Struct2QE:
                 qe_latt = [[tx, -ty, tz], [0, 2*ty, tz], [-tx, -ty, tz]]
                 qe_latt = np.array(qe_latt) * an
                 conv_mat = primitive_structure.lattice.matrix@np.diag([1, 1, -1])@np.linalg.inv(qe_latt)
-        # elif sp_num in spn_ibrav5:
-        #     system["ibrav"] = 5
-        #     cosg = (2*c**2 - 3*a**2)/(2*c**2 + 6*a**2)
-        #     tx = np.sqrt((1 - cosg)/2)
-        #     ty = np.sqrt((1 - cosg)/6)
-        #     tz = np.sqrt((1 + 2*cosg)/3)
-        #     an = a/(2*tx)
-        #     system["A"] = an
-        #     system["cosab"] = cosg
-        #     #ap = an/np.sqrt(3)
-        #     #u = tz - 2*np.sqrt(2)*ty
-        #     #v = tz + np.sqrt(2)*ty
-        #     #qe_latt = [[u, v, v], [v, u, v], [v, v, u]]
-        #     #qe_latt = np.array(qe_latt)*ap
-        #     qe_latt = [[tx, -ty, tz], [0, 2*ty, tz], [-tx, -ty, tz]]
-        #     qe_latt = np.array(qe_latt)*an
-        #     conv_mat = primitive_structure.lattice.matrix@np.diag([1, 1, -1])@np.linalg.inv(qe_latt)
         elif sp_num in spn_ibrav6:
             system["ibrav"] = 6
             system["A"] = a
@@ -721,27 +690,3 @@ class Struct2QE:
 
         #self.structure = new_structure
         return new_structure, system
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-
-    cif_file = '../../t/Co3(SnS)2_nosym.cif'
-
-    struct = Cif2Struct(cif_file, {
-        'use_ibrav': False,
-        'tolerance': 0.01,
-    })
-
-    qe = Struct2QE({'optional': { 'pp_file': '../../t/pseudo/pp_psl_pbe_rrkjus.csv' }}, struct)
-
-    #x = generate_cell_parameters(qe, {})
-    #x = generate_atomic_species(qe, {})
-    x = generate_atomic_positions(qe, { 'ignore_species': ['S','Sn']})
-    #x = generate_k_points(qe, { 'option': 'automatic', 'grid': [8,8,8] })
-    #x = generate_k_points(qe, { 'option': 'automatic', 'vol_density': 80 })
-    #x = generate_k_points(qe, { 'option': 'automatic', 'k_resolution': 0.05, 'kshifts': [1,1,1] })
-    #x = generate_k_points(qe, { 'option': 'crystal', 'grid': [8,8,8] })
-
-    print(x)
-    print(to_string_block(x))

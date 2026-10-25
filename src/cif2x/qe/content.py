@@ -1,8 +1,5 @@
-import os, sys
-import re
-import ast
+import os
 import json
-import itertools
 from pathlib import Path
 import numpy as np
 from f90nml.namelist import Namelist

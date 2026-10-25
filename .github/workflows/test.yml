@@ -37,6 +37,11 @@ jobs:
           cif2x --version | grep -v develop
           getcif --version | grep -v develop
 
+      - name: Lint
+        run: |
+          pip install ruff
+          ruff check src tests
+
       - name: Run tests
         env:
           CIF2X_TEST_INSTALLED: "1"

@@ -6,7 +6,6 @@ import itertools
 import json
 from collections import UserDict
 
-import numpy as np
 
 from cif2x.input_validator import InputValidationError
 
@@ -21,6 +20,25 @@ def dryrun_emit(path, text, stream=None):
     stream.write(text)
     if not text.endswith("\n"):
         stream.write("\n")
+
+
+def normalize_cutoff(value):
+    """Cutoff/charge value from a CSV cell or UPF attribute, or None.
+
+    Blank CSV cells arrive as NaN, ld1.x-generated UPFs may carry a literal
+    0.0 for an unset attribute, and unparseable tokens are reported: all mean
+    "not specified".
+    """
+    if value is None:
+        return None
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        logger.warning("unparseable cutoff value {!r}; treated as unspecified".format(value))
+        return None
+    if math.isnan(value) or value <= 0.0:
+        return None
+    return value
 
 
 def serializer(data):
@@ -89,7 +107,7 @@ def inflate(content):
             if isinstance(_a, (list, tuple)):
                 return list(_a)
             return [_a]
-        except Exception as e:
+        except Exception:
             pass
 
         # 3. [ s1, s2, ... ] where s1, s2, ... are unquoted strings
@@ -108,12 +126,12 @@ def inflate(content):
         try:
             v = int(s)
             return v
-        except Exception as e:
+        except Exception:
             pass
         try:
             v = float(s)
             return v
-        except Exception as e:
+        except Exception:
             pass
         return s
 

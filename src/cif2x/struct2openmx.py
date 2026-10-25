@@ -1,13 +1,10 @@
-from typing import Any, Dict, List, Tuple, Union
 
-import os, sys
+import os
 from pathlib import Path
-from pymatgen.symmetry.bandstructure import HighSymmKpath
 import numpy as np
 
-from cif2x.cif2struct import Cif2Struct
 from cif2x.input_validator import InputValidationError
-from cif2x.utils import *
+from cif2x.utils import CaseInsensitiveDict, dryrun_emit, inflate, serializer, deserializer
 
 import logging
 logger = logging.getLogger(__name__)
@@ -107,12 +104,12 @@ class Content(CaseInsensitiveDict):
             try:
                 t = int(x)
                 return t
-            except ValueError as e:
+            except ValueError:
                 pass
             try:
                 t = float(x)
                 return t
-            except ValueError as e:
+            except ValueError:
                 pass
             return str(x)
 
@@ -285,15 +282,3 @@ class Struct2OpenMX:
             mat = self.struct.structure.lattice.matrix
             mat = np.where(np.abs(mat) < 1.0e-12, 0.0, mat)
             content["Atoms.UnitVectors"] = [ list(x) for x in mat ]
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-
-    cif_file = 'GaAs_cod.cif'
-
-    struct = Cif2Struct(cif_file, {
-        'use_ibrav': False,
-        'tolerance': 0.01,
-    })
-
-    mx = Struct2OpenMX({}, struct)

@@ -1,25 +1,22 @@
-from typing import Any, Dict, List, Tuple, Union
 import logging
 logger = logging.getLogger("Cif2Struct")
 
-import sys,os
 from pathlib import Path
 
 import numpy as np
-from pymatgen.core import IStructure, Structure
+from pymatgen.core import Structure
 from pymatgen.core import Molecule
-from pymatgen.core import Composition
-from pymatgen.core.periodic_table import Element
 from pymatgen.electronic_structure.core import Magmom
 
 from cif2x.input_validator import InputValidationError
 
 
 class Cif2Struct:
-    def __init__(self, cif_file, params={}):
+    def __init__(self, cif_file, params=None):
         logger.info(f"init: cif_file={cif_file}, params={params}")
 
         # store parameters
+        params = {} if params is None else params
         self.params = params
         self.use_ibrav = params.get("use_ibrav", False)
         self.cif_file = cif_file
@@ -46,7 +43,7 @@ class Cif2Struct:
             except Exception as e:
                 raise InputValidationError(
                     f"cannot read '{cif_file}' as a crystal structure nor as a "
-                    f"molecule: {e}")
+                    f"molecule: {e}") from e
 
             self.molecule = mol
             self.is_cellshape_auto = False

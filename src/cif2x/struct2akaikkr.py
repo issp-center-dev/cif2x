@@ -1,17 +1,13 @@
-from typing import Any, Dict, List, Tuple, Union
 
-import os, sys
+import os
 from pathlib import Path
 #from pymatgen.io.vasp import VaspInput, Incar, Poscar, Potcar, Kpoints
-from pymatgen.symmetry.bandstructure import HighSymmKpath
-from pymatgen.core import SETTINGS
 #from monty.io import zopen
 #from monty.os.path import zpath
 import copy
 
-from cif2x.cif2struct import Cif2Struct
 from cif2x.input_validator import InputValidationError
-from cif2x.utils import *
+from cif2x.utils import dryrun_emit, inflate, serializer, deserializer
 
 from cif2x.akaikkr.run_cif2kkr import ak_struct2kkr
 from cif2x.akaikkr.read_input import read_input_file

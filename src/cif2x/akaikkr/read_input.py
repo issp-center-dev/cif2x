@@ -211,7 +211,7 @@ def parse_readin(tokens):
     params["anclr"]    = []
     params["conc"]     = []
 
-    for i in range(params["ntyp"]):
+    for _ in range(params["ntyp"]):
         typ = tokens[idx]; idx += 1
         ncmp = _to_int(tokens[idx]); idx += 1
         rmt = _to_float(tokens[idx]); idx += 1
@@ -220,7 +220,7 @@ def parse_readin(tokens):
 
         anclr = []
         conc = []
-        for j in range(ncmp):
+        for _ in range(ncmp):
             anclr.append(_to_float(tokens[idx])); idx += 1
             conc.append(_to_float(tokens[idx])); idx += 1
 
@@ -236,7 +236,7 @@ def parse_readin(tokens):
     params["natm"] = _to_int(tokens[idx]); idx += 1
     params["atmicx"] = []
 
-    for i in range(params["natm"]):
+    for _ in range(params["natm"]):
         atmicx1 = tokens[idx].lower(); idx += 1
         atmicx2 = tokens[idx].lower(); idx += 1
         atmicx3 = tokens[idx].lower(); idx += 1
@@ -247,7 +247,7 @@ def parse_readin(tokens):
         logger.debug(f"end of items {idx}/{len(tokens)}")
     elif tokens[idx].lower() == "end":
         idx += 1
-        logger.debug(f"end mark detected")
+        logger.debug("end mark detected")
     else:
         logger.debug("remains: %s", tokens[idx:])
 

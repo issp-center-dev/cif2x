@@ -1,4 +1,3 @@
-import pytest
 
 from cif2x.qe.content import Content
 

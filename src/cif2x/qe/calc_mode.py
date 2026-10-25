@@ -3,8 +3,9 @@ logger = logging.getLogger(__name__)
 
 import numpy as np
 
-from .cards import *
-from .tools import *
+from .cards import (generate_atomic_positions, generate_atomic_species,
+                    generate_cell_parameters, generate_k_points)
+from .tools import is_empty_key
 from cif2x.input_validator import InputValidationError
 
 def create_modeproc(mode, qe):
@@ -129,10 +130,10 @@ class QEmode_pw(QEmode_base):
                 # generated input: reject non-numeric values with a clear error
                 try:
                     known_wfc = float(system["ecutwfc"])
-                except (TypeError, ValueError):
+                except (TypeError, ValueError) as e:
                     raise InputValidationError(
                         "content.namelist.system.ecutwfc must be numeric, "
-                        "got {!r}".format(system["ecutwfc"]))
+                        "got {!r}".format(system["ecutwfc"])) from e
                 # write the normalized number back so a numeric string
                 # ("100") is not rendered as a quoted Fortran string
                 system["ecutwfc"] = known_wfc
