@@ -72,7 +72,9 @@ def generate_k_points(qe, params):
         return kmesh
 
     def _get_kmesh_by_vol(vol_density):
-        return Kpoints.automatic_density_by_vol(qe.struct.structure, vol_density, force_gamma=True).kpts[0]
+        # kpts[0] is a tuple; return a list so it can be joined with kshifts
+        kpts = Kpoints.automatic_density_by_vol(qe.struct.structure, vol_density, force_gamma=True).kpts[0]
+        return [int(k) for k in kpts]
 
     option = params.get("option", "automatic")
     mode = getattr(qe, "mode", None)
@@ -126,6 +128,14 @@ def generate_k_points(qe, params):
                 kgrid = _get_kmesh_by_vol(vol_density)
             else:
                 kres = params.get("k_resolution", 0.15)
+                try:
+                    kres = float(kres)
+                except (TypeError, ValueError):
+                    kres = 0.0
+                if kres <= 0.0:
+                    raise InputValidationError(
+                        "K_POINTS: k_resolution must be a positive number "
+                        "(1/angstrom), got {!r}.".format(params.get("k_resolution")))
                 kgrid = _get_kmesh(kres)
 
         if option == "automatic":

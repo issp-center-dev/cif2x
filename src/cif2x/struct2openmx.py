@@ -29,9 +29,9 @@ def _lookup_vps_table(elem, variant=None):
             "write Definition.of.Atomic.Species by hand.")
     if variant is None:
         return rows[0]
-    variant = str(variant)
+    variant = str(variant).upper()
     for v in rows:
-        if v[1] == variant or v[1].endswith(variant):
+        if v[1].upper() == variant or v[1].upper().endswith(variant):
             return v
     raise InputValidationError(
         f"OpenMX: no pseudopotential variant '{variant}' for {elem}; available: "

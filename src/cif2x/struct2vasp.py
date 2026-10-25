@@ -48,14 +48,31 @@ def _fill_magmom(vsp, incar):
     struct = vsp.struct
     if not getattr(struct, "is_mag", False) or "MAGMOM" in incar:
         return
-    if struct._are_collinear():
+    # VASP reads MAGMOM as 3 values per atom whenever LNONCOLLINEAR or LSORBIT
+    # is on, so follow the user's INCAR, not only the shape of the moments
+    user_noncollinear = _incar_true(incar.get("LNONCOLLINEAR")) or _incar_true(incar.get("LSORBIT"))
+    if struct._are_collinear() and not user_noncollinear:
         incar["MAGMOM"] = [ round(m, 6) for m in struct.collinear_moments() ]
         incar.setdefault("ISPIN", 2)
         logger.info("MAGMOM and ISPIN = 2 set from the magnetic structure data")
     else:
         incar["MAGMOM"] = [ [ round(x, 6) for x in v ] for v in struct.vector_moments() ]
-        incar.setdefault("LNONCOLLINEAR", True)
-        logger.info("MAGMOM (3 per site) and LNONCOLLINEAR set from the magnetic structure data")
+        if not user_noncollinear:
+            incar.setdefault("LNONCOLLINEAR", True)
+        logger.info("MAGMOM (3 per site) set from the magnetic structure data")
+        if "SAXIS" in incar:
+            logger.warning("MAGMOM vectors are written in cartesian coordinates of the "
+                           "POSCAR cell, but SAXIS is set: VASP interprets them relative "
+                           "to SAXIS. Check the orientation or give MAGMOM explicitly.")
+
+
+def _incar_true(value):
+    """Truth of an INCAR logical given as bool or as a Fortran-style string."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lstrip(".").upper().startswith("T")
+    return False
 
 
 def build_vaspinput(vsp, content):
@@ -124,22 +141,22 @@ class Struct2Vasp:
         except FileNotFoundError:
             sub_d["incar"] = None
 
-        # POSCAR
+        # KPOINTS
         try:
-            fullzpath = zpath(Path(dirname, "POSCAR"))
-            sub_d["poscar"] = Poscar.from_file(fullzpath, check_for_POTCAR=False)
-            logger.info("read_input: read {} from {}".format("POSCAR", fullzpath))
+            fullzpath = zpath(Path(dirname, "KPOINTS"))
+            sub_d["kpoints"] = Kpoints.from_file(fullzpath)
+            logger.info("read_input: read {} from {}".format("KPOINTS", fullzpath))
         except FileNotFoundError:
-            sub_d["poscar"] = None
+            sub_d["kpoints"] = None
 
-        # KPOINTS, POTCAR
-        for fname, ftype in [("KPOINTS", Kpoints),("POTCAR", Potcar)]:
-            try:
-                fullzpath = zpath(Path(dirname, fname))
-                sub_d[fname.lower()] = ftype.from_file(fullzpath)
-                logger.info("read_input: read {} from {}".format(fname, fullzpath))
-            except FileNotFoundError:
-                sub_d[fname.lower()] = None
+        # POSCAR and POTCAR are always generated (from the structure and from
+        # the optional section); template files of these names are not read,
+        # so a stale or invalid one cannot break the run
+        for fname in ("POSCAR", "POTCAR"):
+            if Path(dirname, fname).exists() or Path(dirname, fname + ".gz").exists():
+                logger.info("read_input: {} in template_dir is ignored (always generated)".format(fname))
+        sub_d["poscar"] = None
+        sub_d["potcar"] = None
 
         return VaspInput(**sub_d)
 

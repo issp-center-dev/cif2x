@@ -81,7 +81,10 @@ class Cif2Struct:
         if params.get("use_primitive", False):
             tol = params.get("tolerance", 0.01)
             logger.info("init: use_primitive, tolerance={}".format(tol))
-            self.structure = structure.get_primitive_structure(tolerance=tol)
+            # use_site_props keeps sites with different magnetic moments apart,
+            # so an antiferromagnetic cell is not reduced to a ferromagnetic one
+            self.structure = structure.get_primitive_structure(
+                tolerance=tol, use_site_props="magmom" in structure.site_properties)
 
         if "supercell" in params:
             logger.info("init: supercell {}".format(params["supercell"]))
@@ -144,7 +147,10 @@ class Cif2Struct:
             elem_names: Element names for pseudopotential files in ATOMIC_SPECIES.
             atom_names: Atomic labels for ATOMIC_SPECIES and ATOMIC_POSITIONS.
         """
-        self.atoms = list(zip(self.structure.species, self.structure.site_properties["magmom"]))
+        # moments are rounded before grouping: symmetry operations leave
+        # 1e-16 noise that would otherwise split one magnetic species into
+        # several (Magmom hashes exactly while comparing approximately)
+        self.atoms = list(zip(self.structure.species, self._site_magmoms()))
         self.atom_types = list(sorted(set(self.atoms), key=self.atoms.index))
         #self.elem_names = [ Element(at).symbol for at, _ in self.atom_types ]
         self.elem_names = [ at.symbol for at, _ in self.atom_types ]
@@ -157,19 +163,35 @@ class Cif2Struct:
 
     # --- magnetic moments -------------------------------------------------
 
+    MAGMOM_DECIMALS = 6
+
+    @classmethod
+    def _rounded_magmom(cls, m):
+        """Magmom with its cartesian components rounded (noise-free grouping)."""
+        vec = np.round(np.array(Magmom(m).global_moment, dtype=float), cls.MAGMOM_DECIMALS)
+        return Magmom(vec + 0.0)   # + 0.0 turns -0.0 into 0.0
+
     def _site_magmoms(self):
-        return [ Magmom(m) for m in self.structure.site_properties["magmom"] ]
+        return [ self._rounded_magmom(m) for m in self.structure.site_properties["magmom"] ]
 
     def _type_magmoms(self):
         return [ Magmom(m) for _, m in self.atom_types ]
 
     def _collinear_axis(self):
-        """Unit vector (global frame) along the first finite moment, or None."""
+        """Unit vector (global frame) of the common axis, or None.
+
+        Taken from the first finite moment and oriented so that its largest
+        component is positive: moments written along +z stay positive even
+        when the first atom in the file points down.
+        """
         for m in self._site_magmoms():
             v = np.array(m.global_moment, dtype=float)
             n = np.linalg.norm(v)
             if n > 1.0e-8:
-                return v / n
+                axis = v / n
+                if axis[np.argmax(np.abs(axis))] < 0:
+                    axis = -axis
+                return axis
         return None
 
     def collinear_moments(self, per_type=False):
