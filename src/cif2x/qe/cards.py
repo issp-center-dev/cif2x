@@ -63,8 +63,12 @@ def generate_atomic_positions(qe, params):
 def generate_k_points(qe, params):
 
     def _get_kmesh(kresolution):
-        nn = 2 * np.pi / kresolution
-        kmesh = [int(np.ceil(nn/lp)) for lp in qe.struct.structure.lattice.abc]
+        # n_i = ceil(|b_i| / kresolution) with |b_i| the reciprocal lattice
+        # vector lengths (2*pi included), so the k-point spacing along every
+        # reciprocal axis is at most kresolution (1/angstrom). For orthogonal
+        # cells this equals ceil(2*pi / (kresolution * a_i)).
+        recip = qe.struct.structure.lattice.reciprocal_lattice.abc
+        kmesh = [int(np.ceil(b / kresolution)) for b in recip]
         return kmesh
 
     def _get_kmesh_by_vol(vol_density):

@@ -19,7 +19,7 @@ numpy = ">=1.20"
 pandas = ">=1.4"
 # mp_api needs pymatgen > 2024.2.20 and getcif/cif2x use the mp_api client;
 # verified with pymatgen 2026.10.24
-pymatgen = ">=2024.2.20"
+pymatgen = ">2024.2.20"
 f90nml = "^1.4"
 beautifulsoup4 = "^4"
 mp_api = ">=0.40"

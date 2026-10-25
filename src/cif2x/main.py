@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import copy
 import sys
 import tempfile
 from pathlib import Path
@@ -139,9 +140,7 @@ def _run(args):
 
         params = {}
         params.update(info)
-        if params.get("optional") is None:
-            params["optional"] = {}
-        deepupdate(params, {"optional": info_optional})
+        params["optional"] = merge_optional(info_optional, info.get("optional"))
 
         output_file = info.get("output_file")
         output_dir = info.get("output_dir", ".")
@@ -167,6 +166,17 @@ def _warn_if_nscf_keeps_symmetry(generator):
                 "content.namelist.system.nosym: true and noinv: true "
                 "(required by qe2respack).")
             return
+
+
+def merge_optional(global_optional, task_optional):
+    """Combine the top-level ``optional`` section with a task's own.
+
+    The global section is the base and a task-level entry with the same key
+    overrides it, so a task can deviate from the shared settings.
+    """
+    merged = copy.deepcopy(global_optional or {})
+    deepupdate(merged, task_optional or {})
+    return merged
 
 
 def deepupdate(dict1, dict2):

@@ -10,19 +10,30 @@ from pathlib import Path
 logger = logging.getLogger("getcif")
 
 
-def resolve_api_key(api_key_file="materials_project.key"):
+DEFAULT_API_KEY_FILE = "materials_project.key"
+
+
+def resolve_api_key(api_key_file=DEFAULT_API_KEY_FILE):
     """Return the Materials Project API key, or None to defer to env/pymatgen.
 
-    Reads the first line not starting with ``#`` (after strip) of
-    ``api_key_file`` when it ends in ``.key`` and exists; otherwise None.
-    Extracted verbatim from the original getcif _setup_dbinfo logic.
+    Reads the first non-blank line not starting with ``#`` of ``api_key_file``
+    (any file name). The default file may be absent: None is returned and
+    mp_api falls back to the MP_API_KEY environment variable or the pymatgen
+    settings. A file named explicitly must exist; otherwise FileNotFoundError
+    is raised instead of silently ignoring the setting.
     """
     api_key = None
-    if api_key_file.endswith(".key") and Path(api_key_file).exists():
-        with open(Path(api_key_file), "r", encoding="utf-8") as fp:
-            data = [s.strip() for s in fp.readlines() if not s.strip().startswith("#")]
+    path = Path(api_key_file)
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as fp:
+            data = [s.strip() for s in fp.readlines()
+                    if s.strip() and not s.strip().startswith("#")]
             if data:
                 api_key = data[0]
+            else:
+                logger.warning(f"API key file {api_key_file} holds no key")
+    elif str(api_key_file) != DEFAULT_API_KEY_FILE:
+        raise FileNotFoundError(f"API key file not found: {api_key_file}")
     if not api_key:
         logger.debug("api_key not set. use environment variable or pymatgen settings")
     return api_key

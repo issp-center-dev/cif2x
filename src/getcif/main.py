@@ -469,11 +469,13 @@ def main():
         else:
             info_dict["option"] = {"dry_run": True}
 
-    #try:
-    stat = QueryMaterialsProject(info_dict).run()
-    #except Exception as e:
-    #    logger.error("{}".format(e))
-    #    sys.exit(1)
+    try:
+        QueryMaterialsProject(info_dict).run()
+    except (ValueError, FileNotFoundError) as e:
+        # invalid query keys/fields, a missing API key file, ...: report and
+        # exit without a traceback
+        logger.error("{}".format(e))
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

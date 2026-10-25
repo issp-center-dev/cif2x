@@ -249,7 +249,7 @@ def parse_readin(tokens):
         idx += 1
         logger.debug(f"end mark detected")
     else:
-        logger.debug("remains:", tokens[idx:])
+        logger.debug("remains: %s", tokens[idx:])
 
     rest = tokens[idx:]
     return params, rest

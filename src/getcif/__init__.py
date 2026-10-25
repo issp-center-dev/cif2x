@@ -6,5 +6,5 @@ from .main import QueryMaterialsProject
 try:
     __version__ = version("HTP-tools-cif2x")
 except PackageNotFoundError:
-    # package not installed
-    pass
+    # running from a source checkout without installation
+    __version__ = "develop"

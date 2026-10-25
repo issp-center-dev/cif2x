@@ -1,3 +1,5 @@
+import contextlib
+import io
 import tempfile
 import sys
 from pathlib import Path
@@ -19,8 +21,14 @@ def ak_struct2kkr(struct, workdir=None):
     if workdir and not Path(workdir).exists():
         raise InputValidationError(f"optional.workdir not found: {workdir}")
 
+    # pyakaikkr prints progress to standard output; keep it out of --dry-run
+    # output (which is the generated input file) and relay it to the log
+    captured = io.StringIO()
     with tempfile.NamedTemporaryFile(delete=True, dir=workdir, suffix=".cif") as t:
         logger.debug("ak_struct2kkr: tempfile={}".format(t.name))
         struct.to(filename=t.name, fmt="cif")
-        data = ak_cif2kkrparam(t.name)
+        with contextlib.redirect_stdout(captured):
+            data = ak_cif2kkrparam(t.name)
+    for line in captured.getvalue().splitlines():
+        logger.debug("pyakaikkr: %s", line)
     return data

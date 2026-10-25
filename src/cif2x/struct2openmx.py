@@ -13,15 +13,33 @@ import logging
 logger = logging.getLogger(__name__)
 
 from cif2x.openmx.vps_table import VPS_TABLE
-def _lookup_vps_table(elem):
-    for v in VPS_TABLE:
-        if v[0] == elem:
-            return v
-    else:
+def _lookup_vps_table(elem, variant=None):
+    """Row of VPS_TABLE for ``elem``.
+
+    Some elements (Fe, Co, Ni, Cu, Zn) have two pseudopotential variants, a
+    hard one (``..._PBE19H``, more valence electrons) and a soft one
+    (``..._PBE19S``). ``variant`` selects one by suffix (``"H"``/``"S"``) or
+    by the full VPS name; without it the first row (the hard one) is used.
+    """
+    rows = [v for v in VPS_TABLE if v[0] == elem]
+    if not rows:
         raise InputValidationError(
             f"OpenMX: element '{elem}' is not in the built-in pseudo-atomic "
             "orbital table (cif2x.openmx.vps_table); add it to the table or "
             "write Definition.of.Atomic.Species by hand.")
+    if variant is None:
+        return rows[0]
+    variant = str(variant)
+    for v in rows:
+        if v[1] == variant or v[1].endswith(variant):
+            return v
+    raise InputValidationError(
+        f"OpenMX: no pseudopotential variant '{variant}' for {elem}; available: "
+        + ", ".join(v[1] for v in rows))
+
+
+def _vps_variants(elem):
+    return [v[1] for v in VPS_TABLE if v[0] == elem]
 
 class Content(CaseInsensitiveDict):
     # def __init__(self):
@@ -141,6 +159,14 @@ class Struct2OpenMX:
                 "OpenMX input generation does not support; use an ordered "
                 "structure or the akaikkr target.")
 
+        # optional.vps_variant: {element: "H" | "S" | full VPS name}
+        optional = self.info.get("optional") or {}
+        self.vps_variant = optional.get("vps_variant") or {}
+        if not isinstance(self.vps_variant, dict):
+            raise InputValidationError(
+                "optional.vps_variant must be a mapping of element to variant "
+                "(for example {Fe: S}).")
+
         # setup content from input params and template
         self.content = self._setup_content()
 
@@ -207,7 +233,13 @@ class Struct2OpenMX:
 
         tbl = []
         for atom in elements:
-            entry = _lookup_vps_table(atom)
+            variant = self.vps_variant.get(atom)
+            variants = _vps_variants(atom)
+            if variant is None and len(variants) > 1:
+                logger.info(f"OpenMX: {atom} has pseudopotential variants "
+                            f"{', '.join(variants)}; using {variants[0]} "
+                            "(choose with optional.vps_variant)")
+            entry = _lookup_vps_table(atom, variant)
             tbl.append([atom, entry[prec], entry[1]])
         content["Definition.of.Atomic.Species"] = tbl
 
@@ -228,7 +260,7 @@ class Struct2OpenMX:
         tbl = []
         species = self.struct.structure.species
         for idx, (atom, coords) in enumerate(zip(species, self.struct.structure.cart_coords)):
-            entry = _lookup_vps_table(atom.symbol)
+            entry = _lookup_vps_table(atom.symbol, self.vps_variant.get(atom.symbol))
             nv = entry[2]
             m = moments[idx] if is_mag else 0.0
             up, down = (nv + m) / 2, (nv - m) / 2
@@ -236,6 +268,8 @@ class Struct2OpenMX:
                 raise InputValidationError(
                     f"atom {idx+1} ({atom.symbol}): moment {m:.3f} muB exceeds the "
                     f"{nv:g} valence electrons of its pseudopotential.")
+            # drop floating-point noise (e.g. 4.5e-16) like the unit vectors do
+            coords = [ 0.0 if abs(x) < 1.0e-12 else float(x) for x in coords ]
             tbl += [[(idx+1), atom.symbol, *coords, up, down]]
 
         content["Atoms.SpeciesAndCoordinates"] = tbl

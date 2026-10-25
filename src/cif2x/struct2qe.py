@@ -282,8 +282,10 @@ class Struct2QE:
                 "or specify content.namelist.system.nbnd explicitly.".format(
                     ", ".join(f"'{c}'" for c in missing)))
 
-        # determine the number of bands
-        spinor_factor = 2 if self.is_col or self.is_noncol else 1
+        # determine the number of bands. nbnd counts spinor states only for a
+        # noncollinear run; for nspin = 2 QE takes nbnd per spin channel, so
+        # the collinear case needs no factor.
+        spinor_factor = 2 if self.is_noncol else 1
         species = self.struct.structure.species
         nexclude = np.sum(
             [self.pp_list.at[Element(s).symbol, "nexclude"] for s in species],
