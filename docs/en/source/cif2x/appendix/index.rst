@@ -168,8 +168,20 @@ Common errors that may occur when running ``cif2x`` and how to resolve them are 
 
 - **Warnings: pp_file / cutoff_file / pseudo_dir not specified or not found**
 
-  A warning is emitted (and the run continues) when these parameters are not given in the ``optional`` section, or when the specified path does not exist. Check that the paths of the pseudo-potential index file (``pp_file``), the cutoff index file (``cutoff_file``), and the pseudo-potential directory (``pseudo_dir``) are correct. Note that ``cutoff_file`` / ``pseudo_dir`` are warning-and-continue, but ``pp_file`` is effectively required for standard QE generation: ``ATOMIC_SPECIES`` generation (and automatic ``nbnd``) raises a ``RuntimeError`` later in the run if it is not specified.
+  A warning is emitted (and the run continues) when these parameters are not given in the ``optional`` section, or when the specified path does not exist. Check that the paths of the pseudo-potential index file (``pp_file``), the cutoff index file (``cutoff_file``), and the pseudo-potential directory (``pseudo_dir``) are correct. ``pp_file`` is required as soon as ``ATOMIC_SPECIES`` is generated or ``nbnd`` is left blank: the run then stops with **ATOMIC_SPECIES: optional.pp_file ... is required** or **nbnd is left blank but ...**.
 
-- **Cutoff values become 0.0**
+- **cutoff information (ecutwfc) not found for element '...'**
 
-  When ``ecutwfc`` / ``ecutrho`` are left blank to be obtained automatically, the cutoff value falls back to ``0.0`` if — given a valid ``pp_file`` mapping for the element — the corresponding ``.UPF`` file is not found in ``pseudo_dir`` and the ``cutoff_file`` has no matching entry. Check that the pseudo-potential files and the cutoff index entries are all in place. (Note that a missing element row in ``pp_file`` itself is a hard error (``KeyError``), not a ``0.0`` fallback.)
+  ``ecutwfc`` was left blank (or omitted) and could not be resolved for the element: ``cutoff_file`` has no row for its pseudo-potential file and the ``.UPF`` file in ``pseudo_dir`` carries no cutoff information. Add the row to ``cutoff_file``, make the ``.UPF`` file available, or set ``content.namelist.system.ecutwfc`` explicitly. A missing ``ecutrho`` is not an error: the key is omitted and ``pw.x`` uses ``4 * ecutwfc``.
+
+- **cannot determine the valence charge of '...'**
+
+  The structure data carry magnetic moments and ``starting_magnetization(i)`` is to be generated, but the valence charge of the pseudo-potential is unknown. Add a ``zval`` column to ``pp_file``, make the ``.UPF`` file available in ``pseudo_dir``, or set ``starting_magnetization(i)`` explicitly in ``content.namelist.system``.
+
+- **POTCAR: ...** (VASP)
+
+  The POTCAR could not be assembled: an element has no row in ``pp_file``, a POTCAR file could not be read, or neither ``pp_file`` nor ``PMG_VASP_PSP_DIR`` is set. Fix the ``optional`` section (see the file format page), or set ``content.potcar.skip: true`` to omit the POTCAR deliberately.
+
+- **the structure has partially occupied (disordered) sites**
+
+  Quantum ESPRESSO, VASP, and OpenMX input generation needs an ordered structure. Use an ordered (supercell) model of the alloy, or the ``akaikkr`` target, which handles disordered sites through the coherent potential approximation.

@@ -50,8 +50,8 @@ structure
 
 optional
 --------
-第一原理計算プログラムごとに必要な global な設定を行います。記述する内容は以下の各節に記述します。
-    
+第一原理計算プログラムごとに必要な global な設定を行います。記述する内容は以下の各節に記述します。各タスクにも同じキーを持つ ``optional`` ブロックを置くことができ、タスク側の指定が global の指定より優先されます。例えばあるタスクだけ別の ``pseudo_dir`` を使うことができます。
+
 tasks
 -----
 入力ファイルの内容を記述します。複数の入力ファイルに対応するため、 ``tasks`` には各入力ファイルごとのブロックからなるリスト形式をとります。各ブロックに記述する項目は以下のとおりです。
@@ -84,6 +84,10 @@ tasks
 
     擬原子軌道を OpenMXマニュアル 10.6 章の Table 1, 2 にしたがって選択します。 ``quick``, ``standard``, ``precise`` のいずれかの値を取ります。デフォルト値は ``quick`` です。 ``content`` の中ではなく、タスク自体のパラメータとして記述します。
 
+  ``optional``
+
+    global な ``optional`` セクション (上記) をタスク単位で上書きします。キーは同じで、ここに記述した項目はこのタスクに限って global の指定より優先されます。
+
 パラメータセット指定
 --------------------
 入力パラメータには値のリストや範囲を指定することができ、値の組み合わせごとに個別のディレクトリを作成して入力ファイルを生成します。パラメータセットの指定には特別な構文 ``${...}`` を用います。
@@ -91,11 +95,19 @@ tasks
 
 - リスト ``${[ A, B, ... ]}``
 
-  パラメータセットを Python のリストとして列挙します。各項目はスカラー値やリストを指定できます。
+  パラメータセットを Python のリストとして列挙します。各項目はスカラー値やリストを指定できます。引用符のない語は文字列として扱われます (``${[ pbe, lda ]}``)。
 
 - 範囲指定 ``${range(N)}``, ``${range(start, end, step)}``
 
-  パラメータの範囲を指定します。それぞれ 0〜N-1, start〜end を step 刻み (step を省略した場合は 1) です。 ``N``, ``start``, ``end``, ``step`` は int または float です。
+  パラメータの範囲を指定します。前者は 0〜N-1、後者は start から step 刻みで end の **直前まで** (end は含みません。Python の ``range`` や NumPy の ``arange`` と同じ) です。step を省略した場合は 1 です。 ``N``, ``start``, ``end``, ``step`` は int または float です。
+
+以下の規則があります。
+
+- ``${...}`` はパラメータの値全体でなければなりません (``ecutwfc: ${range(30, 60, 10)}``)。文字列の一部としては展開されません (``prefix: run_${[1, 2]}`` はそのまま残ります)。
+
+- タスク内の各 ``${...}`` は独立に展開され、すべての組み合わせについて入力ファイルが生成されます。各組み合わせのファイルは ``output_dir`` 直下に、値を出現順に ``_`` で連結した名前のサブディレクトリに書き出されます。リスト値の要素は ``x`` で連結されます (例: ``ecutwfc: 40`` と ``grid: [8, 8, 8]`` の組み合わせは ``40_8x8x8``)。
+
+- 展開は Quantum ESPRESSO、VASP、OpenMX、AkaiKKR のタスクの ``content`` に適用されます。 ``mode: respack`` のタスクには適用されません。
 
 Quantum ESPRESSO 向けパラメータ
 ===============================
@@ -108,20 +120,21 @@ optionalセクション
 
   ``pp_file``
 
-    元素種と擬ポテンシャルを対応付けるCSV形式のインデックスファイルを指定します。
-    ファイルの 1行目はヘッダで、列は ``element,pseudopotential,nexclude,orbitals`` です。各列の意味は以下のとおりです。
+    元素種と擬ポテンシャルを対応付けるCSV形式のインデックスファイルを指定します。 ``ATOMIC_SPECIES`` の生成に必須です。
+    ファイルの 1行目はヘッダで、列は ``element,pseudopotential[,nexclude,orbitals][,zval]`` です。各列の意味は以下のとおりです。
 
     - ``element``: 元素記号。
     - ``pseudopotential``: 擬ポテンシャルファイル名のうち、元素記号と拡張子 ``.UPF`` を除いた部分(name stem)。擬ポテンシャルファイル名は ``{element}.{pseudopotential}.UPF`` として組み立てられます (スピン軌道相互作用を含む非共線計算では、生成される ``ATOMIC_SPECIES`` のファイル名が ``{element}.rel-{pseudopotential}.UPF`` のように ``rel-`` 付きになります)。
-    - ``nexclude``: Wannier 関数によるバンド数の見積り (``nbnd``) で除外する内殻バンド数。
-    - ``orbitals``: Wannier 化の対象とする軌道を ``s``, ``p``, ``d``, ``f`` の文字で並べたもの。``nbnd`` の計算に用いられます (``src/cif2x/struct2qe.py`` の ``_find_nbnd_info``)。
+    - ``nexclude``: Wannier 関数によるバンド数の見積り (``nbnd``) で除外する内殻バンド数。namelist の ``nbnd`` を空欄にした場合のみ必要です。
+    - ``orbitals``: Wannier 化の対象とする軌道を ``s``, ``p``, ``d``, ``f`` の文字で並べたもの。 ``nexclude`` とともに空欄の ``nbnd`` の計算に用いられます。
+    - ``zval``: 擬ポテンシャルの価電子数。磁性構造データの磁気モーメントを ``starting_magnetization`` に換算する場合のみ必要です。この列がない場合は ``pseudo_dir`` 内の UPF ファイルの ``z_valence`` 属性から読み取ります。
 
     例:
 
     .. code-block::
 
-      element,pseudopotential,nexclude,orbitals
-      Fe,pbe-spn-rrkjus_psl.0.2.1,4,spd
+      element,pseudopotential,nexclude,orbitals,zval
+      Fe,pbe-spn-rrkjus_psl.0.2.1,4,spd,16
 
     この行は擬ポテンシャルファイル ``Fe.pbe-spn-rrkjus_psl.0.2.1.UPF`` に対応します。
 
@@ -132,7 +145,8 @@ optionalセクション
 
   ``pseudo_dir``
 
-    擬ポテンシャルファイルを格納するディレクトリ名を指定します。カットオフの値を擬ポテンシャルファイルから取得する場合に使用します。Quantum ESPRESSO の ``pseudo_dir`` パラメータとは独立に指定します。
+    擬ポテンシャルファイルを格納するディレクトリ名を指定します。カットオフの値 (磁性構造の場合は価電子数も) を UPF ファイルから取得する場合に使用します。
+    また、テンプレートや ``content`` で ``&control`` の ``pseudo_dir`` パラメータが空欄の場合は、この値が転記されます。値が指定されている場合はそのまま残ります。
 
 
 content
@@ -148,9 +162,19 @@ content
     - ``use_ibrav = true``:
       ``ibrav`` は結晶構造データから取得された Bravais 格子のインデックスがセットされます。また、Structure データは基本格子のとり方など Quantum ESPRESSO の convention に合わせて再構成されます。
 
-  - ``nat`` (原子数) および ``ntyp`` (元素種の数)は結晶構造データから取得される値で上書きされます。
+  - ``nat`` (原子数) および ``ntyp`` (元素種の数)は結晶構造データから取得される値で上書きされます。磁性構造データでは、同じ元素でもモーメントが異なる原子は別の種として数えられ、 ``Fe0``, ``Fe1`` のようにラベル付けされます。
 
-  - カットオフ ``ecutwfc`` および ``ecutrho`` の情報は、パラメータの値が空欄の場合は擬ポテンシャルファイルから取得します。
+  - ``&control`` の ``calculation`` は常にタスクの ``mode`` にセットされます。
+
+  - ``&control`` の ``pseudo_dir`` が空欄の場合は ``optional.pseudo_dir`` の値が転記されます。
+
+  - カットオフ ``ecutwfc`` および ``ecutrho`` は、値が空欄の場合 (``ecutwfc`` はキー自体がない場合も) に解決されます。元素ごとに、まず ``cutoff_file``、次に ``pseudo_dir`` 内の UPF ファイルの ``wfc_cutoff`` / ``rho_cutoff`` 属性または "Suggested minimum cutoff" 行を参照し、元素全体での最大値を書き出します。 ``ecutwfc`` は必ず解決できなければならず、できない場合は ``cutoff_file`` または明示的な値を求めるエラーで停止します。 ``ecutrho`` が解決できない場合はキーを出力せず、 ``pw.x`` のデフォルト (``4 * ecutwfc``) に任せます。明示的に指定した ``ecutrho`` がこのデフォルトより小さい場合はデフォルト値まで引き上げられます。
+
+  - ``nbnd`` が空欄の場合は、 ``pp_file`` の ``nexclude`` と ``orbitals`` 列から見積もられます (Wannier 軌道の数に余裕を加えたもの)。非共線計算では見積もりが 2 倍になります。これらの列がない場合は ``nbnd`` を明示的に指定してください。
+
+  - ``nspin``, ``noncolin``, ``lspinorb`` は整合するように書き直されます。共線スピン分極計算では ``nspin = 2``、非共線計算では ``noncolin = .true.`` (指定があれば ``lspinorb`` も)、非磁性計算では何も出力されません。結晶構造データが磁気モーメントを持ち、これらのキーがいずれも指定されていない場合は、モーメント自体から ``nspin = 2`` または ``noncolin`` を選びます (``tol_deg`` 参照)。モーメントが非共線なのに ``nspin = 2`` が指定されている場合は ``noncolin`` に切り替えられます。
+
+  - 磁性構造データでは、有限のモーメントを持つ各原子種 ``i`` について ``starting_magnetization(i)`` が書き出されます。値はボーア磁子単位のモーメントを擬ポテンシャルの価電子数 (``pp_file`` の ``zval`` 列、または UPF ファイルの ``z_valence`` 属性。どちらもなければいずれかを求めるエラーになります) で割ったものです。非共線計算では ``angle1(i)`` と ``angle2(i)`` (度) も書き出されます。テンプレートや ``content`` で指定した値 (``starting_magnetization(1)`` や、添字なしの ``starting_magnetization`` リスト) は保持され、生成は行われません。 ``nspin: 1`` を明示した場合は何も生成されません。
 
   **CELL_PARAMETERS**
 
@@ -185,8 +209,8 @@ content
   - メッシュの指定は以下の順序で決定されます。
 
     - ``grid`` パラメータの指定。grid の値は :math:`n_x, n_y, n_z` の配列またはスカラー値 :math:`n` です。後者の場合は :math:`n_x = n_y = n_z = n` と仮定します。
-    - ``vol_density`` パラメータから自動導出。
-    - ``k_resolution`` パラメータから自動導出。``k_resolution`` のデフォルトは 0.15 です。
+    - ``vol_density`` パラメータから自動導出 (逆格子体積あたりの k 点数。pymatgen の ``automatic_density_by_vol`` と同じで、メッシュは :math:`\Gamma` 中心)。
+    - ``k_resolution`` パラメータから自動導出。 ``k_resolution`` は k 点間隔の上限 (単位は 1/angstrom、デフォルト値 0.15) で、逆格子ベクトル :math:`\mathbf{b}_i` (因子 :math:`2\pi` を含む) から :math:`n_i = \lceil |\mathbf{b}_i| / k_\mathrm{resolution} \rceil` と決まります。
 
   - ``data`` フィールドが参照されるのは、バンド経路のオプション ``crystal_b`` と ``tpiba_b`` (および未知の ``option`` を指定した場合で、この場合は記述どおりに出力されます) に限られます。これらの場合は ``data`` に記述した行がそのまま出力され、生成は行われません。それ以外のオプションおよび上記の他の card では、データは常に結晶構造から生成されます。
 
@@ -199,35 +223,51 @@ VASP 向けパラメータ
 optional
 --------
 
-擬ポテンシャルのタイプや格納場所を指定します。
+``optional`` セクションでは POTCAR ファイルの取得元を指定します。方法は 2 つあり、 ``pp_file`` が指定されている場合は 1 の方法が使われます。
 
-pymatgen では、擬ポテンシャルファイルを
-``PMG_VASP_PSP_DIR``/*functional*/POTCAR. *element* (.gz) または
-``PMG_VASP_PSP_DIR``/*functional*/ *element* /POTCAR から取得します。
-``PMG_VASP_PSP_DIR`` はディレクトリの指定で、設定ファイル ``~/.config/.pmgrc.yaml`` に記載するか、同名の環境変数に指定します。また、 *functional* は擬ポテンシャルのタイプで、 ``POT_GGA_PAW_PBE`` や ``POT_LDA_PAW`` などが決められています。
+1. POTCAR ファイルのインデックスファイル (``pp_file`` と ``pseudo_dir``)
+
+  ``pp_file``
+
+    ヘッダ行と ``element,pseudopotential`` の 2 列からなる CSV ファイルで、元素記号とその POTCAR ファイル (素のファイルまたは ``.gz``) のパスを対応付けます。相対パスは ``pseudo_dir`` が指定されていればそこからの相対パスです。構造に含まれるすべての元素の行が必要です。例:
+
+    .. code-block::
+
+      element,pseudopotential
+      Na,Na_pv/POTCAR
+      Cl,Cl/POTCAR
+
+  ``pseudo_dir``
+
+    ``pp_file`` 内のパスの基準となるディレクトリです。
+
+2. pymatgen の流儀 (``pseudo_functional`` と ``pseudo_map``)
+
+  ``pp_file`` がない場合は pymatgen と同じ方法で POTCAR ファイルを探します。すなわち ``PMG_VASP_PSP_DIR``/*functional*/POTCAR. *symbol* (.gz) または ``PMG_VASP_PSP_DIR``/*functional*/ *symbol* /POTCAR で、 ``PMG_VASP_PSP_DIR`` は設定ファイル ``~/.config/.pmgrc.yaml`` に記載するか同名の環境変数で指定し、 *functional* は ``POT_GGA_PAW_PBE`` や ``POT_LDA_PAW`` などのディレクトリ名です。この方法では ``PMG_VASP_PSP_DIR`` の設定が必須です。
 
   ``pseudo_functional``
 
-    擬ポテンシャルのタイプを指定します。タイプの指定と上記の *functional* の対応は pymatgen 内のテーブルに定義され、 ``PBE`` → ``POT_GGA_PAW_PBE``,　 ``LDA`` → ``POT_LDA_PAW`` などのようになっています。
+    汎関数を指定します。 *functional* ディレクトリとの対応は pymatgen 内のテーブルで決まります (``PBE`` → ``POT_GGA_PAW_PBE``, ``LDA`` → ``POT_LDA_PAW`` など)。省略時は pymatgen のデフォルトが使われます。
 
-以下の ``pseudo_dir`` を指定した場合は pymatgen の流儀を無視して擬ポテンシャルの格納ディレクトリを探します。
-    
-  ``pseudo_dir``
+  ``pseudo_map``
 
-    擬ポテンシャルの格納ディレクトリを指定します。擬ポテンシャルファイルのファイル名は ``pseudo_dir``/POTCAR. *element* (.gz) または ``pseudo_dir``/*element*/POTCAR です。
+    ``element,symbol`` の 2 列からなる CSV ファイルで、元素に使用する POTCAR のシンボル (例: ``Na,Na_pv``) を対応付けます。記載のない元素は元素記号そのままのシンボルを使います。
 
+POTCAR を組み立てられない場合 (``pp_file`` に元素の行がない、POTCAR ファイルが読めない、 ``PMG_VASP_PSP_DIR`` が未設定) は、POTCAR を欠いた入力一式が意図せず書き出されないよう、cif2x はエラーで停止します。計算ノード側で POTCAR を付加する場合など、意図的に POTCAR を省くには ``content`` の ``potcar`` に ``skip: true`` を指定します (下記参照)。
 
 tasks
 -----
 
-テンプレートファイルは、 ``template_dir`` で指定するディレクトリ内に ``INCAR``, ``KPOINTS``, ``POSCAR``, ``POTCAR`` ファイルを配置します。ファイルがない項目は無視されます。
+テンプレートファイルは、 ``template_dir`` で指定するディレクトリ内に ``INCAR``, ``KPOINTS`` の名前で配置します。ファイルがない項目は無視されます。 ``POSCAR`` は常に結晶構造から、 ``POTCAR`` は ``optional`` の設定から生成されるため、 ``template_dir`` 内のこれらの名前のファイルは使用されません。
 
 content
 -------
 
   **incar**
 
-  - INCAR ファイルに記述するパラメータを列挙します。
+  - INCAR ファイルに記述するパラメータを列挙します。キーの大文字小文字は区別しません。
+
+  - 磁性構造データ (mCIF ファイルなど) の場合は、モーメントから ``MAGMOM`` が生成されます。共線モーメントでは ``POSCAR`` の原子順に 1 原子あたり 1 つの値 (あわせて ``ISPIN = 2``)、非共線モーメントでは 1 原子あたり 3 つの値 (あわせて ``LNONCOLLINEAR = .TRUE.``) です。ここで ``MAGMOM`` を指定した場合はその値がそのまま使われ、 ``ISPIN`` / ``LNONCOLLINEAR`` の指定も変更されません。
 
   **kpoints**
 
@@ -275,6 +315,14 @@ content
         type: gamma_automatic
         kpoints: [6, 6, 6]
 
+  **poscar**
+
+  - ``POSCAR`` は結晶構造から生成されます。 ``fix_species`` に元素記号またはそのリストを指定すると、該当する元素の原子の selective dynamics フラグが ``F F F``、それ以外が ``T T T`` になります。空のリストを指定すると、構造データが持つ ``selective_dynamics`` 属性が取り除かれます。
+
+  **potcar**
+
+  - ``skip: true`` を指定すると生成する一式から ``POTCAR`` を省きます (上記 ``optional`` セクション参照)。他のパラメータはありません。
+
 
 OpenMX 向けパラメータ
 ===============================
@@ -287,6 +335,17 @@ optional
   ``data_path``
 
     擬原子軌道および擬ポテンシャルのファイルを格納するディレクトリを指定します。入力ファイルの ``DATA.PATH`` パラメータに対応します。
+
+  ``vps_variant``
+
+    一部の元素 (Fe, Co, Ni, Cu, Zn) には OpenMX のデータベースに 2 種類の擬ポテンシャル、hard 版 (``Fe_PBE19H``、価電子数が多い) と soft 版 (``Fe_PBE19S``) があります。このパラメータで元素ごとに使用する版を、接尾辞 ``H`` / ``S`` または完全な名前で指定します。指定がない場合は hard 版が使われます。
+
+    .. code-block:: yaml
+
+      optional:
+        data_path: ../openmx3.9/DFT_DATA19
+        vps_variant:
+          Fe: S
 
 tasks
 -----
@@ -308,6 +367,8 @@ content
 --------
 
 ``content`` には OpenMX のキーワードを記述し、そのまま出力ファイルに書き出されます (リスト値は ``<Key ... Key>`` のブロック形式で出力されます)。以下のキーワードは結晶構造データから生成され、テンプレートや ``content`` の値を上書きします: ``Species.Number``, ``Definition.of.Atomic.Species``, ``Atoms.Number``, ``Atoms.SpeciesAndCoordinates.Unit``, ``Atoms.SpeciesAndCoordinates``, ``Atoms.UnitVectors.Unit``, ``Atoms.UnitVectors`` 。 ``System.Name`` が指定されていない場合は構造ファイルのベース名が使われます。
+
+``Atoms.SpeciesAndCoordinates`` の up / down 電子数は、非磁性構造では擬ポテンシャルの価電子数の半分ずつです。共線モーメントを持つ磁性構造データでは、原子のモーメント :math:`m` (ボーア磁子単位) から :math:`(N \pm m)/2` となり、テンプレートや ``content`` で指定がなければ ``scf.SpinPolarization`` が ``on`` にセットされます。非共線モーメントは OpenMX では未対応で、cif2x はエラーで停止します。この場合はブロックを手で記述してください。
 
 AkaiKKR 向けパラメータ
 ===============================

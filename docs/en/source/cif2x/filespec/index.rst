@@ -51,8 +51,8 @@ structure
 
 optional
 --------
-This section contains global settings needed for the first-principles calculation software. The available parameters are described in the corresponding sections below.
-    
+This section contains global settings needed for the first-principles calculation software. The available parameters are described in the corresponding sections below. A task may carry its own ``optional`` block with the same keys; a task-level entry overrides the global one, so one task can use, for example, a different ``pseudo_dir``.
+
 tasks
 -----
 This section defines contents of the input files. It is organized as a list of blocks, each corresponding to an input file, to allow for generating a set of input files for an input. The terms described in each block are explained in the following.
@@ -85,6 +85,10 @@ This section defines contents of the input files. It is organized as a list of b
 
     This parameter specifies the set of pseudo-atomic orbitals listed in Tables 1 and 2 of Section 10.6 of the OpenMX manual. It is one of ``quick``, ``standard``, or ``precise``. The default value is ``quick``. Note that it is a parameter of the task itself, not of ``content``.
 
+  ``optional``
+
+    Task-level overrides of the global ``optional`` section (see above). The keys are the same; an entry given here takes precedence over the global one for this task only.
+
 
 Specifying parameter set
 ----------------------------------------
@@ -92,12 +96,20 @@ An input parameter may be given a list or range of parameters. In this case, a s
 
 - a list: ``${[ A, B, ... ]}``
 
-  a set of parameter values is described as a Python list. Each entry may be a scalar value, or a list of values.
+  a set of parameter values is described as a Python list. Each entry may be a scalar value, or a list of values. Unquoted words are read as strings (``${[ pbe, lda ]}``).
 
 - a range: ``${range(N)}``, ``${range(start, end, step)}``
 
-  a range of parameter is given by the keyword ``range``. The former specifies the values from ``0`` to ``N-1``, and the latter from ``start`` to ``end`` with every ``step``. (If ``step`` is omitted, it is assumed to be ``1``.)
-  
+  a range of parameter is given by the keyword ``range``. The former specifies the values from ``0`` to ``N-1``, and the latter from ``start`` up to but **not including** ``end`` with every ``step``, as Python's ``range`` and NumPy's ``arange`` do. (If ``step`` is omitted, it is assumed to be ``1``.) ``N``, ``start``, ``end``, and ``step`` may be integers or floats.
+
+The following rules apply:
+
+- The ``${...}`` expression must be the whole value of the parameter (``ecutwfc: ${range(30, 60, 10)}``). It is not expanded inside a longer string (``prefix: run_${[1, 2]}`` is left as it is).
+
+- Every ``${...}`` in a task is expanded independently, and an input file is generated for every combination. The files of one combination are written to a sub-directory of ``output_dir`` named after the values, joined with ``_`` in the order of appearance; the elements of a list value are joined with ``x`` (for example ``40_8x8x8`` for ``ecutwfc: 40`` and ``grid: [8, 8, 8]``).
+
+- The expansion applies to the ``content`` of Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR tasks. It is not applied to ``mode: respack`` tasks.
+
 
 Parameters for Quantum ESPRESSO
 ===============================
@@ -110,19 +122,20 @@ optional section
 
   ``pp_file``
 
-    This parameter specifies the index file in CSV format that relates the element type and the pseudo-potential file. The first line is a header, and the columns are ``element,pseudopotential,nexclude,orbitals``. The meaning of each column is:
+    This parameter specifies the index file in CSV format that relates the element type and the pseudo-potential file. It is required to generate ``ATOMIC_SPECIES``. The first line is a header, and the columns are ``element,pseudopotential[,nexclude,orbitals][,zval]``. The meaning of each column is:
 
     - ``element``: the element symbol.
     - ``pseudopotential``: the name stem of the pseudo-potential file, i.e. the part of the file name excluding the element symbol and the ``.UPF`` extension. The pseudo-potential file name is assembled as ``{element}.{pseudopotential}.UPF`` (for SOC runs, i.e. noncollinear with spin-orbit coupling, the generated ``ATOMIC_SPECIES`` filename uses the ``rel-`` variant, e.g. ``{element}.rel-{pseudopotential}.UPF``).
-    - ``nexclude``: the number of core bands to exclude when counting the number of bands (``nbnd``) for Wannier functions.
-    - ``orbitals``: the orbitals to be Wannierized, given as a string of the characters ``s``, ``p``, ``d``, ``f``. It is used to compute ``nbnd`` (see ``_find_nbnd_info`` in ``src/cif2x/struct2qe.py``).
+    - ``nexclude``: the number of core bands to exclude when counting the number of bands (``nbnd``) for Wannier functions. Needed only when ``nbnd`` is left blank in the namelist.
+    - ``orbitals``: the orbitals to be Wannierized, given as a string of the characters ``s``, ``p``, ``d``, ``f``. It is used together with ``nexclude`` to compute a blank ``nbnd``.
+    - ``zval``: the valence charge of the pseudo-potential. Needed only for magnetic structure data, to convert the magnetic moments to ``starting_magnetization``; when the column is absent, the value is read from the ``z_valence`` attribute of the UPF file in ``pseudo_dir``.
 
     An example line is given as:
 
     .. code-block::
 
-      element,pseudopotential,nexclude,orbitals
-      Fe,pbe-spn-rrkjus_psl.0.2.1,4,spd
+      element,pseudopotential,nexclude,orbitals,zval
+      Fe,pbe-spn-rrkjus_psl.0.2.1,4,spd,16
 
     This line corresponds to the pseudo-potential file ``Fe.pbe-spn-rrkjus_psl.0.2.1.UPF``.
 
@@ -132,9 +145,9 @@ optional section
 
   ``pseudo_dir``
 
-    This parameter specifies the name of the directory that holds pseudo-potential files. It is used when the cutoff values are obtained from the pseudo-potential files.
-    It is indenepent from the ``pseudo_dir`` parameter in the input files for Quantum ESPRESSO.
-    
+    This parameter specifies the name of the directory that holds pseudo-potential files. It is used when the cutoff values (or, for magnetic structures, the valence charges) are read from the UPF files.
+    It is also copied into the ``pseudo_dir`` parameter of ``&control`` when that parameter is left blank in the template or ``content``; a value given there is kept.
+
 
 content
 --------
@@ -149,9 +162,19 @@ content
     - ``use_ibrav = true``:
       ``ibrab`` is set to the index of Bravais lattices obtained from the crystal structure data. The Structure data will be reconstructed to match the convention of Quantum ESPRESSO.
 
-  - ``nat`` (the number of atoms) and ``ntyp`` (the number of element types) will be superseded by the values obtained from the crystal structure data.
+  - ``nat`` (the number of atoms) and ``ntyp`` (the number of element types) will be superseded by the values obtained from the crystal structure data. For magnetic structure data, atoms of the same element with different moments count as different types and are labelled ``Fe0``, ``Fe1``, and so on.
 
-  - The cutoff values ``ecutwfc`` and ``ecutrho`` are obtained from the pseudo-potential files if these parameters are left blank.
+  - ``calculation`` in ``&control`` is always set to the task ``mode``.
+
+  - ``pseudo_dir`` in ``&control``, when left blank, is filled with ``optional.pseudo_dir``.
+
+  - The cutoff values ``ecutwfc`` and ``ecutrho`` are resolved when they are left blank (``ecutwfc`` also when the key is absent). For each element, the values are looked up first in ``cutoff_file``, then in the ``wfc_cutoff`` / ``rho_cutoff`` attributes or the "Suggested minimum cutoff" lines of the UPF file in ``pseudo_dir``; the largest values over the elements are written. ``ecutwfc`` must be resolvable, otherwise ``cif2x`` stops with an error asking for ``cutoff_file`` or an explicit value. When ``ecutrho`` cannot be resolved the key is omitted and ``pw.x`` applies its default (``4 * ecutwfc``); an explicit ``ecutrho`` below that default is raised to it.
+
+  - ``nbnd``, when left blank, is estimated from the ``nexclude`` and ``orbitals`` columns of ``pp_file`` (the number of Wannier orbitals plus a margin); the estimate is doubled for noncollinear runs. Give ``nbnd`` explicitly when the columns are not available.
+
+  - ``nspin``, ``noncolin``, and ``lspinorb`` are rewritten consistently: ``nspin = 2`` is written for a collinear spin-polarized run, ``noncolin = .true.`` (and ``lspinorb`` when given) for a noncollinear run, and nothing for a non-magnetic run. When the structure data carry magnetic moments and none of these keys is given, ``nspin = 2`` or ``noncolin`` is chosen from the moments themselves (see ``tol_deg``); ``nspin = 2`` with non-collinear moments is turned into ``noncolin``.
+
+  - For magnetic structure data, ``starting_magnetization(i)`` is written for every atom type ``i`` with a finite moment, as the moment in Bohr magnetons divided by the valence charge of the pseudo-potential (the ``zval`` column of ``pp_file`` or the ``z_valence`` attribute of the UPF file; otherwise an error asks for one of them). For a noncollinear run ``angle1(i)`` and ``angle2(i)`` (degrees) are written as well. Values given in the template or ``content`` (``starting_magnetization(1)``, or a bare ``starting_magnetization`` list) are kept and not generated. Nothing is generated when ``nspin: 1`` is given explicitly.
 
   **CELL_PARAMETERS**
 
@@ -186,8 +209,8 @@ content
   - The mesh width is determined in the following order:
 
     - the ``grid`` parameter, specified by a list of :math:`n_x, n_y, n_z`, or a scalar value :math:`n`. For the latter, :math:`n_x = n_y = n_z = n` is assumed.
-    - derived from the ``vol_density`` parameter.
-    - derived from the ``k_resolution`` parameter, whose default value is 0.15.
+    - derived from the ``vol_density`` parameter (k points per reciprocal volume, as in pymatgen's ``automatic_density_by_vol``; the mesh is :math:`\Gamma`-centered).
+    - derived from the ``k_resolution`` parameter, the largest allowed spacing of k points in units of 1/angstrom (default: 0.15): :math:`n_i = \lceil |\mathbf{b}_i| / k_\mathrm{resolution} \rceil` with :math:`\mathbf{b}_i` the reciprocal lattice vectors (including the factor :math:`2\pi`).
 
   - The ``data`` field is honoured only for the band-path options ``crystal_b`` and ``tpiba_b`` (and for an unrecognized ``option``, which is passed through as written). In these cases, the rows given in ``data`` are written as they are instead of being generated. For the other options, and for the other cards above, the data are always generated from the crystal structure.
 
@@ -200,34 +223,42 @@ The entries of ``optional`` section and ``content`` part of the ``tasks`` sectio
 optional
 --------
 
-The type and the location of pseudo-potential files are specified.
+The ``optional`` section tells where the POTCAR files come from. There are two ways; the first one is used when ``pp_file`` is given.
 
-According to pymatgen, the pseudo-potential files are obtained from 
-``PMG_VASP_PSP_DIR``/*functional*/POTCAR.{element}(.gz) or
-``PMG_VASP_PSP_DIR``/*functional*/{element}/POTCAR,
-where
-``PMG_VASP_PSP_DIR`` points to the directory and it is given in the configuration file
-``~/.config/.pmgrc.yaml`` or by the environment variable of the same name.
-*functional* refers to the type of the pseudo-potential, whose value is predefined as
-``POT_GGA_PAW_PBE``, ``POT_LDA_PAW``, etc.
+1. An index file of POTCAR files (``pp_file`` and ``pseudo_dir``)
 
+  ``pp_file``
+
+    An index file in CSV format with a header line and the columns ``element,pseudopotential``: the element symbol and the path of its POTCAR file (plain or ``.gz``). A relative path is taken from ``pseudo_dir`` when that is given. Every element of the structure must have a row. For example:
+
+    .. code-block::
+
+      element,pseudopotential
+      Na,Na_pv/POTCAR
+      Cl,Cl/POTCAR
+
+  ``pseudo_dir``
+
+    The directory that the paths in ``pp_file`` are relative to.
+
+2. The pymatgen convention (``pseudo_functional`` and ``pseudo_map``)
+
+  Without ``pp_file``, the POTCAR files are located as pymatgen does: ``PMG_VASP_PSP_DIR``/*functional*/POTCAR.{symbol}(.gz) or ``PMG_VASP_PSP_DIR``/*functional*/{symbol}/POTCAR, where ``PMG_VASP_PSP_DIR`` is given in the configuration file ``~/.config/.pmgrc.yaml`` or by the environment variable of the same name, and *functional* is a directory name such as ``POT_GGA_PAW_PBE`` or ``POT_LDA_PAW``. ``PMG_VASP_PSP_DIR`` must be set in this case.
 
   ``pseudo_functional``
 
-    This parameter specifies the type of the pseudo-potential. The relation to the *functional* value above is defined in the table of pymatgen, for example, by ``PBE`` to ``POT_GGA_PAW_PBE``, or by ``LDA`` to ``POT_LDA_PAW``, or in a similar manner.
-    
+    The functional, mapped to the *functional* directory by pymatgen's table (for example ``PBE`` to ``POT_GGA_PAW_PBE``, ``LDA`` to ``POT_LDA_PAW``). The pymatgen default is used when omitted.
 
-When the ``pseudo_dir`` parameter is specified, it is used as the directory that holds the pseudo-potential files, ignoring the convention of pymatgen.
-    
-  ``pseudo_dir``
+  ``pseudo_map``
 
-    This parameter specifies the directory that holds the pseudo-potential files. The paths to the pseudo-potential file turn to ``pseudo_dir``/POTCAR.{element}(.gz), or ``pseudo_dir``/{element}/POTCAR.
+    A CSV file with the columns ``element,symbol`` that maps an element to the POTCAR symbol to use (for example ``Na,Na_pv``). Elements not listed use their plain symbol.
+
+If the POTCAR cannot be assembled (an element missing from ``pp_file``, a POTCAR file that cannot be read, or ``PMG_VASP_PSP_DIR`` not set), ``cif2x`` stops with an error so that an input set is never written without its POTCAR by accident. To omit the POTCAR deliberately, for example when it is added later on the compute node, set ``skip: true`` in the ``potcar`` part of ``content`` (see below).
 
 tasks
 -----
 
-The template files are assumed to be placed in the directory specified by the ``template_dir`` parameter by the names ``INCAR``, ``KPOINTS``, ``POSCAR``, and ``POTCAR``. The missing files will be ignored.
-
+The template files are assumed to be placed in the directory specified by the ``template_dir`` parameter by the names ``INCAR`` and ``KPOINTS``. The missing files will be ignored. ``POSCAR`` is always generated from the crystal structure and ``POTCAR`` from the ``optional`` settings; files of these names in ``template_dir`` are not used.
 
 
 content
@@ -235,7 +266,9 @@ content
 
   **incar**
 
-  - This block contains parameters described in the INCAR file
+  - This block contains parameters described in the INCAR file. The keys are case-insensitive.
+
+  - For magnetic structure data (for example an mCIF file), ``MAGMOM`` is generated from the moments, one value per atom in the order of ``POSCAR`` for collinear moments (with ``ISPIN = 2``), or three values per atom for non-collinear moments (with ``LNONCOLLINEAR = .TRUE.``). A ``MAGMOM`` given here is kept as it is, and ``ISPIN`` / ``LNONCOLLINEAR`` given here are not changed.
 
   **kpoints**
 
@@ -283,6 +316,14 @@ content
         type: gamma_automatic
         kpoints: [6, 6, 6]
 
+  **poscar**
+
+  - ``POSCAR`` is generated from the crystal structure. ``fix_species`` takes an element symbol or a list of symbols; the atoms of these elements get ``F F F`` in the selective-dynamics flags and all others ``T T T``. An empty list removes a ``selective_dynamics`` property carried by the structure data.
+
+  **potcar**
+
+  - ``skip: true`` omits the ``POTCAR`` from the generated set (see the ``optional`` section above). There are no other parameters.
+
 
 Parameters for OpenMX
 ===============================
@@ -295,6 +336,17 @@ optional
   ``data_path``
 
     This parameter specifies the name of directory that holds files for pseudo-atomic orbitals and pseudo-potentials. It corresponds to the ``DATA.PATH`` parameter.
+
+  ``vps_variant``
+
+    Some elements (Fe, Co, Ni, Cu, Zn) have two pseudo-potentials in the OpenMX database: a hard one (``Fe_PBE19H``, more valence electrons) and a soft one (``Fe_PBE19S``). This parameter maps an element to the variant to use, by the suffix ``H`` / ``S`` or by the full name; the hard one is used when not given.
+
+    .. code-block:: yaml
+
+      optional:
+        data_path: ../openmx3.9/DFT_DATA19
+        vps_variant:
+          Fe: S
 
 tasks
 -----
@@ -316,6 +368,8 @@ content
 --------
 
 The ``content`` part contains OpenMX keywords, written to the output file as they are (a list value is written as a block ``<Key ... Key>``). The following keywords are generated from the crystal structure data and overwrite the values in the template or ``content``: ``Species.Number``, ``Definition.of.Atomic.Species``, ``Atoms.Number``, ``Atoms.SpeciesAndCoordinates.Unit``, ``Atoms.SpeciesAndCoordinates``, ``Atoms.UnitVectors.Unit``, and ``Atoms.UnitVectors``. ``System.Name`` defaults to the base name of the structure file when it is not given.
+
+The numbers of up and down electrons in ``Atoms.SpeciesAndCoordinates`` are half the valence electrons of the pseudo-potential for a non-magnetic structure. For magnetic structure data with collinear moments they are :math:`(N \pm m)/2` with :math:`m` the moment of the atom in Bohr magnetons, and ``scf.SpinPolarization`` is set to ``on`` unless it is given in the template or ``content``. Non-collinear moments are not supported for OpenMX; ``cif2x`` stops with an error and the block has to be written by hand.
 
 Parameters for AkaiKKR
 ===============================

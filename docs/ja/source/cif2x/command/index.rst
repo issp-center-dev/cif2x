@@ -64,7 +64,7 @@ cif2x
 
   - ``--api-key-file`` *FILE*
 
-    Materials Project の API キーを格納したファイル(``#`` 以外の各行に1つ、既定 ``materials_project.key``)。``--mp-id`` 指定時のみ有効です。
+    Materials Project の API キーを格納したファイル(既定 ``materials_project.key``)。空行でも ``#`` で始まる行でもない最初の行が使われます。ファイル名は自由です。既定のファイルは存在しなくてもよく、その場合は環境変数または pymatgen の設定からキーを取得します。明示的に指定したファイルが存在しない場合はエラーで停止します。``--mp-id`` 指定時のみ有効です。
 
   .. note::
 
