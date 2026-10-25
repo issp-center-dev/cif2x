@@ -51,7 +51,8 @@
 
 - Tests on Python 3.11 to 3.14; `ruff check src tests` in CI; the shipped
   samples are regenerated and compared with their references in the test
-  suite.
+  suite (the AkaiKKR samples only where pyakaikkr is installed, which CI
+  does not do).
 
 ## 1.1.0 (2024-09-14)
 

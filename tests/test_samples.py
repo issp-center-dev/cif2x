@@ -2,13 +2,16 @@
 
 The samples under sample/cif2x/<target>/<case>/ are run through the CLI with
 --dry-run from their own directory (the inputs use relative paths) and the
-generated files are compared token by token with the *_ref files: numbers
-within 1e-4, words case-insensitively, so that pymatgen's formatting changes
-(600 vs 600.0, Accurate vs accurate, -0.000000) do not count as regressions.
-No pseudopotential files ship with the samples; cutoffs come from the CSVs.
+generated files are compared with the *_ref files: numbers with a relative
+tolerance of 1e-6 (so that -0.000000 and the last digit of a printed float do
+not count), words exactly; the VASP INCAR is compared through pymatgen's
+parser, which normalizes value formatting (600 vs 600.0, Accurate vs
+accurate). No pseudopotential files ship with the samples; cutoffs come from
+the CSVs. The AkaiKKR cases need pyakaikkr and are skipped without it.
 """
 
 import glob
+import math
 import re
 import sys
 from pathlib import Path
@@ -53,9 +56,9 @@ def _tokens(text):
             continue
         for t in line.split():
             try:
-                toks.append(round(float(t), 4) + 0.0)
+                toks.append(float(t) + 0.0)   # + 0.0 folds -0.0 into 0.0
             except ValueError:
-                toks.append(t.lower())
+                toks.append(t)
     return toks
 
 
@@ -64,9 +67,22 @@ def _assert_same(ref_path, generated):
     assert len(ref) == len(gen), f"{ref_path}: token count {len(ref)} vs {len(gen)}"
     for i, (a, b) in enumerate(zip(ref, gen)):
         if isinstance(a, float) and isinstance(b, float):
-            assert abs(a - b) <= 1e-4, f"{ref_path}: token {i}: {a} vs {b}"
+            assert math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-12), f"{ref_path}: token {i}: {a} vs {b}"
         else:
             assert a == b, f"{ref_path}: token {i}: {a!r} vs {b!r}"
+
+
+def _assert_same_incar(ref_path, generated):
+    from pymatgen.io.vasp import Incar
+
+    ref, gen = Incar.from_str(ref_path.read_text()), Incar.from_str(generated)
+    assert set(ref) == set(gen), f"{ref_path}: keys {sorted(set(ref) ^ set(gen))} differ"
+    for key in ref:
+        a, b = ref[key], gen[key]
+        if isinstance(a, float) and isinstance(b, (int, float)):
+            assert math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-12), f"{ref_path}: {key}: {a} vs {b}"
+        else:
+            assert a == b, f"{ref_path}: {key}: {a!r} vs {b!r}"
 
 
 def _cases(target, ref_glob):
@@ -89,7 +105,10 @@ def test_vasp_sample_matches_reference(monkeypatch, capsys, case):
     files = _dry_run(monkeypatch, capsys, "vasp", case)
     for name in ("INCAR", "KPOINTS", "POSCAR"):
         ref = case / "default_ref" / name
-        if ref.exists():
+        assert ref.exists(), f"reference {ref} is missing"
+        if name == "INCAR":
+            _assert_same_incar(ref, _generated(files, name))
+        else:
             _assert_same(ref, _generated(files, name))
     # the samples opt out of POTCAR (no POTCAR files ship with them)
     assert not any(Path(k).name == "POTCAR" for k in files)
@@ -108,8 +127,6 @@ def test_openmx_sample_matches_reference(monkeypatch, capsys, case):
 @pytest.mark.parametrize("case", _cases("akaikkr", "test.in_ref"), ids=lambda p: p.name)
 def test_akaikkr_sample_matches_reference(monkeypatch, capsys, case):
     pytest.importorskip("pyakaikkr")
-    if case.name == "FeRh05Pt05":
-        pytest.xfail("pymatgen orders the species of a disordered site differently across versions")
     files = _dry_run(monkeypatch, capsys, "akaikkr", case)
     _assert_same(case / "test.in_ref", _generated(files, "test.in"))
 

@@ -36,10 +36,14 @@ jobs:
           getcif --help
           cif2x --version | grep -v develop
           getcif --version | grep -v develop
+          cif2x-pp-cutoff -h
 
       - name: Lint
+        # one matrix leg is enough; pinned so that a new ruff rule cannot
+        # turn CI red without a code change
+        if: matrix.python-version == '3.12'
         run: |
-          pip install ruff
+          pip install "ruff==0.17.2"
           ruff check src tests
 
       - name: Run tests
