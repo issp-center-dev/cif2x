@@ -6,6 +6,8 @@
 
 - The `qe-tools` dependency is gone; Quantum ESPRESSO templates are read with
   f90nml. Indexed keys such as `starting_magnetization(2)` keep their index.
+- The `phonopy` dependency is gone as well: nothing in cif2x or getcif
+  imported it.
 - A task-level `optional` block now overrides the global `optional` section
   (it was the other way round).
 - `k_resolution` derives the k mesh from the reciprocal lattice vector

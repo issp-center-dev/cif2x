@@ -23,7 +23,6 @@ pymatgen = ">2024.2.20"
 f90nml = "^1.4"
 beautifulsoup4 = "^4"
 mp_api = ">=0.40"
-phonopy = "*"
 "ruamel.yaml" = ">=0.17"
 
 [tool.poetry.extras]
