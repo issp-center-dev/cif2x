@@ -39,6 +39,9 @@
 
 ### Fixed
 
+- `cif2x -h`, `cif2x --version` and the getcif equivalents return at once:
+  the generators and pymatgen are imported on first use instead of at
+  start-up (issue #1; help took about 4 s before).
 - Every user-caused failure (missing files, disordered structures, missing
   pseudopotential rows, bad options) ends with a one-line error and exit
   status 1 instead of a traceback; write failures are reported.
