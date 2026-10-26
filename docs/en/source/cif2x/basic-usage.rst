@@ -13,7 +13,6 @@ Installation and basic usage
   - f90nml module
   - beautifulsoup4 module
   - mp_api module
-  - phonopy module
   - ruamel.yaml module
 
   To generate input files for AkaiKKR, the AkaiKKRPythonUtil module is additionally required. It is not installed automatically and must be installed separately (see below).

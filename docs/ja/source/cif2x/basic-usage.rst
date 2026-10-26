@@ -13,7 +13,6 @@
   - f90nml モジュール
   - beautifulsoup4 モジュール
   - mp_api モジュール
-  - phonopy モジュール
   - ruamel.yaml モジュール
 
   AkaiKKR 向けの入力ファイルを生成する場合は、上記に加えて AkaiKKRPythonUtil モジュールが必要です。これは自動ではインストールされないため、別途インストールします (下記参照)。
