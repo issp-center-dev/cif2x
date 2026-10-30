@@ -9,7 +9,7 @@ import copy
 from cif2x.input_validator import InputValidationError
 from cif2x.utils import dryrun_emit, inflate, serializer, deserializer
 
-from cif2x.akaikkr.run_cif2kkr import ak_struct2kkr
+from cif2x.akaikkr.cif2kkr import struct2kkrparam
 from cif2x.akaikkr.read_input import read_input_file
 from cif2x.akaikkr.make_input import make_inputcard
 
@@ -92,12 +92,12 @@ class Struct2AkaiKKR:
         else:
             content = None
 
-        workdir = None
-        if "optional" in self.info and self.info["optional"] is not None:
-            workdir = self.info["optional"].get("workdir")
-        workdir = self.info.get("workdir", workdir)
+        optional = self.info.get("optional") or {}
+        if "workdir" in optional or "workdir" in self.info:
+            logger.info("optional.workdir is accepted but no longer used: "
+                        "the structure is converted in memory, without a temporary file")
 
-        struct_data = ak_struct2kkr(self.struct.structure, workdir=workdir)
+        struct_data = struct2kkrparam(self.struct.structure)
 
         tbl = {}
         if infile is not None:

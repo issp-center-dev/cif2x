@@ -15,9 +15,9 @@
   - mp_api モジュール
   - ruamel.yaml モジュール
 
-  AkaiKKR 向けの入力ファイルを生成する場合は、上記に加えて AkaiKKRPythonUtil モジュールが必要です。これは自動ではインストールされないため、別途インストールします (下記参照)。
+  本バージョンは Python 3.11〜3.14、pymatgen 2026.10、f90nml 1.5、mp-api 0.47 で動作を確認しています。
 
-  本バージョンは Python 3.11〜3.14、pymatgen 2026.10、f90nml 1.5、mp-api 0.47 で動作を確認しています。AkaiKKRPythonUtil 2023.2.1 は pymatgen と spglib の非推奨インタフェースに依存しており、pymatgen 2026.10 では動作しますが、これらのライブラリの将来の版で動かなくなる可能性があります。
+  AkaiKKR 向けの構造変換は cif2x に含まれています (`AkaiKKRPythonUtil <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_ から移植、Apache License 2.0)。AkaiKKRPythonUtil パッケージのインストールは不要になりました。
 
 **ソースコード配布サイト**
 
@@ -41,16 +41,6 @@
      $ python3 -m pip install .
 
   実行プログラム ``cif2x``, ``getcif``, ``cif2x-pp-cutoff`` がインストールされます。
-
-  なお、AkaiKKRPythonUtil モジュールは別途インストールが必要です。
-  以下の手順で `配布サイト <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_ からソースコードを取得しインストールします。また、必要な seaborn モジュールもインストールしておきます。
-
-  .. code-block:: bash
-
-     $ git clone https://github.com/AkaiKKRteam/AkaiKKRPythonUtil.git
-     $ cd ./AkaiKKRPythonUtil/library/PyAkaiKKR
-     $ python3 -m pip install .
-     $ python3 -m pip install seaborn
 
 
 **ディレクトリ構成**
@@ -92,9 +82,9 @@
      |   |   |   |-- vps_table.py
      |   |   |-- struct2akaikkr.py
      |   |   |-- akaikkr/
+     |   |   |   |-- cif2kkr.py
      |   |   |   |-- make_input.py
      |   |   |   |-- read_input.py
-     |   |   |   |-- run_cif2kkr.py
      |   |   |-- struct2respack.py
      |   |-- getcif/
      |       |-- __init__.py

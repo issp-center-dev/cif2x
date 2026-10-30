@@ -22,7 +22,7 @@ def _struct_data():
 
 def _make(info, monkeypatch, struct_data=None):
     sd = _struct_data() if struct_data is None else struct_data
-    monkeypatch.setattr(sak, "ak_struct2kkr", lambda structure, workdir=None: sd)
+    monkeypatch.setattr(sak, "struct2kkrparam", lambda structure: sd)
     obj = sak.Struct2AkaiKKR.__new__(sak.Struct2AkaiKKR)
     obj.info = info
     obj.struct = types.SimpleNamespace(structure=object())
@@ -68,7 +68,7 @@ def test_none_user_kpath_is_filled_from_struct_data(monkeypatch):
 
 
 def test_partial_struct_data_without_kdiv_fmt_does_not_crash(monkeypatch):
-    # ak_struct2kkr may return kpath without kdiv/fmt; must not KeyError
+    # struct2kkrparam may return kpath without kdiv/fmt; must not KeyError
     sd = _struct_data()
     del sd["kdiv"]
     del sd["fmt"]

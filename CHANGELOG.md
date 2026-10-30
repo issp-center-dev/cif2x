@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### Changed behaviour
+
+- The AkaiKKR target no longer needs AkaiKKRPythonUtil (pyakaikkr) and
+  seaborn: the one function cif2x used, `ak_cif2kkrparam`, is included as
+  `cif2x.akaikkr.cif2kkr.struct2kkrparam` (adapted from pyakaikkr 2023.2.1,
+  Apache License 2.0, notice in `src/cif2x/akaikkr/LICENSE-pyakaikkr.txt`).
+  It takes the pymatgen structure directly instead of writing it to a
+  temporary CIF file and parsing it back, uses the current pymatgen
+  interfaces (pyakaikkr relied on deprecated ones), and reports failures as
+  one-line errors. The generated inputs are unchanged; the only numerical
+  difference is that the lattice constant no longer passes through the
+  8-decimal rounding of the temporary CIF (visible in the 9th digit with
+  `use_primitive`). `optional.workdir` is accepted but no longer used.
+
+### Development
+
+- The AkaiKKR samples are part of the regression tests in CI (they were
+  skipped without pyakaikkr), and the converter has unit tests of its own.
+
 ## 1.2.0 (unreleased)
 
 ### Changed behaviour
