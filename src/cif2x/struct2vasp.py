@@ -1,16 +1,14 @@
-from typing import Any, Dict, List, Tuple, Union
 
-import os, sys
 from pathlib import Path
 from pymatgen.io.vasp import VaspInput, Incar, Poscar, Potcar, Kpoints
 from pymatgen.symmetry.bandstructure import HighSymmKpath
 from pymatgen.core import SETTINGS
 from monty.io import zopen
 from monty.os.path import zpath
-from pandas import read_csv, DataFrame
+from pandas import read_csv
 
-from cif2x.cif2struct import Cif2Struct
-from cif2x.utils import *
+from cif2x.input_validator import InputValidationError
+from cif2x.utils import dryrun_emit, inflate, serializer, deserializer
 
 import logging
 logger = logging.getLogger(__name__)
@@ -38,8 +36,46 @@ class Content:
         d = deserializer(str)
         return Content.from_dict(d)
 
+def _fill_magmom(vsp, incar):
+    """Set MAGMOM (and ISPIN / LNONCOLLINEAR) from the structure's moments.
+
+    Collinear moments give one value per site in POSCAR order; non-collinear
+    moments give one 3-vector per site. A MAGMOM given by the user is kept.
+    """
+    struct = vsp.struct
+    if not getattr(struct, "is_mag", False) or "MAGMOM" in incar:
+        return
+    # VASP reads MAGMOM as 3 values per atom whenever LNONCOLLINEAR or LSORBIT
+    # is on, so follow the user's INCAR, not only the shape of the moments
+    user_noncollinear = _incar_true(incar.get("LNONCOLLINEAR")) or _incar_true(incar.get("LSORBIT"))
+    if struct._are_collinear() and not user_noncollinear:
+        incar["MAGMOM"] = [ round(m, 6) for m in struct.collinear_moments() ]
+        incar.setdefault("ISPIN", 2)
+        logger.info("MAGMOM and ISPIN = 2 set from the magnetic structure data")
+    else:
+        incar["MAGMOM"] = [ [ round(x, 6) for x in v ] for v in struct.vector_moments() ]
+        if not user_noncollinear:
+            incar.setdefault("LNONCOLLINEAR", True)
+        logger.info("MAGMOM (3 per site) set from the magnetic structure data")
+        if "SAXIS" in incar:
+            logger.warning("MAGMOM vectors are written in cartesian coordinates of the "
+                           "POSCAR cell, but SAXIS is set: VASP interprets them relative "
+                           "to SAXIS. Check the orientation or give MAGMOM explicitly.")
+
+
+def _incar_true(value):
+    """Truth of an INCAR logical given as bool or as a Fortran-style string."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lstrip(".").upper().startswith("T")
+    return False
+
+
 def build_vaspinput(vsp, content):
-    incar = Incar.from_dict(content["incar"])
+    incar_dict = dict(content["incar"])
+    _fill_magmom(vsp, incar_dict)
+    incar = Incar.from_dict(incar_dict)
 
     if "@optional" in content["kpoints"]:
         kpoints = generate_kpoints(vsp, content["kpoints"]["@optional"])
@@ -64,8 +100,10 @@ class Struct2Vasp:
         self.struct = struct
 
         if struct.is_composite:
-            logger.error("init: composite material is not supported")
-            raise ValueError("unsupported material type")
+            raise InputValidationError(
+                "the structure has partially occupied (disordered) sites, which "
+                "VASP input generation does not support; use an ordered "
+                "structure or the akaikkr target.")
 
         # setup content from input params and template
         self.content = self._setup_content()
@@ -100,22 +138,22 @@ class Struct2Vasp:
         except FileNotFoundError:
             sub_d["incar"] = None
 
-        # POSCAR
+        # KPOINTS
         try:
-            fullzpath = zpath(Path(dirname, "POSCAR"))
-            sub_d["poscar"] = Poscar.from_file(fullzpath, check_for_POTCAR=False)
-            logger.info("read_input: read {} from {}".format("POSCAR", fullzpath))
+            fullzpath = zpath(Path(dirname, "KPOINTS"))
+            sub_d["kpoints"] = Kpoints.from_file(fullzpath)
+            logger.info("read_input: read {} from {}".format("KPOINTS", fullzpath))
         except FileNotFoundError:
-            sub_d["poscar"] = None
+            sub_d["kpoints"] = None
 
-        # KPOINTS, POTCAR
-        for fname, ftype in [("KPOINTS", Kpoints),("POTCAR", Potcar)]:
-            try:
-                fullzpath = zpath(Path(dirname, fname))
-                sub_d[fname.lower()] = ftype.from_file(fullzpath)
-                logger.info("read_input: read {} from {}".format(fname, fullzpath))
-            except FileNotFoundError:
-                sub_d[fname.lower()] = None
+        # POSCAR and POTCAR are always generated (from the structure and from
+        # the optional section); template files of these names are not read,
+        # so a stale or invalid one cannot break the run
+        for fname in ("POSCAR", "POTCAR"):
+            if Path(dirname, fname).exists() or Path(dirname, fname + ".gz").exists():
+                logger.info("read_input: {} in template_dir is ignored (always generated)".format(fname))
+        sub_d["poscar"] = None
+        sub_d["potcar"] = None
 
         return VaspInput(**sub_d)
 
@@ -126,7 +164,9 @@ class Struct2Vasp:
             return t in cnt and cnt[t] is not None
 
         if "template_dir" in self.info:
-            # infile = VaspInput.from_directory(Path(self.info["template_dir"]))
+            if not Path(self.info["template_dir"]).is_dir():
+                raise InputValidationError(
+                    f"template_dir not found: {self.info['template_dir']}")
             infile = self._read_input(Path(self.info["template_dir"]))
         else:
             infile = None
@@ -205,11 +245,11 @@ class Struct2Vasp:
                     def _as_number(s):
                         try:
                             return int(s)
-                        except ValueError as e:
+                        except ValueError:
                             pass
                         try:
                             return float(s)
-                        except ValueError as e:
+                        except ValueError:
                             pass
                         return s
 
@@ -305,9 +345,11 @@ def generate_kpoints(vsp, params):
         kpt = Kpoints.automatic_linemode(div, ibz)
 
     else:
-        kpt = None
-        logger.error(f"generate_kpoints: unknown type {mode}")
-        raise ValueError(f"unknown kpoints type {mode}")
+        raise InputValidationError(
+            f"kpoints: unknown type '{mode}'. Choose from automatic, "
+            "gamma_automatic, monkhorst_automatic, automatic_density, "
+            "automatic_gamma_density, automatic_density_by_vol, "
+            "automatic_density_by_lengths, or automatic_linemode.")
 
     return kpt
 
@@ -333,7 +375,10 @@ def generate_poscar(vsp, params):
                 pos = Poscar(vsp.struct.structure)
 
         else:
-            seldyn = [ [False,False,False] if t.symbol in fix_species else [True,True,True] for t in vsp.struct.atoms ]
+            # structure.species rather than struct.atoms: the latter holds
+            # (species, magmom) pairs for magnetic structure data
+            seldyn = [ [False,False,False] if t.symbol in fix_species else [True,True,True]
+                       for t in vsp.struct.structure.species ]
             logger.debug(f"fix_species = {fix_species}")
             logger.debug(f"seldyn = {seldyn}")
 
@@ -348,7 +393,17 @@ def generate_poscar(vsp, params):
     return pos
 
 def generate_potcar(vsp, params):
+    """Build the POTCAR, or return None only when the user asked to skip it.
+
+    Every failure to assemble a POTCAR raises InputValidationError, so that a
+    VASP input set is never written without its POTCAR by accident. Set
+    ``content.potcar.skip: true`` to omit it deliberately.
+    """
     logger.debug("generate_potcar")
+
+    if params.get("SKIP"):
+        logger.info("POTCAR skipped as requested (content.potcar.skip)")
+        return None
 
     def _find_option(key, default=None):
         optional = vsp.info.get("optional")
@@ -363,21 +418,28 @@ def generate_potcar(vsp, params):
     pp_dir = _find_option("pseudo_dir")
 
     pp_list = None
-    try:
-        pp_list = read_csv(pp_file, index_col=0)
-    except Exception as e:
-        logger.warning("generate_potcar: {}".format(e))
+    if pp_file is not None:
+        try:
+            pp_list = read_csv(pp_file, index_col=0)
+        except Exception as e:
+            raise InputValidationError(
+                f"POTCAR: cannot read optional.pp_file '{pp_file}': {e}") from e
 
     logger.debug(f"generate_potcar: pp_file = {pp_file}, pseudo_dir = {pp_dir}")
+
+    # POTCAR is per element; magnetic structure data split the atom types
+    # by moment, so collapse the element names
+    elements = list(dict.fromkeys(vsp.struct.elem_names))
 
     if pp_list is not None:
         # read POTCAR files for elements
         potcar_map = {}
-        for el in vsp.struct.elem_names:
-            # p = _find_potcar_file(el)
+        for el in elements:
             if el not in pp_list.index:
-                logger.warning(f"generate_potcar: element {el} not found in pp_list")
-                return None
+                raise InputValidationError(
+                    f"POTCAR: element '{el}' is not listed in optional.pp_file "
+                    f"'{pp_file}'. Add a row for it, or set content.potcar.skip: "
+                    "true to omit the POTCAR.")
             p = pp_list.at[el, "pseudopotential"]
             if pp_dir:
                 p = Path(pp_dir, p)
@@ -386,11 +448,13 @@ def generate_potcar(vsp, params):
                 with zopen(p, "rt") as f:
                     dat = f.read()
             except Exception as e:
-                logger.warning("{}".format(e))
-                return None
+                raise InputValidationError(
+                    f"POTCAR: cannot read the POTCAR file for '{el}' ({p}): {e}. "
+                    "Check optional.pseudo_dir and pp_file, or set "
+                    "content.potcar.skip: true to omit the POTCAR.") from e
             potcar_map[el] = dat
 
-        potcar = Potcar(vsp.struct.elem_names, sym_potcar_map=potcar_map)
+        potcar = Potcar(elements, sym_potcar_map=potcar_map)
 
     else:
         # pymatgen-way of POTCAR handling
@@ -406,18 +470,21 @@ def generate_potcar(vsp, params):
             except Exception as e:
                 logger.warning("read pseudo_map: {}".format(e))
 
-        if not "PMG_VASP_PSP_DIR" in SETTINGS:
-            logger.error("Path to pseudo-potential directory is not specified. Specify pseudo_dir parameter, or set PMG_VASP_PSP_DIR through .config/.pmgrc.yaml or environment variable")
-            return None
+        if "PMG_VASP_PSP_DIR" not in SETTINGS:
+            raise InputValidationError(
+                "POTCAR: no pseudopotential source. Give optional.pp_file (with "
+                "optional.pseudo_dir), or set PMG_VASP_PSP_DIR in "
+                "~/.config/.pmgrc.yaml or the environment for pymatgen, or set "
+                "content.potcar.skip: true to omit the POTCAR.")
 
-        logger.debug(f"atom_types = {vsp.struct.elem_names}")
+        logger.debug(f"atom_types = {elements}")
         logger.debug("psp_dir = {}, functional = {}, default = {}".format(
             SETTINGS.get("PMG_VASP_PSP_DIR", None),
             pseudo_functional,
             SETTINGS.get("PMG_DEFAULT_FUNCTIONAL", "PBE")
         ))
 
-        elem_list = vsp.struct.elem_names
+        elem_list = elements
         if elem_map is not None:
             elem_list = [ elem_map.at[el, "symbol"] if el in elem_map.index else el for el in elem_list ]
         logger.debug("element list = {}".format(elem_list))
@@ -425,83 +492,9 @@ def generate_potcar(vsp, params):
         try:
             potcar = Potcar(elem_list, functional=pseudo_functional)
         except Exception as e:
-            logger.error("{}".format(e))
-            return None
+            raise InputValidationError(
+                f"POTCAR: pymatgen could not assemble the POTCAR for {elem_list}: "
+                f"{e}. Check PMG_VASP_PSP_DIR and optional.pseudo_functional, or "
+                "set content.potcar.skip: true to omit the POTCAR.") from e
 
     return potcar
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-
-    cif_file = 'NaCl.cif'
-
-    struct = Cif2Struct(cif_file, {
-        'use_ibrav': False,
-        'tolerance': 0.01,
-    })
-
-    vsp = Struct2Vasp({}, struct)
-
-    # KPOINTS tests
-    if False:
-        for params in [
-                { "type": "automatic" },
-                { "type": "gamma_automatic", "kpoints": [4,4,4] },
-                { "type": "gamma_automatic", "kpoints": [4,4,4] },
-                { "type": "monkhorst_automatic", "kpoints": [4,4,4] },
-                { "type": "automatic_density", "grid_density": 0.2 },
-                { "type": "automatic_gamma_density", "grid_density": 0.2 },
-                { "type": "automatic_density_by_vol", "grid_density": 4 },
-                { "type": "automatic_density_by_lengths", "length_density": [12.0,12.0,12.0] },
-                { "type": "automatic_linemode", "division": 40 },
-                { "type": "automatic_linemode", "division": 40, "path_type": "latimer_munro" },
-        ]:
-            print(f"param = {params}")
-            x = generate_kpoints(vsp, params)
-            print(str(x))
-            print()
-            # x.write_file(Path("KPATH" + params["type"]))
-
-    # POSCAR tests
-    if False:
-        for params in [
-                {},
-                { "fix_species": [] },
-                { "fix_species": "Na" },
-                { "fix_species": ["Na"] },
-                { "fix_species": ["Na","Cl"] },
-        ]:
-            print(f"seldyn = empty, param = {params}")
-            y = generate_poscar(vsp, params)
-            print(str(y))
-            print()
-
-        vsp.struct.structure.add_site_property("selective_dynamics", [[False,False,False],[True,True,True]])
-        for params in [
-                {},
-                { "fix_species": [] },
-                { "fix_species": "Na" },
-                { "fix_species": ["Na"] },
-                { "fix_species": ["Na","Cl"] },
-        ]:
-            print(f"seldyn = F,T, param = {params}")
-            y = generate_poscar(vsp, params)
-            print(str(y))
-            print()
-
-    # POTCAR tests
-    if False:
-        for params in [
-                {},
-                { "pseudo_dir": "/home/issp/vasp/vasp5/pot" },
-                { "pseudo_dir": "/home/issp/vasp/vasp5/pot", "pseudo_functional": "LDA" },
-        ]:
-            print(f"param = {params}")
-            try:
-                z = generate_potcar(vsp, params)
-                print(str(z))
-            except Exception as e:
-                print(e)
-            print()
-

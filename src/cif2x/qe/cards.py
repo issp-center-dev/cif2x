@@ -1,7 +1,8 @@
 import numpy as np
-from pymatgen.core.structure import Structure
 from pymatgen.core.periodic_table import Element
 from pymatgen.io.vasp.inputs import Kpoints
+
+from cif2x.input_validator import InputValidationError
 
 import logging
 logger = logging.getLogger(__name__)
@@ -25,8 +26,9 @@ def generate_atomic_species(qe, params):
             ppfile = qe._pp_filename(ename)
             data += [[aname, Element(ename).atomic_mass, ppfile]]
     else:
-        logger.error("generate_atomic_species: pp_file is not specified")
-        raise RuntimeError("generate_atomic_species: pp_file not specified")
+        raise InputValidationError(
+            "ATOMIC_SPECIES: optional.pp_file (the element-to-pseudopotential "
+            "index) is required but not specified or not found.")
     return {
         'key': 'ATOMIC_SPECIES',
         'option': None,
@@ -60,12 +62,18 @@ def generate_atomic_positions(qe, params):
 def generate_k_points(qe, params):
 
     def _get_kmesh(kresolution):
-        nn = 2 * np.pi / kresolution
-        kmesh = [int(np.ceil(nn/lp)) for lp in qe.struct.structure.lattice.abc]
+        # n_i = ceil(|b_i| / kresolution) with |b_i| the reciprocal lattice
+        # vector lengths (2*pi included), so the k-point spacing along every
+        # reciprocal axis is at most kresolution (1/angstrom). For orthogonal
+        # cells this equals ceil(2*pi / (kresolution * a_i)).
+        recip = qe.struct.structure.lattice.reciprocal_lattice.abc
+        kmesh = [int(np.ceil(b / kresolution)) for b in recip]
         return kmesh
 
     def _get_kmesh_by_vol(vol_density):
-        return Kpoints.automatic_density_by_vol(qe.struct.structure, vol_density, force_gamma=True).kpts[0]
+        # kpts[0] is a tuple; return a list so it can be joined with kshifts
+        kpts = Kpoints.automatic_density_by_vol(qe.struct.structure, vol_density, force_gamma=True).kpts[0]
+        return [int(k) for k in kpts]
 
     option = params.get("option", "automatic")
     mode = getattr(qe, "mode", None)
@@ -74,7 +82,7 @@ def generate_k_points(qe, params):
     # A bands calculation must use a band-path option; reject a silent uniform
     # mesh (wrong physics) instead of generating one.
     if mode == "bands" and option not in band_options:
-        raise ValueError(
+        raise InputValidationError(
             "mode 'bands' requires a band-path K_POINTS option such as "
             "'crystal_b' (got option '{}'). Set 'option: crystal_b' in the "
             "K_POINTS content block.".format(option)
@@ -87,7 +95,7 @@ def generate_k_points(qe, params):
         if params.get("data"):
             return {'key': 'K_POINTS', 'option': option, 'data': params["data"]}
         if option == "tpiba_b":
-            raise ValueError(
+            raise InputValidationError(
                 "K_POINTS option 'tpiba_b' is not generated automatically; "
                 "supply explicit data or use 'crystal_b'."
             )
@@ -112,13 +120,21 @@ def generate_k_points(qe, params):
                 else:
                     kgrid = kgrid[0:3]
             else:
-                raise ValueError("generage_k_points: invalid grid {}".format(kgrid))
+                raise InputValidationError("K_POINTS: invalid grid {!r}".format(kgrid))
         else:
             vol_density = params.get("vol_density", 0)
             if vol_density > 0:
                 kgrid = _get_kmesh_by_vol(vol_density)
             else:
                 kres = params.get("k_resolution", 0.15)
+                try:
+                    kres = float(kres)
+                except (TypeError, ValueError):
+                    kres = 0.0
+                if kres <= 0.0:
+                    raise InputValidationError(
+                        "K_POINTS: k_resolution must be a positive number "
+                        "(1/angstrom), got {!r}.".format(params.get("k_resolution")))
                 kgrid = _get_kmesh(kres)
 
         if option == "automatic":
@@ -162,7 +178,7 @@ def _generate_band_path(qe, params):
 
     line_npoints = int(params.get("line_npoints", 20))
     if line_npoints < 1:
-        raise ValueError(
+        raise InputValidationError(
             "K_POINTS 'line_npoints' must be a positive integer "
             "(got {}).".format(line_npoints)
         )
@@ -182,7 +198,7 @@ def _generate_band_path(qe, params):
     segments = params.get("path") or kpath["path"]
 
     if any(isinstance(seg, str) for seg in segments):
-        raise ValueError(
+        raise InputValidationError(
             "K_POINTS 'path' must be a list of label sequences "
             "(e.g. [['\\Gamma', 'X', 'M']]), not a flat list of labels."
         )
@@ -191,7 +207,7 @@ def _generate_band_path(qe, params):
     for segment in segments:
         for i, label in enumerate(segment):
             if label not in label_coords:
-                raise ValueError(
+                raise InputValidationError(
                     "unknown high-symmetry label '{}'. Available: {}.".format(
                         label, ", ".join(sorted(label_coords))
                     )

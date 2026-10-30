@@ -1,23 +1,42 @@
-from typing import Any, Dict, List, Tuple, Union
 
-import os, sys
+import os
 from pathlib import Path
-from pymatgen.symmetry.bandstructure import HighSymmKpath
 import numpy as np
 
-from cif2x.cif2struct import Cif2Struct
-from cif2x.utils import *
+from cif2x.input_validator import InputValidationError
+from cif2x.utils import CaseInsensitiveDict, dryrun_emit, inflate, serializer, deserializer
 
 import logging
 logger = logging.getLogger(__name__)
 
 from cif2x.openmx.vps_table import VPS_TABLE
-def _lookup_vps_table(elem):
-    for v in VPS_TABLE:
-        if v[0] == elem:
+def _lookup_vps_table(elem, variant=None):
+    """Row of VPS_TABLE for ``elem``.
+
+    Some elements (Fe, Co, Ni, Cu, Zn) have two pseudopotential variants, a
+    hard one (``..._PBE19H``, more valence electrons) and a soft one
+    (``..._PBE19S``). ``variant`` selects one by suffix (``"H"``/``"S"``) or
+    by the full VPS name; without it the first row (the hard one) is used.
+    """
+    rows = [v for v in VPS_TABLE if v[0] == elem]
+    if not rows:
+        raise InputValidationError(
+            f"OpenMX: element '{elem}' is not in the built-in pseudo-atomic "
+            "orbital table (cif2x.openmx.vps_table); add it to the table or "
+            "write Definition.of.Atomic.Species by hand.")
+    if variant is None:
+        return rows[0]
+    variant = str(variant).upper()
+    for v in rows:
+        if v[1].upper() == variant or v[1].upper().endswith(variant):
             return v
-    else:
-        raise ValueError(f"element {elem} not found in VPS_TABLE")
+    raise InputValidationError(
+        f"OpenMX: no pseudopotential variant '{variant}' for {elem}; available: "
+        + ", ".join(v[1] for v in rows))
+
+
+def _vps_variants(elem):
+    return [v[1] for v in VPS_TABLE if v[0] == elem]
 
 class Content(CaseInsensitiveDict):
     # def __init__(self):
@@ -85,12 +104,12 @@ class Content(CaseInsensitiveDict):
             try:
                 t = int(x)
                 return t
-            except ValueError as e:
+            except ValueError:
                 pass
             try:
                 t = float(x)
                 return t
-            except ValueError as e:
+            except ValueError:
                 pass
             return str(x)
 
@@ -132,8 +151,18 @@ class Struct2OpenMX:
         self.struct = struct
 
         if struct.is_composite:
-            logger.error("init: composite material is not supported")
-            raise ValueError("unsupported material type")
+            raise InputValidationError(
+                "the structure has partially occupied (disordered) sites, which "
+                "OpenMX input generation does not support; use an ordered "
+                "structure or the akaikkr target.")
+
+        # optional.vps_variant: {element: "H" | "S" | full VPS name}
+        optional = self.info.get("optional") or {}
+        self.vps_variant = optional.get("vps_variant") or {}
+        if not isinstance(self.vps_variant, dict):
+            raise InputValidationError(
+                "optional.vps_variant must be a mapping of element to variant "
+                "(for example {Fe: S}).")
 
         # setup content from input params and template
         self.content = self._setup_content()
@@ -157,7 +186,11 @@ class Struct2OpenMX:
     def _setup_content(self):
         logger.debug("_setup_template")
         if "template" in self.info:
-            cnt = Content.from_file(self.info["template"])
+            try:
+                cnt = Content.from_file(self.info["template"])
+            except OSError as e:
+                raise InputValidationError(
+                    f"cannot read template file {self.info['template']}: {e}") from e
         else:
             cnt = Content()
         if "optional" in self.info and self.info["optional"] is not None:
@@ -183,13 +216,27 @@ class Struct2OpenMX:
             logger.info("system.name={}".format(basename))
 
     def _fill_species(self, content):
-        prec = { "quick": 3, "standard": 4, "precise": 5 }[self.info.get("precision", "quick")]
+        precision = self.info.get("precision", "quick")
+        prec_table = { "quick": 3, "standard": 4, "precise": 5 }
+        if precision not in prec_table:
+            raise InputValidationError(
+                f"precision must be one of quick, standard, precise (got {precision!r}).")
+        prec = prec_table[precision]
 
-        content["Species.Number"] = len(self.struct.atom_types)
+        # OpenMX species are elements; magnetic structure data split the atom
+        # types by moment, so collapse to the distinct elements in order
+        elements = list(dict.fromkeys(self.struct.elem_names))
+        content["Species.Number"] = len(elements)
 
         tbl = []
-        for atom in [atom_type.symbol for atom_type in self.struct.atom_types]:
-            entry = _lookup_vps_table(atom)
+        for atom in elements:
+            variant = self.vps_variant.get(atom)
+            variants = _vps_variants(atom)
+            if variant is None and len(variants) > 1:
+                logger.info(f"OpenMX: {atom} has pseudopotential variants "
+                            f"{', '.join(variants)}; using {variants[0]} "
+                            "(choose with optional.vps_variant)")
+            entry = _lookup_vps_table(atom, variant)
             tbl.append([atom, entry[prec], entry[1]])
         content["Definition.of.Atomic.Species"] = tbl
 
@@ -197,13 +244,35 @@ class Struct2OpenMX:
         content["Atoms.Number"] = len(self.struct.atoms)
         content["Atoms.SpeciesAndCoordinates.Unit"] = "Ang"
 
+        # initial spin: the valence electrons split as (N+m)/2 up, (N-m)/2 down
+        # from the collinear moment m of the structure data
+        is_mag = self.struct.is_mag
+        if is_mag and not self.struct._are_collinear():
+            raise InputValidationError(
+                "the structure data carry non-collinear magnetic moments; cif2x "
+                "generates OpenMX initial spins only for collinear moments. Write "
+                "Atoms.SpeciesAndCoordinates by hand for a non-collinear run.")
+        moments = self.struct.collinear_moments() if is_mag else None
+
         tbl = []
-        for idx, (atom, coords) in enumerate(zip(self.struct.atoms, self.struct.structure.cart_coords)):
-            entry = _lookup_vps_table(atom.symbol)
+        species = self.struct.structure.species
+        for idx, (atom, coords) in enumerate(zip(species, self.struct.structure.cart_coords)):
+            entry = _lookup_vps_table(atom.symbol, self.vps_variant.get(atom.symbol))
             nv = entry[2]
-            tbl += [[(idx+1), atom.symbol, *coords, nv/2, nv/2]]
+            m = moments[idx] if is_mag else 0.0
+            up, down = (nv + m) / 2, (nv - m) / 2
+            if up < 0 or down < 0:
+                raise InputValidationError(
+                    f"atom {idx+1} ({atom.symbol}): moment {m:.3f} muB exceeds the "
+                    f"{nv:g} valence electrons of its pseudopotential.")
+            # drop floating-point noise (e.g. 4.5e-16) like the unit vectors do
+            coords = [ 0.0 if abs(x) < 1.0e-12 else float(x) for x in coords ]
+            tbl += [[(idx+1), atom.symbol, *coords, up, down]]
 
         content["Atoms.SpeciesAndCoordinates"] = tbl
+        if is_mag and "scf.SpinPolarization" not in content:
+            content["scf.SpinPolarization"] = "on"
+            logger.info("scf.SpinPolarization = on set from the magnetic structure data")
 
     def _fill_unitvectors(self, content):
         if self.struct.is_isolated and self.struct.is_cellshape_auto:
@@ -213,15 +282,3 @@ class Struct2OpenMX:
             mat = self.struct.structure.lattice.matrix
             mat = np.where(np.abs(mat) < 1.0e-12, 0.0, mat)
             content["Atoms.UnitVectors"] = [ list(x) for x in mat ]
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-
-    cif_file = 'GaAs_cod.cif'
-
-    struct = Cif2Struct(cif_file, {
-        'use_ibrav': False,
-        'tolerance': 0.01,
-    })
-
-    mx = Struct2OpenMX({}, struct)

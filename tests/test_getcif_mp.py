@@ -9,13 +9,26 @@ def test_resolve_api_key_reads_first_noncomment_line(tmp_path):
     assert resolve_api_key(str(kf)) == "ABC123"
 
 
-def test_resolve_api_key_missing_file_returns_none(tmp_path):
-    assert resolve_api_key(str(tmp_path / "none.key")) is None
+def test_resolve_api_key_missing_default_file_returns_none(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert resolve_api_key() is None
 
 
-def test_resolve_api_key_non_key_suffix_returns_none(tmp_path):
+def test_resolve_api_key_missing_explicit_file_raises(tmp_path):
+    with pytest.raises(FileNotFoundError, match="none.key"):
+        resolve_api_key(str(tmp_path / "none.key"))
+
+
+def test_resolve_api_key_any_file_name_is_read(tmp_path):
+    # the file name no longer has to end in ".key"
     f = tmp_path / "mp.txt"
-    f.write_text("ABC123\n")
+    f.write_text("# comment\n\nABC123\n")
+    assert resolve_api_key(str(f)) == "ABC123"
+
+
+def test_resolve_api_key_empty_file_returns_none(tmp_path):
+    f = tmp_path / "mp.key"
+    f.write_text("# nothing here\n")
     assert resolve_api_key(str(f)) is None
 
 

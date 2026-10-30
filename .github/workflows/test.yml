@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,6 +34,17 @@ jobs:
           python -c "import cif2x, pathlib; p = pathlib.Path(cif2x.__file__).resolve(); assert ('site-packages' in p.parts or 'dist-packages' in p.parts), p; print(p)"
           cif2x --help
           getcif --help
+          cif2x --version | grep -v develop
+          getcif --version | grep -v develop
+          cif2x-pp-cutoff -h
+
+      - name: Lint
+        # one matrix leg is enough; pinned so that a new ruff rule cannot
+        # turn CI red without a code change
+        if: matrix.python-version == '3.12'
+        run: |
+          pip install "ruff==0.17.2"
+          ruff check src tests
 
       - name: Run tests
         env:

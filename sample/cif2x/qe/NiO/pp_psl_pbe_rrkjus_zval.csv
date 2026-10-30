@@ -1,0 +1,3 @@
+element,pseudopotential,nexclude,orbitals,zval
+Ni,pbe-n-rrkjus_psl.0.1,0,spd,10
+O,pbe-n-rrkjus_psl.0.1,1,p,6

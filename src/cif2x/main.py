@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import copy
 import sys
 import tempfile
 from pathlib import Path
@@ -53,6 +54,10 @@ def main():
     except InputValidationError as e:
         logger.error(str(e))
         sys.exit(1)
+    except OSError as e:
+        # a file could not be read or written (permissions, disk full, ...)
+        logger.error(f"file error: {e}")
+        sys.exit(1)
 
 
 def _require_one_source(args):
@@ -96,14 +101,14 @@ def _run(args):
         yaml = YAML(typ="safe")
         with open(Path(args.input_file), mode="r") as fp:
             info_dict = yaml.load(fp)
-    except FileNotFoundError:
-        raise InputValidationError(f"input file not found: {args.input_file}")
+    except FileNotFoundError as e:
+        raise InputValidationError(f"input file not found: {args.input_file}") from e
     except InputValidationError:
         raise
     except Exception as e:
         raise InputValidationError(
             f"failed to parse input file '{args.input_file}': {e}"
-        )
+        ) from e
 
     validate_input(info_dict, target)
 
@@ -135,9 +140,7 @@ def _run(args):
 
         params = {}
         params.update(info)
-        if params.get("optional") is None:
-            params["optional"] = {}
-        deepupdate(params, {"optional": info_optional})
+        params["optional"] = merge_optional(info_optional, info.get("optional"))
 
         output_file = info.get("output_file")
         output_dir = info.get("output_dir", ".")
@@ -165,14 +168,26 @@ def _warn_if_nscf_keeps_symmetry(generator):
             return
 
 
+def merge_optional(global_optional, task_optional):
+    """Combine the top-level ``optional`` section with a task's own.
+
+    The global section is the base and a task-level entry with the same key
+    overrides it, so a task can deviate from the shared settings.
+    """
+    merged = copy.deepcopy(global_optional or {})
+    deepupdate(merged, task_optional or {})
+    return merged
+
+
 def deepupdate(dict1, dict2):
     """
     merge dict2 into dict1; update nested dictionary recursively
     """
     for k, v in dict2.items():
-        if isinstance(v, dict) and k in dict1:
+        if isinstance(v, dict) and isinstance(dict1.get(k), dict):
             deepupdate(dict1[k], v)
         else:
+            # a mapping replaces a scalar/None (and vice versa)
             dict1[k] = v
 
 

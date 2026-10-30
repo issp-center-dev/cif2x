@@ -3,8 +3,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("qe_tools")  # main imports struct2qe -> qeutil -> qe_tools
-
 import cif2x.main as main_mod
 
 
@@ -159,7 +157,7 @@ def test_blank_top_level_structure_normalized(monkeypatch, tmp_path):
     # Cif2Struct as {} so its params.get(...) does not crash on None (P2).
     captured = {}
 
-    def _record_struct(cif_file, params={}):
+    def _record_struct(cif_file, params=None):
         captured["params"] = params
         return object()
 

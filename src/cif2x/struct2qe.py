@@ -1,17 +1,15 @@
-from typing import Any, Dict, List, Tuple, Union
 
 from pathlib import Path
 import numpy as np
-from pandas import read_csv, DataFrame
+from pandas import read_csv
 from pymatgen.core import Structure
-from pymatgen.core.periodic_table import Element
+from pymatgen.electronic_structure.core import Magmom
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 import copy
 
-from cif2x.cif2struct import Cif2Struct
-from cif2x.utils import dryrun_emit
+from cif2x.utils import dryrun_emit, normalize_cutoff
 from cif2x.input_validator import InputValidationError
-from cif2x.qe.tools import *
+from cif2x.qe.tools import deepupdate, is_empty_key
 from cif2x.qe.qeutil import QEInputGeneral
 from cif2x.qe.content import Content, inflate
 from cif2x.qe.calc_mode import create_modeproc
@@ -20,19 +18,29 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def _normalize_cutoff(value):
-    # blank CSV cells arrive as NaN and ld1.x-generated UPFs may carry the
-    # cutoff attribute with a literal 0.0; both mean "not specified"
-    if value is None:
-        return None
-    try:
-        value = float(value)
-    except (TypeError, ValueError):
-        logger.warning(f"unparseable cutoff value {value!r}; treated as unspecified")
-        return None
-    if np.isnan(value) or value <= 0.0:
-        return None
-    return value
+def _symmetry_structure(structure):
+    """Structure whose symmetry reflects the magnetic order.
+
+    SpacegroupAnalyzer ignores site properties, so for magnetic structure data
+    atoms of one element with different moments are relabelled with distinct
+    dummy species. The Bravais lattice chosen for ``ibrav`` then belongs to the
+    magnetic cell (an antiferromagnet is not treated as its ferromagnetic,
+    higher-symmetry parent).
+    """
+    if "magmom" not in structure.site_properties:
+        return structure
+    from pymatgen.core.periodic_table import DummySpecies
+    keys = [(str(sp), tuple(np.round(np.array(Magmom(m).global_moment, dtype=float), 6) + 0.0))
+            for sp, m in zip(structure.species, structure.site_properties["magmom"])]
+    types = list(dict.fromkeys(keys))
+    if len(types) == len(set(str(sp) for sp in structure.species)):
+        return structure           # one moment per element: nothing to relabel
+    species = [DummySpecies("X{}".format(types.index(k))) for k in keys]
+    return Structure(structure.lattice, species, structure.frac_coords)
+
+
+# kept under the old private name for callers and tests
+_normalize_cutoff = normalize_cutoff
 
 
 class Struct2QE:
@@ -42,8 +50,10 @@ class Struct2QE:
         self.struct = copy.deepcopy(struct)
 
         if struct.is_composite:
-            logger.error("init: composite material is not supported")
-            raise ValueError("unsupported material type")
+            raise InputValidationError(
+                "the structure has partially occupied (disordered) sites, which "
+                "Quantum ESPRESSO input generation does not support; use an "
+                "ordered structure or the akaikkr target.")
 
         #XXX
         self.pseudo_dir = None
@@ -151,6 +161,10 @@ class Struct2QE:
         # the fully-relativistic "rel-" variant. Used by ATOMIC_SPECIES
         # generation and by both cutoff lookups so they always agree.
         prefix = "rel-" if self.is_soc else ""
+        if ename not in self.pp_list.index:
+            raise InputValidationError(
+                f"optional.pp_file has no row for element '{ename}'; add one to "
+                "generate ATOMIC_SPECIES.")
         return "{}.{}{}.UPF".format(ename, prefix, self.pp_list.at[ename, "pseudopotential"])
 
     def _find_elem_cutoff_from_table(self, ename):
@@ -182,16 +196,19 @@ class Struct2QE:
             logger.warning(f"{pseudo_file}: {e}")
             pass
 
-        if bs and bs.upf and bs.upf.pp_header:
-            if bs.upf.pp_header.has_attr("wfc_cutoff"):
-                ecutwfc = _normalize_cutoff(bs.upf.pp_header["wfc_cutoff"])
-            if bs.upf.pp_header.has_attr("rho_cutoff"):
-                ecutrho = _normalize_cutoff(bs.upf.pp_header["rho_cutoff"])
+        # bs.find works for UPF v2 (<UPF> root) and UPF v1 (no root element)
+        header = bs.find("pp_header") if bs else None
+        if header is not None:
+            if header.has_attr("wfc_cutoff"):
+                ecutwfc = _normalize_cutoff(header["wfc_cutoff"])
+            if header.has_attr("rho_cutoff"):
+                ecutrho = _normalize_cutoff(header["rho_cutoff"])
         if ecutwfc is None or ecutrho is None:
             # fill only the fields the header did not provide; a "Suggested"
             # line may itself carry an unset 0.0 and must not clobber them
-            if bs and bs.upf and bs.upf.pp_info:
-                lines = str(bs.upf.pp_info).splitlines()
+            info = bs.find("pp_info") if bs else None
+            if info is not None:
+                lines = str(info).splitlines()
                 sg = [s for s in lines if "Suggested" in s]
                 for s in sg:
                     if "wavefunctions" in s and ecutwfc is None:
@@ -201,43 +218,126 @@ class Struct2QE:
 
         return ecutwfc, ecutrho
 
+    def _find_elem_zvalence(self, ename, itype=None):
+        """Valence charge of the pseudopotential of ``ename``.
+
+        Looked up in a ``zval`` (or ``z_valence``) column of pp_file first, then
+        in the ``z_valence`` attribute of the UPF header in pseudo_dir. Needed to
+        convert a magnetic moment to QE's starting_magnetization.
+        """
+        if self.pp_list is not None and ename in self.pp_list.index:
+            for col in ("zval", "z_valence"):
+                if col in self.pp_list.columns:
+                    value = _normalize_cutoff(self.pp_list.at[ename, col])
+                    if value is not None:
+                        return value
+
+        if self.pp_list is not None and self.pseudo_dir is not None:
+            from bs4 import BeautifulSoup
+            pseudo_file = "{}/{}".format(self.pseudo_dir, self._pp_filename(ename))
+            try:
+                with open(pseudo_file, "r") as fp:
+                    bs = BeautifulSoup(fp, "html.parser")
+            except OSError as e:
+                logger.warning(f"{pseudo_file}: {e}")
+                bs = None
+            # UPF v2 wraps everything in <UPF>; UPF v1 has no root element, so
+            # search the tree rather than going through bs.upf
+            header = bs.find("pp_header") if bs else None
+            if header is not None and header.has_attr("z_valence"):
+                # UPF v2: attribute of <PP_HEADER>
+                value = _normalize_cutoff(header["z_valence"])
+                if value is not None:
+                    return value
+            if header is not None:
+                # UPF v1: a text line such as "   16.00000000000   Z valence"
+                for line in header.get_text().splitlines():
+                    if "z valence" in line.lower():
+                        value = _normalize_cutoff(line.split()[0])
+                        if value is not None:
+                            return value
+
+        key = "starting_magnetization({})".format(itype if itype is not None else "i")
+        raise InputValidationError(
+            f"cannot determine the valence charge of '{ename}', needed to convert "
+            f"its magnetic moment to {key}: add a 'zval' column to pp_file, make "
+            "the pseudopotential file available in pseudo_dir, or set "
+            f"content.namelist.system.{key} explicitly.")
+
     def _set_nspin_info(self, content):
         if "system" in content.namelist:
             if is_empty_key(content.namelist["system"], "nspin"):
-                logger.error("nspin left blank")
-                raise ValueError("empty nspin")
-            nspin = content.namelist["system"].get("nspin", None)
-            is_noncolin = content.namelist["system"].get("noncolin", False)
-            is_lspinorb = content.namelist["system"].get("lspinorb", False)
+                raise InputValidationError(
+                    "content.namelist.system.nspin is left blank; give 1 or 2, "
+                    "or remove the key to let cif2x decide from the structure.")
+            system = content.namelist["system"]
+            nspin = system.get("nspin", None)
+            noncolin_given = "noncolin" in system and system["noncolin"] is not None
+            is_noncolin = bool(system.get("noncolin", False))
+            is_lspinorb = bool(system.get("lspinorb", False))
+
+            if self.struct.is_mag and nspin is None and not noncolin_given:
+                # magnetic structure data with no spin setting from the user:
+                # choose the polarization from the moments themselves
+                if self.struct._are_collinear():
+                    nspin = 2
+                    logger.info("magnetic structure: nspin = 2 chosen (collinear moments)")
+                else:
+                    is_noncolin = True
+                    logger.info("magnetic structure: noncolin chosen (non-collinear moments)")
 
             self.is_col = nspin == 2
             self.is_noncol = nspin is None and is_noncolin
             self.is_soc = self.is_noncol and is_lspinorb
 
-            if self.struct.is_mag:
-                if self.is_col and not self.struct._are_collinear():
-                    logger.warning("is_col but structure is not collinear. enforce noncollinear.")
+            if self.struct.is_mag and not self.struct._are_collinear():
+                if self.is_col:
+                    logger.warning("nspin = 2 given but the magnetic moments are not "
+                                   "collinear; switching to noncolin.")
                     self.is_col = False
                     self.is_noncol = True
                     self.is_soc = self.is_noncol and is_lspinorb
+                elif noncolin_given and not is_noncolin and nspin is None:
+                    # explicit noncolin: false on non-collinear data: respect it,
+                    # but say what happens to the moments
+                    self.is_col = True
+                    logger.warning("noncolin: false given but the magnetic moments are not "
+                                   "collinear; running collinear (nspin = 2) with the moments "
+                                   "projected on the axis of the first finite moment.")
 
     def _find_nbnd_info(self):
         if self.pp_list is None:
-            logger.error("find_nbnd_info: pp_file not specified")
-            raise RuntimeError("find_nbnd_info: pp_file not specified")
-            return 0
-        
-        # determine the number of bands
-        spinor_factor = 2 if self.is_col or self.is_noncol else 1
-        species = self.struct.structure.species
+            raise InputValidationError(
+                "nbnd is left blank but optional.pp_file (with 'nexclude' and "
+                "'orbitals' columns) is not available; specify nbnd explicitly "
+                "or provide pp_file.")
+        missing = [c for c in ("nexclude", "orbitals") if c not in self.pp_list.columns]
+        if missing:
+            raise InputValidationError(
+                "nbnd is left blank but pp_file lacks the column(s) {}; add them "
+                "or specify content.namelist.system.nbnd explicitly.".format(
+                    ", ".join(f"'{c}'" for c in missing)))
+
+        # determine the number of bands. nbnd counts spinor states only for a
+        # noncollinear run; for nspin = 2 QE takes nbnd per spin channel, so
+        # the collinear case needs no factor.
+        spinor_factor = 2 if self.is_noncol else 1
+        # .symbol works for Element and for Species with an oxidation state
+        # (Element("Na+") does not)
+        symbols = [s.symbol for s in self.struct.structure.species]
+        missing = sorted({s for s in symbols if s not in self.pp_list.index})
+        if missing:
+            raise InputValidationError(
+                "nbnd is left blank but pp_file has no row for element(s) {}.".format(
+                    ", ".join(missing)))
         nexclude = np.sum(
-            [self.pp_list.at[Element(s).symbol, "nexclude"] for s in species],
+            [self.pp_list.at[s, "nexclude"] for s in symbols],
             dtype=int,
         )
         orb_to_num = {"s": 1, "p": 3, "d": 5, "f": 7}
         num_wann = 0
-        for s in species:
-            orbitals = self.pp_list.at[Element(s).symbol, "orbitals"]
+        for s in symbols:
+            orbitals = self.pp_list.at[s, "orbitals"]
             if not isinstance(orbitals, str):
                 continue
             num_wann += np.sum([orb_to_num[o] for o in orbitals], dtype=int)
@@ -285,10 +385,12 @@ class Struct2QE:
             try:
                 with open(tmpl, "r") as fp:
                     content = fp.read()
-            except Exception as e:
-                logger.error("{}".format(e))
-                raise RuntimeError(f"cannot read template file {tmpl}")
-            qe_input = QEInputGeneral(content)
+            except OSError as e:
+                raise InputValidationError(f"cannot read template file {tmpl}: {e}") from e
+            try:
+                qe_input = QEInputGeneral(content)
+            except InputValidationError as e:
+                raise InputValidationError(f"template file {tmpl}: {e}") from e
             logger.debug(f"namelist = {qe_input.namelist}")
             logger.debug(f"cards = {qe_input.cards}")
             return qe_input.namelist, qe_input.cards
@@ -330,14 +432,14 @@ class Struct2QE:
         
         self.pseudo_dir = _find_optional(params, "pseudo_dir")
         if self.pseudo_dir is None:
-            logger.warning(f"pseudo_dir not specified")
+            logger.warning("pseudo_dir not specified")
         elif not Path(self.pseudo_dir).exists():
             logger.warning(f"pseudo_dir {self.pseudo_dir} not found")
 
         self.pp_file = _find_optional(params, "pp_file")
         if self.pp_file is None:
             # raise FileNotFoundError(f"pp_file not specified or found")
-            logger.warning(f"pp_file not specified")
+            logger.warning("pp_file not specified")
         elif not Path(self.pp_file).exists():
             logger.warning(f"pp_file {self.pp_file} not found")
         else:
@@ -345,7 +447,7 @@ class Struct2QE:
 
         self.cutoff_file = _find_optional(params, "cutoff_file")
         if self.cutoff_file is None:
-            logger.warning(f"cutoff_file not specified")
+            logger.warning("cutoff_file not specified")
         elif not Path(self.cutoff_file).exists():
             logger.warning(f"cutoff_file {self.cutoff_file} not found")
         else:
@@ -354,8 +456,11 @@ class Struct2QE:
     def _set_ibrav_structure(self, structure: Structure):
         system = { "ibrav": 0 }
 
-        primitive_structure = structure.get_primitive_structure(tolerance=0.01)
-        sp_num = SpacegroupAnalyzer(primitive_structure).get_space_group_number()
+        # keep magnetically distinct sites apart (an antiferromagnet must not
+        # collapse to its ferromagnetic primitive cell)
+        primitive_structure = structure.get_primitive_structure(
+            tolerance=0.01, use_site_props="magmom" in structure.site_properties)
+        sp_num = SpacegroupAnalyzer(_symmetry_structure(primitive_structure)).get_space_group_number()
 
         l_base = structure.lattice
         a = l_base.a
@@ -445,23 +550,6 @@ class Struct2QE:
                 qe_latt = [[tx, -ty, tz], [0, 2*ty, tz], [-tx, -ty, tz]]
                 qe_latt = np.array(qe_latt) * an
                 conv_mat = primitive_structure.lattice.matrix@np.diag([1, 1, -1])@np.linalg.inv(qe_latt)
-        # elif sp_num in spn_ibrav5:
-        #     system["ibrav"] = 5
-        #     cosg = (2*c**2 - 3*a**2)/(2*c**2 + 6*a**2)
-        #     tx = np.sqrt((1 - cosg)/2)
-        #     ty = np.sqrt((1 - cosg)/6)
-        #     tz = np.sqrt((1 + 2*cosg)/3)
-        #     an = a/(2*tx)
-        #     system["A"] = an
-        #     system["cosab"] = cosg
-        #     #ap = an/np.sqrt(3)
-        #     #u = tz - 2*np.sqrt(2)*ty
-        #     #v = tz + np.sqrt(2)*ty
-        #     #qe_latt = [[u, v, v], [v, u, v], [v, v, u]]
-        #     #qe_latt = np.array(qe_latt)*ap
-        #     qe_latt = [[tx, -ty, tz], [0, 2*ty, tz], [-tx, -ty, tz]]
-        #     qe_latt = np.array(qe_latt)*an
-        #     conv_mat = primitive_structure.lattice.matrix@np.diag([1, 1, -1])@np.linalg.inv(qe_latt)
         elif sp_num in spn_ibrav6:
             system["ibrav"] = 6
             system["A"] = a
@@ -534,19 +622,39 @@ class Struct2QE:
                 [c*cosac, c*(cosbc - cosac*cosab)/sinab, c*np.sqrt(1 + 2*cosbc*cosac*cosab - cosab**2 - cosac**2 - cosbc**2)/sinab]
             ]
         else:
-            raise Exception(f"Failed to set ibrav. space group {sp_num} is not implemented.")
+            raise InputValidationError(
+                f"use_ibrav: space group {sp_num} is not supported; set "
+                "structure.use_ibrav: false.")
         # a_i = lattice.matrix[i, :], cartesian_coord = frac_coord@lattice.matrix
         new_lattice = np.array(qe_latt)
         if conv_mat is None:
             conv_mat = primitive_structure.lattice.matrix@np.linalg.inv(new_lattice)
         new_coords = primitive_structure.frac_coords@conv_mat
         new_coords = new_coords - np.floor(new_coords + 1e-10)
+        site_properties = dict(primitive_structure.site_properties)
+        if "magmom" in site_properties:
+            # the cell is re-oriented: cartesian moment vectors must follow.
+            # old_cart = frac @ L_old and new_cart = frac @ conv_mat @ L_new,
+            # so new_cart = old_cart @ M with M = inv(L_old) @ conv_mat @ L_new.
+            # A moment is an axial vector: it picks up det(M) under an
+            # improper transformation.
+            rot = np.linalg.inv(primitive_structure.lattice.matrix) @ conv_mat @ new_lattice
+            if not np.allclose(rot @ rot.T, np.eye(3), atol=1.0e-6):
+                raise InputValidationError(
+                    "use_ibrav: the lattice transformation is not a rotation; "
+                    "cannot carry the magnetic moments over. Set "
+                    "structure.use_ibrav: false.")
+            sign = np.sign(np.linalg.det(rot))
+            site_properties["magmom"] = [
+                Magmom(sign * (np.array(Magmom(m).global_moment, dtype=float) @ rot))
+                for m in site_properties["magmom"]
+            ]
         new_structure = Structure(
                 new_lattice,
                 primitive_structure.species,
                 new_coords,
-                site_properties=primitive_structure.site_properties,
-                coords_are_cartesian=False, 
+                site_properties=site_properties,
+                coords_are_cartesian=False,
         )
 
         npopt = np.get_printoptions()
@@ -575,32 +683,10 @@ class Struct2QE:
         logger.debug("system = {}".format(system))
 
         if not primitive_structure.matches(new_structure, ltol=0.01, stol=0.01, angle_tol=0.1, primitive_cell=False):
-            logger.error("ibrav structure does not match original structure.")
-            raise Exception("ibrav structure does not match original structure.")
+            raise InputValidationError(
+                "use_ibrav: the structure rebuilt in the Quantum ESPRESSO "
+                "ibrav convention does not match the original structure; set "
+                "structure.use_ibrav: false to write CELL_PARAMETERS instead.")
 
         #self.structure = new_structure
         return new_structure, system
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-
-    cif_file = '../../t/Co3(SnS)2_nosym.cif'
-
-    struct = Cif2Struct(cif_file, {
-        'use_ibrav': False,
-        'tolerance': 0.01,
-    })
-
-    qe = Struct2QE({'optional': { 'pp_file': '../../t/pseudo/pp_psl_pbe_rrkjus.csv' }}, struct)
-
-    #x = generate_cell_parameters(qe, {})
-    #x = generate_atomic_species(qe, {})
-    x = generate_atomic_positions(qe, { 'ignore_species': ['S','Sn']})
-    #x = generate_k_points(qe, { 'option': 'automatic', 'grid': [8,8,8] })
-    #x = generate_k_points(qe, { 'option': 'automatic', 'vol_density': 80 })
-    #x = generate_k_points(qe, { 'option': 'automatic', 'k_resolution': 0.05, 'kshifts': [1,1,1] })
-    #x = generate_k_points(qe, { 'option': 'crystal', 'grid': [8,8,8] })
-
-    print(x)
-    print(to_string_block(x))

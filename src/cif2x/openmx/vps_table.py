@@ -82,5 +82,5 @@ VPS_TABLE = [
   ["Hg", "Hg_PBE19",  18.0, "Hg8.0-s3p2d2",    "Hg8.0-s3p2d2f1",  "Hg8.0-s3p3d2f1", ],
   ["Tl", "Tl_PBE19",  19.0, "Tl8.0-s3p2d2",    "Tl8.0-s3p2d2f1",  "Tl8.0-s3p3d2f1", ],
   ["Pb", "Pb_PBE19",  14.0, "Pb8.0-s3p2d2",    "Pb8.0-s3p2d2f1",  "Pb8.0-s3p3d2f1", ],
-  ["Bi", "Bi_PBE19",  15.0, "Bi8.0-s3p2d2",    "Bi8.0-s3p2d2f1",  "Bi8.0-s3p3d2f111",],
+  ["Bi", "Bi_PBE19",  15.0, "Bi8.0-s3p2d2",    "Bi8.0-s3p2d2f1",  "Bi8.0-s3p3d2f1", ],
 ]

@@ -17,13 +17,13 @@ def fetch_to_cif(material_id, dest_path, *, symprec=0.1,
         api_key = resolve_api_key(api_key_file)
         structure = fetch_structure(material_id, api_key=api_key)
         structure.to(str(dest_path), fmt="cif", symprec=(symprec or None))
-    except LookupError:
+    except LookupError as e:
         raise InputValidationError(
             f"material '{material_id}' not found in the Materials Project."
-        )
+        ) from e
     except InputValidationError:
         raise
     except Exception as e:
         raise InputValidationError(
             f"failed to fetch '{material_id}' from the Materials Project: {e}"
-        )
+        ) from e

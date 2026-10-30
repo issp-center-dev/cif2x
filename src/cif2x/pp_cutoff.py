@@ -2,10 +2,10 @@
 
 """
 NAME
-    pp_cutoff.py - extract cutoff information from pseudo-potential files
+    cif2x-pp-cutoff - extract cutoff information from pseudo-potential files
 
 SYNOPSIS
-    python3 pp_cutoff.py [-f list_file] [-o output_csv] [pp_file ...]
+    cif2x-pp-cutoff [-f list_file] [-o output_csv] [pp_file ...]
 
 DESCRIPTION
     read pseudo-potential files in UPF format (e.g. for Quantum ESPRESSO)
@@ -36,24 +36,12 @@ DESCRIPTION
 
 from bs4 import BeautifulSoup
 import csv
-import math
+import os
 import logging
 logger = logging.getLogger(__name__)
 
-def _normalize_cutoff(value):
-    # keep in sync with cif2x.struct2qe._normalize_cutoff (this helper stays
-    # standalone, so no import): unset attributes written as 0.0 by ld1.x and
-    # unparseable tokens mean "not specified"
-    if value is None:
-        return None
-    try:
-        value = float(value)
-    except (TypeError, ValueError):
-        logger.warning("unparseable cutoff value {!r}; treated as unspecified".format(value))
-        return None
-    if math.isnan(value) or value <= 0.0:
-        return None
-    return value
+from cif2x.utils import normalize_cutoff as _normalize_cutoff
+
 
 def read_pseudo_cutoff(pp_file, use_header=True):
     ecutwfc = None
@@ -66,25 +54,36 @@ def read_pseudo_cutoff(pp_file, use_header=True):
         logger.error("{}: {}".format(pp_file, e))
         return None
 
-    if bs is None or bs.upf is None:
+    header = bs.find("pp_header") if bs is not None else None
+    info = bs.find("pp_info") if bs is not None else None
+    if header is None:
         logger.error("{}: unknown pseudopotential file format".format(pp_file))
         return None
 
     if use_header:
-        # read cutoff from pp_header attribute
-        if bs.upf.pp_header:
-            if bs.upf.pp_header.has_attr("wfc_cutoff"):
-                ecutwfc = _normalize_cutoff(bs.upf.pp_header["wfc_cutoff"])
-            if bs.upf.pp_header.has_attr("rho_cutoff"):
-                ecutrho = _normalize_cutoff(bs.upf.pp_header["rho_cutoff"])
+        # UPF v2: attributes of <PP_HEADER>
+        if header.has_attr("wfc_cutoff"):
+            ecutwfc = _normalize_cutoff(header["wfc_cutoff"])
+        if header.has_attr("rho_cutoff"):
+            ecutrho = _normalize_cutoff(header["rho_cutoff"])
+        # UPF v1: a header text line "<wfc> <rho> Suggested cutoff for wfc and rho"
+        if ecutwfc is None or ecutrho is None:
+            for line in header.get_text().splitlines():
+                if "suggested cutoff for wfc and rho" in line.lower():
+                    tokens = line.split()
+                    if len(tokens) >= 2:
+                        if ecutwfc is None:
+                            ecutwfc = _normalize_cutoff(tokens[0])
+                        if ecutrho is None:
+                            ecutrho = _normalize_cutoff(tokens[1])
         if ecutwfc is None or ecutrho is None:
             logger.warning("{}: cutoff info not found in header".format(pp_file))
 
     if ecutwfc is None or ecutrho is None:
         # read cutoff from pp_info text description; fill only the missing
         # fields so header values survive an unset "Suggested ... 0.0" line
-        if bs.upf.pp_info:
-            lines = str(bs.upf.pp_info).splitlines()
+        if info is not None:
+            lines = str(info).splitlines()
             sg = [s for s in lines if "Suggested" in s]
             for s in sg:
                 if "wavefunctions" in s and ecutwfc is None:
@@ -92,6 +91,9 @@ def read_pseudo_cutoff(pp_file, use_header=True):
                 elif "charge density" in s and ecutrho is None:
                     ecutrho = _normalize_cutoff(s.split()[6])
 
+    # cif2x looks the cutoffs up by the bare pseudopotential file name (the
+    # name written to ATOMIC_SPECIES), so the CSV key must not carry a path
+    name = os.path.basename(pp_file)
     if ecutwfc is None:
         logger.warning("{}: wfc_cutoff not found".format(pp_file))
         return None
@@ -99,14 +101,14 @@ def read_pseudo_cutoff(pp_file, use_header=True):
         # leave the CSV cell blank: cif2x reads it as "not specified" and
         # omits ecutrho from the input (pw.x then defaults to 4*ecutwfc)
         logger.warning("{}: rho_cutoff not found; leaving the CSV cell blank".format(pp_file))
-        return [ pp_file, ecutwfc, "" ]
-    return [ pp_file, ecutwfc, ecutrho ]
+        return [ name, ecutwfc, "" ]
+    return [ name, ecutwfc, ecutrho ]
 
 def main():
     import argparse
     import sys
 
-    parser = argparse.ArgumentParser(prog="pp_cutoff")
+    parser = argparse.ArgumentParser(prog="cif2x-pp-cutoff")
     parser.add_argument("-f", "--filelist", default=None, metavar="list_file", help="list file that contains list of pseudo-potential files")
     parser.add_argument("-o", "--output", default=None, metavar="output_csv", help="output file to store the result in CSV foramt")
     parser.add_argument("--use-suggested", action="store_true", help="use suggested cutoff value in text info")

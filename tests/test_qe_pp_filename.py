@@ -1,6 +1,5 @@
 import pytest
 
-pytest.importorskip("qe_tools")
 pd = pytest.importorskip("pandas")
 
 from cif2x.struct2qe import Struct2QE

@@ -128,7 +128,7 @@ class Struct2RESPACK:
             nml = f90nml.reads(text)
         except Exception as e:
             raise InputValidationError(
-                f"failed to parse RESPACK template '{template}': {e}")
+                f"failed to parse RESPACK template '{template}': {e}") from e
         for name in nml:
             if name not in _ALLOWED_NAMELISTS:
                 raise InputValidationError(
@@ -187,10 +187,10 @@ class Struct2RESPACK:
                 "respack: 'reading_sk_format' must be an integer (got {!r}).".format(rsf))
         try:
             rsf = int(rsf)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError) as e:
             raise InputValidationError(
                 "respack: 'reading_sk_format' must be an integer (got {!r}).".format(
-                    interp.get("reading_sk_format")))
+                    interp.get("reading_sk_format"))) from e
         if rsf != 0:
             raise InputValidationError(
                 "respack: only reading_sk_format = 0 is supported.")
