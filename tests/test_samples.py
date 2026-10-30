@@ -7,7 +7,7 @@ tolerance of 1e-6 (so that -0.000000 and the last digit of a printed float do
 not count), words exactly; the VASP INCAR is compared through pymatgen's
 parser, which normalizes value formatting (600 vs 600.0, Accurate vs
 accurate). No pseudopotential files ship with the samples; cutoffs come from
-the CSVs. The AkaiKKR cases need pyakaikkr and are skipped without it.
+the CSVs.
 """
 
 import glob
@@ -126,7 +126,6 @@ def test_openmx_sample_matches_reference(monkeypatch, capsys, case):
 
 @pytest.mark.parametrize("case", _cases("akaikkr", "test.in_ref"), ids=lambda p: p.name)
 def test_akaikkr_sample_matches_reference(monkeypatch, capsys, case):
-    pytest.importorskip("pyakaikkr")
     files = _dry_run(monkeypatch, capsys, "akaikkr", case)
     _assert_same(case / "test.in_ref", _generated(files, "test.in"))
 
