@@ -13,10 +13,11 @@
   - f90nml モジュール
   - beautifulsoup4 モジュール
   - mp_api モジュール
-  - phonopy モジュール
   - ruamel.yaml モジュール
 
   AkaiKKR 向けの入力ファイルを生成する場合は、上記に加えて AkaiKKRPythonUtil モジュールが必要です。これは自動ではインストールされないため、別途インストールします (下記参照)。
+
+  本バージョンは Python 3.11〜3.14、pymatgen 2026.10、f90nml 1.5、mp-api 0.47 で動作を確認しています。AkaiKKRPythonUtil 2023.2.1 は pymatgen と spglib の非推奨インタフェースに依存しており、pymatgen 2026.10 では動作しますが、これらのライブラリの将来の版で動かなくなる可能性があります。
 
 **ソースコード配布サイト**
 
@@ -39,7 +40,7 @@
      $ cd ./cif2x
      $ python3 -m pip install .
 
-  実行プログラム ``cif2x``, ``getcif`` がインストールされます。
+  実行プログラム ``cif2x``, ``getcif``, ``cif2x-pp-cutoff`` がインストールされます。
 
   なお、AkaiKKRPythonUtil モジュールは別途インストールが必要です。
   以下の手順で `配布サイト <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_ からソースコードを取得しインストールします。また、必要な seaborn モジュールもインストールしておきます。
@@ -57,45 +58,54 @@
   ::
 
      .
+     |-- CHANGELOG.md
      |-- LICENSE
      |-- README.md
      |-- pyproject.toml
      |-- docs/
+     |   |-- en/
      |   |-- ja/
      |   |-- tutorial/
+     |-- sample/
+     |   |-- cif2x/
+     |   |-- getcif/
      |-- src/
      |   |-- cif2x/
-     |       |-- __init__.py
-     |       |-- main.py
-     |       |-- cif2struct.py
-     |       |-- struct2qe.py
-     |       |-- qe/
-     |       |   |-- __init__.py
-     |	     |   |-- calc_mode.py
-     |	     |   |-- cards.py
-     |	     |   |-- content.py
-     |	     |   |-- qeutils.py
-     |	     |   |-- tools.py
-     |       |-- struct2vasp.py
-     |       |-- struct2openmx.py
-     |       |-- openmx/
-     |       |   |-- __init__.py
-     |       |   |-- vps_table.py
-     |       |-- struct2akaikkr.py
-     |       |-- akaikkr/
-     |       |   |-- make_input.py
-     |       |   |-- read_input.py
-     |       |   |-- run_cif2kkr.py
-     |       |-- utils.py
+     |   |   |-- __init__.py
+     |   |   |-- main.py
+     |   |   |-- input_validator.py
+     |   |   |-- cif2struct.py
+     |   |   |-- mp_source.py
+     |   |   |-- utils.py
+     |   |   |-- pp_cutoff.py
+     |   |   |-- struct2qe.py
+     |   |   |-- qe/
+     |   |   |   |-- __init__.py
+     |   |   |   |-- calc_mode.py
+     |   |   |   |-- cards.py
+     |   |   |   |-- content.py
+     |   |   |   |-- qeutil.py
+     |   |   |   |-- tools.py
+     |   |   |-- struct2vasp.py
+     |   |   |-- struct2openmx.py
+     |   |   |-- openmx/
+     |   |   |   |-- vps_table.py
+     |   |   |-- struct2akaikkr.py
+     |   |   |-- akaikkr/
+     |   |   |   |-- make_input.py
+     |   |   |   |-- read_input.py
+     |   |   |   |-- run_cif2kkr.py
+     |   |   |-- struct2respack.py
      |   |-- getcif/
      |       |-- __init__.py
      |       |-- main.py
-     |-- sample/
+     |       |-- mp.py
+     |-- tests/
 
 
 **基本的な使用方法**
 
-  cif2xは第一原理計算プログラムのための入力ファイルを生成するツールです。入力パラメータを雛形として、物質の種類や計算条件によって変わる箇所を結晶構造データなどから構成します。現在は Quantum ESPRESSO, VASP, OpenMX, および AkaiKKR の入力ファイル形式に対応しています。
+  cif2xは第一原理計算プログラムのための入力ファイルを生成するツールです。入力パラメータを雛形として、物質の種類や計算条件によって変わる箇所を結晶構造データなどから構成します。現在は Quantum ESPRESSO, VASP, OpenMX, および AkaiKKR の入力ファイル形式に対応しているほか、RESPACK ワークフロー (Quantum ESPRESSO と RESPACK の入力) を生成できます。
 
   #. 入力パラメータファイルの作成
 
@@ -111,7 +121,7 @@
 
   #. コマンドの実行
 
-      作成した入力パラメータファイルおよび結晶構造データファイルを入力としてcif2xプログラムを実行します。Quantum ESPRESSO用の入力ファイルを生成する場合はターゲットオプションに ``-t QE`` を指定します。VASPの場合は ``-t VASP``, OpenMX の場合は ``-t OpenMX``, AkaiKKR の場合は ``-t akaikkr`` を指定します。
+      作成した入力パラメータファイルおよび結晶構造データファイルを入力としてcif2xプログラムを実行します。Quantum ESPRESSO用の入力ファイルを生成する場合はターゲットオプションに ``-t QE`` を指定します。VASPの場合は ``-t VASP``, OpenMX の場合は ``-t OpenMX``, AkaiKKR の場合は ``-t akaikkr``, RESPACK ワークフローの場合は ``-t respack`` を指定します。
 
       .. code-block:: bash
 

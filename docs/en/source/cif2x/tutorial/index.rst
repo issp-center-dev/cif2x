@@ -4,7 +4,7 @@ Tutorial
 ================================================================
 
 The procedure to use the input file generator ``cif2x`` for first-principles calculation software consists of preparing an input parameter file, crystal structure data, and pseudo-potential files, and running the program ``cif2x``.
-In the current version, the supported software includes Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
+In the current version, the supported software includes Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR, as well as the RESPACK workflow (Quantum ESPRESSO and RESPACK inputs).
 In this tutorial, we will explain the steps along a sample for Quantum ESPRESSO in ``docs/tutorial/cif2x``.
 
 
@@ -63,7 +63,7 @@ Run ``cif2x`` and a set of input files for Quantum ESPRESSO will be created. The
 
 One can confirm that the cutoff values ``ecutwfc`` and ``ecutrho`` are obtained from the pseudo-potential files, that ``CELL_PARAMETERS``, ``ATOMIC_POSITIONS`` and the species in ``ATOMIC_SPECIES`` are derived from the crystal structure data, that the pseudo-potential file names in ``ATOMIC_SPECIES`` are taken from the ``optional.pp_file`` mapping, and that ``K_POINTS`` is generated from the ``content.K_POINTS`` setting (``grid: [8,8,8]`` in this example).
 
-Samples for VASP, OpenMX, and AkaiKKR are provided under the ``sample/cif2x/`` directory of the repository.
+Samples for VASP, OpenMX, AkaiKKR, and RESPACK are provided under the ``sample/cif2x/`` directory of the repository.
 
 
 Specifying parameter sets

@@ -2,21 +2,21 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 [![Documentation](https://img.shields.io/badge/docs-online-brightgreen.svg)](https://issp-center-dev.github.io/cif2x/manual/main/en/html/)
 
 In recent years, the use of machine learning for predicting material properties and designing substances (known as materials informatics) has gained considerable attention.
 The accuracy of machine learning depends heavily on the preparation of appropriate training data.
 Therefore, the development of tools and environments for the rapid generation of training data is expected to contribute significantly to the advancement of research in materials informatics.
 
-Cif2x is a tool to generate input files for first-principles calculation software. It takes crystal structure data in CIF format and input parameters as a template, and constructs the parts that vary depending on the type of material and conditions. It is capable of generating multiple input files tailored to specific computational conditions. Currently, it supports [VASP](https://www.vasp.at), [Quantum ESPRESSO](https://www.quantum-espresso.org), [OpenMX](http://www.openmx-square.org), and [AkaiKKR](http://kkr.issp.u-tokyo.ac.jp).
+Cif2x is a tool to generate input files for first-principles calculation software. It takes crystal structure data in CIF format and input parameters as a template, and constructs the parts that vary depending on the type of material and conditions. It is capable of generating multiple input files tailored to specific computational conditions. Currently, it supports [VASP](https://www.vasp.at), [Quantum ESPRESSO](https://www.quantum-espresso.org), [OpenMX](http://www.openmx-square.org), and [AkaiKKR](http://kkr.issp.u-tokyo.ac.jp), and it generates the Quantum ESPRESSO and [RESPACK](https://sites.google.com/view/kazuma7k6r) inputs of a RESPACK workflow.
 
 getcif is a tool to retrieve crystallographic information and other properties of materials from databases. The latest version of getcif provides access to Materials Project database. Users can search database and obtain information by specifying symmetry, composition, or physical properties of materials.
 
 
 ## Target applications
 
-Quantum ESPRESSO, VASP, OpenMX, and AkaiKKR.
+Quantum ESPRESSO, VASP, OpenMX, AkaiKKR, and RESPACK (as a Quantum ESPRESSO + RESPACK workflow).
 
 ## Requirement
 
@@ -40,11 +40,16 @@ Installing the package provides the `cif2x` and `getcif` command-line tools.
 
 Generate input files from a CIF (or molecular structure) file and a YAML
 parameter file. The target code is selected with `-t`
-(`quantum_espresso`/`qe`, `vasp`, `openmx`, `akaikkr`; case-insensitive):
+(`quantum_espresso`/`qe`, `vasp`, `openmx`, `akaikkr`, `respack`; case-insensitive):
 
 ``` bash
 cif2x -t quantum_espresso input.yaml structure.cif
 ```
+
+`--mp-id mp-149` fetches the structure from the Materials Project instead of
+reading a CIF file, and `--dry-run` prints the generated files instead of
+writing them. The companion command `cif2x-pp-cutoff` builds the cutoff index
+CSV from UPF pseudopotential files.
 
 ### getcif
 

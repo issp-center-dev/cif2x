@@ -3,7 +3,7 @@
 チュートリアル
 ================================================================
 
-第一原理計算入力ファイル生成ツール cif2x を使うには、入力パラメータファイルと結晶構造データおよび擬ポテンシャルファイルを用意した後、プログラム cif2x を実行します。現在は Quantum ESPRESSO, VASP, OpenMX, AkaiKKR の入力ファイル生成に対応しています。以下では、 ``docs/tutorial/cif2x`` ディレクトリにある Quantum ESPRESSO 向けサンプルを例にチュートリアルを実施します。
+第一原理計算入力ファイル生成ツール cif2x を使うには、入力パラメータファイルと結晶構造データおよび擬ポテンシャルファイルを用意した後、プログラム cif2x を実行します。現在は Quantum ESPRESSO, VASP, OpenMX, AkaiKKR の入力ファイル生成と、RESPACK ワークフロー (Quantum ESPRESSO と RESPACK の入力) の生成に対応しています。以下では、 ``docs/tutorial/cif2x`` ディレクトリにある Quantum ESPRESSO 向けサンプルを例にチュートリアルを実施します。
 
 入力パラメータファイルを作成する
 ----------------------------------------------------------------
@@ -61,7 +61,7 @@ Quantum ESPRESSO の入力ファイルは、 ``&keyword`` で始まる Fortran90
 
 カットオフ ``ecutwfc``, ``ecutrho`` の値が擬ポテンシャルファイルから取得され、 ``CELL_PARAMETERS``, ``ATOMIC_POSITIONS`` および ``ATOMIC_SPECIES`` の元素種が結晶構造データから決まり、 ``ATOMIC_SPECIES`` の擬ポテンシャルファイル名が ``optional.pp_file`` の対応付けから決まり、 ``K_POINTS`` が ``content.K_POINTS`` の設定(この例では ``grid: [8,8,8]``)から生成されていることが確認できます。
 
-VASP, OpenMX, AkaiKKR 向けのサンプルは、リポジトリの ``sample/cif2x/`` ディレクトリ以下に用意されています。
+VASP, OpenMX, AkaiKKR, RESPACK 向けのサンプルは、リポジトリの ``sample/cif2x/`` ディレクトリ以下に用意されています。
 
 パラメータセットを指定する
 ----------------------------------------------------------------

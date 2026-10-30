@@ -38,7 +38,7 @@ APIキーを getcif にセットするには、以下のいずれかを実行し
 
   (c) ファイルに格納する
 
-      APIキーをファイルに書き込み、getcif を実行するディレクトリに配置します。ファイル名のデフォルトは ``materials_project.key`` です。異なるファイル名を使う場合は、入力パラメータファイル (input.yaml) の api_key_file にファイル名を指定します。ファイル名は ``.key`` の拡張子が必要です。
+      APIキーをファイルに書き込み、getcif を実行するディレクトリに配置します。ファイル名のデフォルトは ``materials_project.key`` です。異なるファイル名を使う場合は、入力パラメータファイル (input.yaml) の api_key_file にファイル名を指定します。ファイル名は自由ですが、 ``.key`` の拡張子にしておくとバージョン管理から除外しやすくなります。
 
         .. code:: yaml
 
@@ -61,7 +61,7 @@ YAMLフォーマットでは、 ``keyword: value`` の辞書形式でパラメ�
    :language: yaml
 
 入力パラメータファイルは ``database``, ``option``, ``properties``, ``fields`` のブロックからなります。
-``database`` にはデータベース接続に関する設定を記述します。例では ``target`` に Materials Project を指定していますが、現時点ではこの項目は無視されます。APIキーをファイルから読み込ませる場合は、 ``api_key_file`` にファイル名 (``.key`` 拡張子) を指定します。デフォルトのファイル名は ``materials_project.key`` です。なお、 ``database`` セクションに APIキーそのものを直接指定する項目はありません。APIキーの与え方には、この ``api_key_file`` のほかに、環境変数 ``MP_API_KEY`` を利用する方法や、pymatgen の設定ファイル (``~/.config/.pmgrc.yaml``) に ``PMG_MAPI_KEY`` として登録する方法があります(前述の「APIキーを取得する」を参照)。例では ``api_key_file`` を指定せず、環境変数または pymatgen の設定ファイルを用いる方式を仮定しています。
+``database`` にはデータベース接続に関する設定を記述します。例では ``target`` に Materials Project を指定していますが、現時点ではこの項目は無視されます。APIキーをファイルから読み込ませる場合は、 ``api_key_file`` にファイル名を指定します。デフォルトのファイル名は ``materials_project.key`` です。なお、 ``database`` セクションに APIキーそのものを直接指定する項目はありません。APIキーの与え方には、この ``api_key_file`` のほかに、環境変数 ``MP_API_KEY`` を利用する方法や、pymatgen の設定ファイル (``~/.config/.pmgrc.yaml``) に ``PMG_MAPI_KEY`` として登録する方法があります(前述の「APIキーを取得する」を参照)。例では ``api_key_file`` を指定せず、環境変数または pymatgen の設定ファイルを用いる方式を仮定しています。
 
 ``option`` には実行時のオプションを記述します。 ``output_dir`` は取得したデータの格納先ディレクトリを指定します。省略時にはカレントディレクトリに書き出されます。 ``dry_run`` を ``true`` にセットすると、データベースへの接続はせず、検索条件を出力して終了します。 ``dry_run`` はコマンドラインオプションでも指定できます。
 
