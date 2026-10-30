@@ -25,7 +25,7 @@ structure
 
   ``use_primitive`` (デフォルト値: ``false``)
 
-    ``true`` の場合、入力ファイルを生成する前に結晶構造を基本格子 (primitive cell) に変換します (pymatgen の ``get_primitive_structure`` を使用)。高対称 k 経路が標準基本格子で定義されるため、 ``respack`` ターゲットおよび Quantum ESPRESSO の ``bands`` モードでは必須です。
+    ``true`` の場合、入力ファイルを生成する前に結晶構造を基本格子 (primitive cell) に変換します (pymatgen の ``get_primitive_structure`` を使用)。高対称 k 経路が標準基本格子で定義されるため、 ``respack`` ターゲットでは必須、Quantum ESPRESSO の ``bands`` モードでは強く推奨されます。 ``bands`` で指定しない場合は警告を出して処理を続けますが、k 経路が誤っている可能性があります。
 
   ``tolerance`` (デフォルト値: 0.01)
 
@@ -168,7 +168,7 @@ content
 
   - カットオフ ``ecutwfc`` および ``ecutrho`` は、値が空欄の場合 (``ecutwfc`` はキー自体がない場合、 ``ecutrho`` は両方のキーがない場合も) に解決されます。元素ごとに、まず ``cutoff_file``、次に ``pseudo_dir`` 内の UPF ファイルの ``wfc_cutoff`` / ``rho_cutoff`` 属性または "Suggested minimum cutoff" 行を参照し、元素全体での最大値を書き出します。どちらの参照にも ``pp_file`` が必要です。 ``ecutwfc`` は必ず解決できなければならず、できない場合は ``cutoff_file`` または明示的な値を求めるエラーで停止します。 ``ecutrho`` が解決できない場合はキーを出力せず、 ``pw.x`` のデフォルト (``4 * ecutwfc``) に任せます。参照して得た ``ecutrho`` がこのデフォルトより小さい場合はデフォルト値まで引き上げられますが、明示的に指定した ``ecutrho`` はそのまま書き出されます。
 
-  - ``nbnd`` が空欄の場合は、 ``pp_file`` の ``nexclude`` と ``orbitals`` 列から ``nexclude + 2 W + ceil(W/2)`` (偶数に切り上げ) として見積もられます。 ``W`` は Wannier 化する軌道の数で、内殻バンドの上におよそ 2.5 W のバンドを取ることになります。非共線計算では ``nexclude`` と ``W`` が 2 倍になります。これらの列がない場合は ``nbnd`` を明示的に指定してください。
+  - ``nbnd`` が空欄の場合は、 ``pp_file`` の ``nexclude`` と ``orbitals`` 列から ``nexclude + 2 W + E`` として見積もられます。 ``W`` は Wannier 化する軌道の数、 ``E`` は ``W/2`` の整数部分を偶数に切り上げた値 (``W = 9`` なら ``E = 4``) で、内殻バンドの上におよそ 2.5 W のバンドを取ることになります。非共線計算では ``nexclude`` と ``W`` が 2 倍になります。これらの列がない場合は ``nbnd`` を明示的に指定してください。
 
   - ``nspin``, ``noncolin``, ``lspinorb`` は整合するように書き直されます。共線スピン分極計算では ``nspin = 2``、非共線計算では ``noncolin = .true.`` (指定があれば ``lspinorb`` も)、非磁性計算では何も出力されません。結晶構造データが磁気モーメントを持ち、これらのキーがいずれも指定されていない場合は、モーメント自体から ``nspin = 2`` または ``noncolin`` を選びます (``tol_deg`` 参照)。モーメントが非共線なのに ``nspin = 2`` が指定されている場合は ``noncolin`` に切り替えられます。
 

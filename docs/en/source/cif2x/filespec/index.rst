@@ -25,7 +25,7 @@ structure
 
   ``use_primitive`` (default value: ``false``)
 
-    When it is set to ``true``, the structure is reduced to the primitive cell (by ``get_primitive_structure`` of pymatgen) before the input files are generated. It is required for the ``respack`` target and for the ``bands`` mode of Quantum ESPRESSO, because the high-symmetry k-path is defined in the standardized primitive cell.
+    When it is set to ``true``, the structure is reduced to the primitive cell (by ``get_primitive_structure`` of pymatgen) before the input files are generated. It is required for the ``respack`` target and strongly recommended for the ``bands`` mode of Quantum ESPRESSO, because the high-symmetry k-path is defined in the standardized primitive cell: for ``bands`` without it, the run proceeds with a warning, but the k-path may be wrong.
 
   ``tolerance`` (default value: 0.01)
 
@@ -168,7 +168,7 @@ content
 
   - The cutoff values ``ecutwfc`` and ``ecutrho`` are resolved when they are left blank (``ecutwfc`` also when the key is absent; ``ecutrho`` also when both keys are absent). For each element, the values are looked up first in ``cutoff_file``, then in the ``wfc_cutoff`` / ``rho_cutoff`` attributes or the "Suggested minimum cutoff" lines of the UPF file in ``pseudo_dir``; the largest values over the elements are written. Both lookups need ``pp_file``. ``ecutwfc`` must be resolvable, otherwise ``cif2x`` stops with an error asking for ``cutoff_file`` or an explicit value. When ``ecutrho`` cannot be resolved the key is omitted and ``pw.x`` applies its default (``4 * ecutwfc``); a looked-up ``ecutrho`` below that default is raised to it, while an explicit ``ecutrho`` is written as given.
 
-  - ``nbnd``, when left blank, is estimated from the ``nexclude`` and ``orbitals`` columns of ``pp_file`` as ``nexclude + 2 W + ceil(W/2)`` (rounded up to an even number) with ``W`` the number of orbitals to be Wannierized, i.e. roughly two and a half times ``W`` above the core bands; ``nexclude`` and ``W`` are doubled for noncollinear runs. Give ``nbnd`` explicitly when the columns are not available.
+  - ``nbnd``, when left blank, is estimated from the ``nexclude`` and ``orbitals`` columns of ``pp_file`` as ``nexclude + 2 W + E`` with ``W`` the number of orbitals to be Wannierized and ``E`` the integer part of ``W/2`` rounded up to an even number (``E = 4`` for ``W = 9``), i.e. roughly two and a half times ``W`` above the core bands; ``nexclude`` and ``W`` are doubled for noncollinear runs. Give ``nbnd`` explicitly when the columns are not available.
 
   - ``nspin``, ``noncolin``, and ``lspinorb`` are rewritten consistently: ``nspin = 2`` is written for a collinear spin-polarized run, ``noncolin = .true.`` (and ``lspinorb`` when given) for a noncollinear run, and nothing for a non-magnetic run. When the structure data carry magnetic moments and none of these keys is given, ``nspin = 2`` or ``noncolin`` is chosen from the moments themselves (see ``tol_deg``); ``nspin = 2`` with non-collinear moments is turned into ``noncolin``.
 
