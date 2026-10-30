@@ -53,6 +53,8 @@
 - pyakaikkr's progress output no longer leaks into `--dry-run` output.
 - Floating-point noise no longer appears in OpenMX coordinates nor splits
   magnetic species.
+- A parameter set of double-quoted strings (`${["a", "b"]}`) expanded to
+  JSON-escaped values (`\"a\"`); it now gives the plain strings.
 
 ### Development
 
