@@ -13,6 +13,11 @@
 - `k_resolution` derives the k mesh from the reciprocal lattice vector
   lengths, which changes the mesh for non-orthogonal cells.
 - The `nbnd` estimate is no longer doubled for collinear (`nspin = 2`) runs.
+- Structure data with magnetic moments (mCIF) switch spin polarization on
+  when the input gives no spin setting: `nspin = 2` (or `noncolin`) for
+  Quantum ESPRESSO, `ISPIN = 2` (or `LNONCOLLINEAR`) for VASP,
+  `scf.SpinPolarization on` for OpenMX. Such input used to produce a
+  non-magnetic run; set the key explicitly to keep that behaviour.
 - VASP: the POTCAR must be resolvable; a missing or unreadable POTCAR is an
   error. Set `content.potcar.skip: true` to omit it deliberately. Only `INCAR`
   and `KPOINTS` are read from `template_dir`.

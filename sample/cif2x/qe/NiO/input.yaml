@@ -1,0 +1,44 @@
+# Antiferromagnetic NiO from an mCIF file.
+#
+# The magnetic moments of the structure data (two Ni with opposite moments)
+# are carried into the input: nspin = 2 is chosen, the two Ni become separate
+# species Ni0 / Ni1, and starting_magnetization(i) = m / zval is set for each.
+# The valence charge zval comes from the "zval" column of pp_file (no UPF
+# files ship with the sample).
+
+structure:
+  use_ibrav: false
+  tolerance: 0.05
+
+optional:
+  pseudo_dir: ../pseudo
+  pp_file: pp_psl_pbe_rrkjus_zval.csv
+  cutoff_file: ../pseudo/cutoff_psl_pbe_rrkjus.csv
+
+tasks:
+  - mode: scf
+    output_file: scf.in
+    content:
+      namelist:
+        control:
+          prefix: pwscf
+          pseudo_dir: ./pseudo
+          outdir: ./work
+        system:
+          ibrav:
+          nat:
+          ntyp:
+          ecutwfc:
+          ecutrho:
+          occupations: smearing
+          smearing: m-p
+          degauss: 0.01
+        electrons:
+          mixing_beta: 0.1
+          conv_thr: 1.e-8
+      CELL_PARAMETERS:
+      ATOMIC_SPECIES:
+      ATOMIC_POSITIONS:
+        option: crystal
+      K_POINTS:
+        option: automatic

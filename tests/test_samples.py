@@ -27,7 +27,7 @@ def _dry_run(monkeypatch, capsys, target, sample_dir):
     import cif2x.main as main_mod
 
     monkeypatch.chdir(sample_dir)
-    src = sorted(glob.glob("*.cif") + glob.glob("*.xyz"))[0]
+    src = sorted(glob.glob("*.cif") + glob.glob("*.mcif") + glob.glob("*.xyz"))[0]
     monkeypatch.setattr(sys, "argv", ["cif2x", "-t", target, "--dry-run", "input.yaml", src])
     main_mod.main()
     out = capsys.readouterr().out
