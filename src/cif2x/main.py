@@ -10,19 +10,46 @@ import logging
 logger = logging.getLogger("cif2x")
 
 from cif2x import __version__
-from cif2x.cif2struct import Cif2Struct
-from cif2x.struct2qe import Struct2QE
-from cif2x.struct2vasp import Struct2Vasp
-from cif2x.struct2openmx import Struct2OpenMX
-from cif2x.struct2akaikkr import Struct2AkaiKKR
-from cif2x.struct2respack import Struct2RESPACK
 from cif2x.input_validator import (
     InputValidationError,
     normalize_target,
     validate_input,
     _target_choices,
 )
-from cif2x.mp_source import fetch_to_cif
+
+# The generators and the Materials Project client pull in pymatgen, numpy,
+# pandas and spglib (seconds of import time), so they are imported on first
+# use rather than here: `cif2x -h` and `cif2x --version` then return at once
+# (issue #1). They stay reachable as module attributes (tests patch them)
+# through the module-level __getattr__ below.
+_LAZY_ATTRS = {
+    "Cif2Struct": ("cif2x.cif2struct", "Cif2Struct"),
+    "Struct2QE": ("cif2x.struct2qe", "Struct2QE"),
+    "Struct2Vasp": ("cif2x.struct2vasp", "Struct2Vasp"),
+    "Struct2OpenMX": ("cif2x.struct2openmx", "Struct2OpenMX"),
+    "Struct2AkaiKKR": ("cif2x.struct2akaikkr", "Struct2AkaiKKR"),
+    "Struct2RESPACK": ("cif2x.struct2respack", "Struct2RESPACK"),
+    "fetch_to_cif": ("cif2x.mp_source", "fetch_to_cif"),
+}
+
+
+def __getattr__(name):
+    if name in _LAZY_ATTRS:
+        import importlib
+        module_name, attr = _LAZY_ATTRS[name]
+        value = getattr(importlib.import_module(module_name), attr)
+        globals()[name] = value      # cache: later lookups are plain attributes
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _lazy(name):
+    """The module attribute ``name``, imported on first use.
+
+    Goes through the module object so that a value patched onto the module
+    (for example by a test) is honoured.
+    """
+    return getattr(sys.modules[__name__], name)
 
 
 def main():
@@ -74,20 +101,21 @@ def _generator_class(target):
     Resolved from module globals at call time so tests can monkeypatch the
     individual Struct2* classes.
     """
-    return {
-        "quantum_espresso": Struct2QE,
-        "vasp": Struct2Vasp,
-        "openmx": Struct2OpenMX,
-        "akaikkr": Struct2AkaiKKR,
+    name = {
+        "quantum_espresso": "Struct2QE",
+        "vasp": "Struct2Vasp",
+        "openmx": "Struct2OpenMX",
+        "akaikkr": "Struct2AkaiKKR",
     }[target]
+    return _lazy(name)      # only the generator for this target is imported
 
 
 def _respack_generator(mode, taskid):
     """Pick the generator for a task under -t respack, by mode."""
     if mode in ("scf", "nscf", "bands"):
-        return Struct2QE
+        return _lazy("Struct2QE")
     if mode == "respack":
-        return Struct2RESPACK
+        return _lazy("Struct2RESPACK")
     raise InputValidationError(
         f"task {taskid}: unsupported mode '{mode}' for target 'respack' "
         "(use scf, nscf, bands, or respack).")
@@ -118,11 +146,11 @@ def _run(args):
     if args.mp_id:
         with tempfile.TemporaryDirectory() as tmpdir:
             cif_path = Path(tmpdir) / "structure.cif"
-            fetch_to_cif(args.mp_id, cif_path,
-                         symprec=args.symprec, api_key_file=args.api_key_file)
-            struct = Cif2Struct(str(cif_path), struct_params)
+            _lazy("fetch_to_cif")(args.mp_id, cif_path,
+                                  symprec=args.symprec, api_key_file=args.api_key_file)
+            struct = _lazy("Cif2Struct")(str(cif_path), struct_params)
     else:
-        struct = Cif2Struct(args.cif_file, struct_params)
+        struct = _lazy("Cif2Struct")(args.cif_file, struct_params)
 
     # `optional:` written with no entries parses to None; treat it as empty so
     # generators that read optional.get(...) do not crash on None.

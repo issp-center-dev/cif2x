@@ -12,9 +12,10 @@ import logging
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from ruamel.yaml import YAML, YAMLError
-# enum parameters (pymatgen is always present; emmet is imported lazily in
-# _find_properties so that this module can be imported without emmet installed)
-from pymatgen.analysis.magnetism import Ordering
+# The enum parameters (pymatgen's Ordering, emmet's CrystalSystem/HasProps)
+# are imported inside _find_properties: pymatgen takes seconds to import, so
+# `getcif -h` and `--version` must not load it (issue #1), and emmet may be
+# absent for a dry run.
 
 from getcif.mp import resolve_api_key, _import_mprester
 
@@ -213,6 +214,7 @@ class QueryMaterialsProject:
     def _find_properties(self, info):
         from emmet.core.symmetry import CrystalSystem
         from emmet.core.summary import HasProps
+        from pymatgen.analysis.magnetism import Ordering
 
         props = info
 
