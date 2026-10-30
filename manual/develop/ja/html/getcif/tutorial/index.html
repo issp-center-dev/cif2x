@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>7.2. チュートリアル &#8212; cif2x Users Guide 1.1.0 ドキュメント</title>
+    <title>7.2. チュートリアル &#8212; cif2x Users Guide 1.2.0 ドキュメント</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=26c6c0d5" />
-    <script src="../../_static/documentation_options.js?v=6599c6cf"></script>
+    <script src="../../_static/documentation_options.js?v=f7e61824"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/translations.js?v=4755f45a"></script>
@@ -68,7 +68,7 @@ $<span class="w"> </span><span class="nb">export</span><span class="w"> </span>M
 <p>を実行します。</p>
 </li>
 <li><p>ファイルに格納する</p>
-<p>APIキーをファイルに書き込み、getcif を実行するディレクトリに配置します。ファイル名のデフォルトは <code class="docutils literal notranslate"><span class="pre">materials_project.key</span></code> です。異なるファイル名を使う場合は、入力パラメータファイル (input.yaml) の api_key_file にファイル名を指定します。ファイル名は <code class="docutils literal notranslate"><span class="pre">.key</span></code> の拡張子が必要です。</p>
+<p>APIキーをファイルに書き込み、getcif を実行するディレクトリに配置します。ファイル名のデフォルトは <code class="docutils literal notranslate"><span class="pre">materials_project.key</span></code> です。異なるファイル名を使う場合は、入力パラメータファイル (input.yaml) の api_key_file にファイル名を指定します。ファイル名は自由ですが、 <code class="docutils literal notranslate"><span class="pre">.key</span></code> の拡張子にしておくとバージョン管理から除外しやすくなります。</p>
 <blockquote>
 <div><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">database</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">api_key_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">materials_project.key</span>
@@ -106,7 +106,7 @@ $<span class="w"> </span><span class="nb">export</span><span class="w"> </span>M
 </pre></div>
 </div>
 <p>入力パラメータファイルは <code class="docutils literal notranslate"><span class="pre">database</span></code>, <code class="docutils literal notranslate"><span class="pre">option</span></code>, <code class="docutils literal notranslate"><span class="pre">properties</span></code>, <code class="docutils literal notranslate"><span class="pre">fields</span></code> のブロックからなります。
-<code class="docutils literal notranslate"><span class="pre">database</span></code> にはデータベース接続に関する設定を記述します。例では <code class="docutils literal notranslate"><span class="pre">target</span></code> に Materials Project を指定していますが、現時点ではこの項目は無視されます。APIキーをファイルから読み込ませる場合は、 <code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> にファイル名 (<code class="docutils literal notranslate"><span class="pre">.key</span></code> 拡張子) を指定します。デフォルトのファイル名は <code class="docutils literal notranslate"><span class="pre">materials_project.key</span></code> です。なお、 <code class="docutils literal notranslate"><span class="pre">database</span></code> セクションに APIキーそのものを直接指定する項目はありません。APIキーの与え方には、この <code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> のほかに、環境変数 <code class="docutils literal notranslate"><span class="pre">MP_API_KEY</span></code> を利用する方法や、pymatgen の設定ファイル (<code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc.yaml</span></code>) に <code class="docutils literal notranslate"><span class="pre">PMG_MAPI_KEY</span></code> として登録する方法があります(前述の「APIキーを取得する」を参照)。例では <code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> を指定せず、環境変数または pymatgen の設定ファイルを用いる方式を仮定しています。</p>
+<code class="docutils literal notranslate"><span class="pre">database</span></code> にはデータベース接続に関する設定を記述します。例では <code class="docutils literal notranslate"><span class="pre">target</span></code> に Materials Project を指定していますが、現時点ではこの項目は無視されます。APIキーをファイルから読み込ませる場合は、 <code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> にファイル名を指定します。デフォルトのファイル名は <code class="docutils literal notranslate"><span class="pre">materials_project.key</span></code> です。なお、 <code class="docutils literal notranslate"><span class="pre">database</span></code> セクションに APIキーそのものを直接指定する項目はありません。APIキーの与え方には、この <code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> のほかに、環境変数 <code class="docutils literal notranslate"><span class="pre">MP_API_KEY</span></code> を利用する方法や、pymatgen の設定ファイル (<code class="docutils literal notranslate"><span class="pre">~/.config/.pmgrc.yaml</span></code>) に <code class="docutils literal notranslate"><span class="pre">PMG_MAPI_KEY</span></code> として登録する方法があります(前述の「APIキーを取得する」を参照)。例では <code class="docutils literal notranslate"><span class="pre">api_key_file</span></code> を指定せず、環境変数または pymatgen の設定ファイルを用いる方式を仮定しています。</p>
 <p><code class="docutils literal notranslate"><span class="pre">option</span></code> には実行時のオプションを記述します。 <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> は取得したデータの格納先ディレクトリを指定します。省略時にはカレントディレクトリに書き出されます。 <code class="docutils literal notranslate"><span class="pre">dry_run</span></code> を <code class="docutils literal notranslate"><span class="pre">true</span></code> にセットすると、データベースへの接続はせず、検索条件を出力して終了します。 <code class="docutils literal notranslate"><span class="pre">dry_run</span></code> はコマンドラインオプションでも指定できます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">properties</span></code> は検索条件の指定を行います。検索条件を「項目: 値」の書式で列挙し、これらの条件は AND で扱われます。例では、バンドギャップが 1.0以下、安定な絶縁体で、組成式は ABO3 (A, B は任意の元素種)、空間群は <code class="docutils literal notranslate"><span class="pre">Pm-3m</span></code> という条件を指定しています。 <code class="docutils literal notranslate"><span class="pre">band_gap</span></code> には値の範囲を上限・下限の組で指定するほか、 <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">1.0</span></code> のような記法も使用できます。検索条件にどのような項目が指定できるかは Appendix を参照してください。</p>
 <p><code class="docutils literal notranslate"><span class="pre">fields</span></code> には出力項目を列挙します。YAMLのリスト形式のほか、空白区切りで項目を列挙する書き方もできます。また、例に示したとおり、YAMLの記法を使って複数行で書くこともできます。
@@ -119,14 +119,14 @@ $<span class="w"> </span><span class="nb">export</span><span class="w"> </span>M
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">getcif</span></code> を実行すると Materials Project のデータベースに接続し、検索条件に合致するデータを取得します。標準出力には、以下のように、物質の material ID と組成式、データ項目のサマリーが出力されます。</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>material_id  formula  band_gap  symmetry  formula_pretty
-mp-861502  AcFeO3  0.9887999999999995  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  AcFeO3
-mp-977455  PaAgO3  0.915  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  PaAgO3
-mp-11775  RbUO3  0.45420000000000016  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  RbUO3
-mp-3163  BaSnO3  0.37239999999999984  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  BaSnO3
-mp-4126  KUO3  0.44540000000000024  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  KUO3
-mp-865322  UTlO3  0.27360000000000007  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  UTlO3
-mp-753781  EuHfO3  0.4795999999999996  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'  EuHfO3
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>material_id  formula  band_gap  symmetry
+mp-861502  AcFeO3  0.9887999999999995  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
+mp-977455  PaAgO3  0.915  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
+mp-11775  RbUO3  0.45420000000000016  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
+mp-3163  BaSnO3  0.37239999999999984  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
+mp-4126  KUO3  0.44540000000000024  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
+mp-865322  UTlO3  0.27360000000000007  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
+mp-753781  EuHfO3  0.4795999999999996  crystal_system=&lt;CrystalSystem.cubic: 'Cubic'&gt; symbol='Pm-3m' number=221 point_group='m-3m' symprec=0.1 version='2.0.2'
 </pre></div>
 </div>
 <p>取得したデータは、 <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> で指定した result ディレクトリ内に物質ごとに格納されます。この例では、 result 以下に mp-3163 から mp-977455 までの 7つのディレクトリが作成され、各ディレクトリには次のファイルが書き込まれます。</p>

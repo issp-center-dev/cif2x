@@ -333,7 +333,7 @@ getcif 実行時に起こりやすい問題と対処法を以下にまとめま�
 
 - **APIキーが見つからない**
 
-  APIキーが取得できない場合、Materials Project への接続に失敗します。getcif はまず ``database`` セクションの ``api_key_file`` (デフォルト ``materials_project.key``) で指定された ``.key`` ファイルを読み込みます。ファイルが存在する場合はそれが優先され、先頭のコメント行以外の行が使われます(空であってはいけません)。見つからない (または先頭の非コメント行が空の) 場合はキーの解決を ``MPRester`` に委譲し、環境変数 ``MP_API_KEY`` や pymatgen の設定ファイル ``~/.config/.pmgrc.yaml`` の ``PMG_MAPI_KEY`` が参照されます。いずれかの方法で有効なAPIキーが設定されているか確認してください (チュートリアルの「APIキーを取得する」を参照)。
+  APIキーが取得できない場合、Materials Project への接続に失敗します。getcif はまず ``database`` セクションの ``api_key_file`` (デフォルト ``materials_project.key``) で指定されたファイルを読み込みます。ファイルが存在する場合はそれが優先され、空行でもコメント行でもない最初の行が使われます。デフォルトのファイルが見つからない (またはファイルにキーがない) 場合はキーの解決を ``MPRester`` に委譲し、環境変数 ``MP_API_KEY`` や pymatgen の設定ファイル ``~/.config/.pmgrc.yaml`` の ``PMG_MAPI_KEY`` が参照されます。明示的に指定したファイルが存在しない場合はエラーになります。いずれかの方法で有効なAPIキーが設定されているか確認してください (チュートリアルの「APIキーを取得する」を参照)。
 
 - **fields check failed / unknown query key**
 

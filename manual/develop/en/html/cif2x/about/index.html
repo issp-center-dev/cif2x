@@ -5,11 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>1. Introduction &#8212; cif2x Users Guide 1.1.0 documentation</title>
+    <title>1. Introduction &#8212; cif2x Users Guide 1.2.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=26c6c0d5" />
-    <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+    <script src="../../_static/documentation_options.js?v=6efca38a"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -43,7 +43,8 @@ Therefore, the development of tools and environments for the rapid generation of
 <p>Cif2x is a tool that generates input files for first-principles calculations from cif files.
 It constructs parts that vary depending on the type of material and computational conditions from crystal structure data, using input parameters as a template.
 It is capable of generating multiple input files tailored to specific computational conditions.
-Currently, it supports <a class="reference external" href="https://www.vasp.at">VASP</a>, <a class="reference external" href="https://www.quantum-espresso.org">Quantum ESPRESSO</a>, <a class="reference external" href="http://www.openmx-square.org">OpenMX</a>, and <a class="reference external" href="http://kkr.issp.u-tokyo.ac.jp">AkaiKKR</a>.</p>
+Currently, it supports <a class="reference external" href="https://www.vasp.at">VASP</a>, <a class="reference external" href="https://www.quantum-espresso.org">Quantum ESPRESSO</a>, <a class="reference external" href="http://www.openmx-square.org">OpenMX</a>, and <a class="reference external" href="http://kkr.issp.u-tokyo.ac.jp">AkaiKKR</a>, and it generates the Quantum ESPRESSO and <a class="reference external" href="https://sites.google.com/view/kazuma7k6r">RESPACK</a> inputs of a RESPACK workflow.</p>
+<p>As an accompanying program, getcif retrieves crystal structure data and other properties of materials from databases. It currently supports the Materials Project: the database can be searched by composition, symmetry, or physical properties such as the band gap, and the matching data are downloaded.</p>
 </section>
 <section id="license">
 <h2><span class="section-number">1.2. </span>License<a class="headerlink" href="#license" title="Link to this heading">¶</a></h2>
@@ -78,6 +79,8 @@ Currently, it supports <a class="reference external" href="https://www.vasp.at">
 <h2><span class="section-number">1.4. </span>Release history<a class="headerlink" href="#release-history" title="Link to this heading">¶</a></h2>
 <blockquote>
 <div><dl class="simple">
+<dt>ver.1.2.0</dt><dd><p>In development (not yet released)</p>
+</dd>
 <dt>ver.1.1.0</dt><dd><p>Released on 2024/09/14</p>
 </dd>
 <dt>ver.1.0.1</dt><dd><p>Released on 2024/03/31</p>

@@ -27,9 +27,8 @@ database
 
 ``api_key_file`` (default value: ``materials_project.key``)
 
-  This parameter specifies a name of a file that contains the API key to access to the database.
-  The suffix of the file name must be ``.key``.
-  A present ``.key`` file takes precedence: its first non-comment line is used (it must be non-empty, as leading blank lines are not skipped). If the file does not exist or its first non-comment line is empty, the API key is obtained from the environment variable ``MP_API_KEY``, or from the parameter ``PMG_MAPI_KEY`` of the pymatgen configuration file in ``~/.config/.pmgrc.yaml``.
+  This parameter specifies a name of a file that contains the API key to access to the database. The file name is free.
+  A present file takes precedence: its first line that is neither blank nor a ``#`` comment is used. If the default file ``materials_project.key`` does not exist, or the file holds no key, the API key is obtained from the environment variable ``MP_API_KEY``, or from the parameter ``PMG_MAPI_KEY`` of the pymatgen configuration file in ``~/.config/.pmgrc.yaml``. A file named explicitly must exist; otherwise ``getcif`` stops with an error.
 
   The API key file is a text file. A line starting with ``#`` is regarded as a comment. The heading and trailing spaces are ignored. When the file contains more than one line, the API key is taken from the first valid line.
     
@@ -83,7 +82,7 @@ The format of the parameter values is shown below. It follows the YAML specifica
 
     .. code:: yaml
 
-	element: Sr Ti
+	elements: Sr Ti
 
 - a range of numerical value
 
@@ -134,4 +133,4 @@ The available types of data conform to the ``field`` parameter of the Materials 
 
 The types ``material_id`` and ``formula_pretty`` are retrieved automatically.
 
-The obtained data are placed in the directory specified by ``output_dir`` parameter under the subdirectories of the material_id for each material. Each item is stored as a separate file of the item name. The crystal structure data (``structure``) is stored in a file ``structure.cif`` in CIF format.
+The obtained data are placed in the directory specified by ``output_dir`` parameter under the subdirectories of the material_id for each material. Each item is stored as a separate file of the item name (``formula_pretty`` is stored as ``formula``). The crystal structure data (``structure``) is stored in a file ``structure.cif`` in CIF format.

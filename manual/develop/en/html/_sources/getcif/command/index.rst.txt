@@ -35,9 +35,9 @@ DESCRIPTION:
 
     displays search parameters and exits without connecting to the database. It allows to confirm the search conditions. This option supersedes the ``dry_run`` parameter in the input file.
 
-  - ``-h``
+  - ``-h``, ``--help``
 
-    displays help and exits.
+    displays help and exits. The help also lists the available search conditions (properties) and data items (fields).
 
   - ``--version``
 

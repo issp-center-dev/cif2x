@@ -61,16 +61,29 @@ cardごとの関数は ``src/cif2x/qe/cards.py`` にまとめられており、�
 はエラーになるため、必ず記述してください。
 
 ``bands`` では ``content`` の K_POINTS オプションに ``crystal_b`` を指定します。
-経路は結晶対称性から ``pymatgen`` の高対称 k 経路を用いて生成されます。例:
+経路は結晶対称性から ``pymatgen`` の高対称 k 経路を用いて生成されます。
+他の pw.x タスクと同様に、 ``&control``, ``&system``, ``&electrons`` の各ネームリストは
+テンプレートまたは ``content.namelist`` で与え、生成したい構造カードは ``content`` に
+列挙する必要があります。例:
 
 .. code-block:: yaml
+
+    structure:
+      use_primitive: true
+      use_ibrav: false
 
     tasks:
       - mode: bands
         output_file: bands.in
+        template: pw.in_tmpl      # &control, &system, &electrons ネームリストを含む
         content:
-          system:
-            nbnd: 16        # 伝導帯が必要な場合は明示的に指定
+          namelist:
+            system:
+              nbnd: 16        # 伝導帯が必要な場合は明示的に指定
+          CELL_PARAMETERS:
+          ATOMIC_SPECIES:
+          ATOMIC_POSITIONS:
+            option: crystal
           K_POINTS:
             option: crystal_b
             line_npoints: 30   # 高対称点間に生成する点数
@@ -81,7 +94,7 @@ cardごとの関数は ``src/cif2x/qe/cards.py`` にまとめられており、�
 与えます(ラベルは自動生成された k 経路に含まれる必要があります)。
 
 Quantum ESPRESSO は既定で占有(価電子)バンドのみを計算するため、伝導帯を
-バンド構造に含めるには ``content.system`` で ``nbnd`` を明示的に指定してください。
+バンド構造に含めるには ``content.namelist.system`` で ``nbnd`` を明示的に指定してください。
 
 高対称点の座標は**標準プリミティブセル**で定義されるため、``bands`` では構造が
 そのセルである必要があります。``use_primitive: true``(かつ ``use_ibrav: false``)
@@ -99,10 +112,29 @@ pw.x に ``calculation='dos'`` はありません。状態密度計算は
     tasks:
       - mode: scf
         output_file: scf.in
-        content: { K_POINTS: { option: automatic, grid: [8, 8, 8] } }
+        template: pw.in_tmpl      # &control, &system, &electrons ネームリストを含む
+        content:
+          CELL_PARAMETERS:
+          ATOMIC_SPECIES:
+          ATOMIC_POSITIONS:
+            option: crystal
+          K_POINTS:
+            option: automatic
+            grid: [8, 8, 8]
       - mode: nscf
         output_file: nscf.in
-        content: { K_POINTS: { option: automatic, grid: [16, 16, 16] } }
+        template: pw.in_tmpl
+        content:
+          namelist:
+            system:
+              occupations: tetrahedra
+          CELL_PARAMETERS:
+          ATOMIC_SPECIES:
+          ATOMIC_POSITIONS:
+            option: crystal
+          K_POINTS:
+            option: automatic
+            grid: [16, 16, 16]
       - mode: dos
         template: dos.in_tmpl     # &DOS ネームリストを含む
         output_file: dos.in
@@ -121,15 +153,15 @@ cif2x は入力ファイルを生成する前に、ターゲット名と ``input
 
 - **unsupported target '...'**
 
-  ``-t``/``--target`` の値が ``quantum_espresso`` (``qe``, ``espresso``)、 ``vasp``、 ``openmx``、 ``akaikkr`` のいずれでもない場合に出力されます。メッセージに有効な選択肢が列挙されます。
+  ``-t``/``--target`` の値が ``quantum_espresso`` (``qe``, ``espresso``)、 ``vasp``、 ``openmx``、 ``akaikkr``、 ``respack`` のいずれでもない場合に出力されます。メッセージに有効な選択肢が列挙されます。
 
-- **task N: 'mode' is required for target 'quantum_espresso'**
+- **task N: 'mode' is required for target '...'**
 
-  Quantum ESPRESSO 向けの実行で、 ``tasks`` の各要素に ``mode`` が指定されていない場合に出力されます。各 task に ``mode`` (``scf``, ``nscf`` など) を指定してください。
+  Quantum ESPRESSO または RESPACK 向けの実行で、 ``tasks`` の各要素に ``mode`` が指定されていない場合に出力されます。各 task に ``mode`` (``scf``, ``nscf`` など) を指定してください。
 
 - **task N: 'output_file' is required for target '...'**
 
-  出力ファイル名が必要な task に ``output_file`` が指定されていない場合に出力されます。各 task に出力ファイル名を ``output_file`` で指定してください (``quantum_espresso``、 ``openmx``、 ``akaikkr`` で必須です)。
+  出力ファイル名が必要な task に ``output_file`` が指定されていない場合に出力されます。各 task に出力ファイル名を ``output_file`` で指定してください (``quantum_espresso``、 ``openmx``、 ``akaikkr``、 ``respack`` で必須です)。
 
 - **task N: unknown key '...' for target '...'**
 
@@ -137,8 +169,20 @@ cif2x は入力ファイルを生成する前に、ターゲット名と ``input
 
 - **pp_file / cutoff_file / pseudo_dir not specified または not found の警告**
 
-  ``optional`` セクションでこれらのパラメータが指定されていない、または指定したパスが存在しない場合に警告が出力されます (処理は継続します)。擬ポテンシャルのインデックスファイル (``pp_file``)、カットオフのインデックスファイル (``cutoff_file``)、擬ポテンシャル格納ディレクトリ (``pseudo_dir``) のパスが正しいか確認してください。なお、 ``cutoff_file`` / ``pseudo_dir`` は警告のみで処理が継続しますが、 ``pp_file`` は ``ATOMIC_SPECIES`` の生成や ``nbnd`` の自動設定で実際に参照されるため事実上必須であり、未指定のままだと処理の後段で ``RuntimeError`` となります。
+  ``optional`` セクションでこれらのパラメータが指定されていない、または指定したパスが存在しない場合に警告が出力されます (処理は継続します)。擬ポテンシャルのインデックスファイル (``pp_file``)、カットオフのインデックスファイル (``cutoff_file``)、擬ポテンシャル格納ディレクトリ (``pseudo_dir``) のパスが正しいか確認してください。 ``pp_file`` は ``ATOMIC_SPECIES`` を生成する場合や ``nbnd`` を空欄にした場合に必須で、未指定のままだと **ATOMIC_SPECIES: optional.pp_file ... is required** または **nbnd is left blank but ...** のエラーで停止します。
 
-- **カットオフが 0.0 になる**
+- **cutoff information (ecutwfc) not found for element '...'**
 
-  ``ecutwfc`` / ``ecutrho`` を空欄にして自動取得させる場合、(その元素について ``pp_file`` の対応付けが存在する前提で) 対応する ``.UPF`` ファイルが ``pseudo_dir`` に見つからず、かつ ``cutoff_file`` にも該当エントリがないと、カットオフの値が ``0.0`` にフォールバックします。擬ポテンシャルファイルやカットオフのインデックスエントリが揃っているか確認してください。(なお、 ``pp_file`` にその元素の行自体が無い場合は ``0.0`` フォールバックではなく ``KeyError`` で停止します。)
+  ``ecutwfc`` を空欄 (または未記載) にしたが、その元素について解決できなかった場合に出力されます。 ``pp_file`` が指定されていないか、 ``cutoff_file`` にその擬ポテンシャルファイルの行がなく、 ``pseudo_dir`` 内の ``.UPF`` ファイルにもカットオフ情報がない状態です。 ``cutoff_file`` に行を追加する、 ``.UPF`` ファイルを配置する、または ``content.namelist.system.ecutwfc`` を明示的に指定してください。 ``ecutrho`` が解決できない場合はエラーにならず、キーを省いて ``pw.x`` のデフォルト (``4 * ecutwfc``) に任せます。
+
+- **cannot determine the valence charge of '...'**
+
+  結晶構造データが磁気モーメントを持ち ``starting_magnetization(i)`` を生成する際に、擬ポテンシャルの価電子数が分からない場合に出力されます。 ``pp_file`` に ``zval`` 列を追加する、 ``pseudo_dir`` に ``.UPF`` ファイルを配置する、または ``content.namelist.system`` で ``starting_magnetization(i)`` を明示的に指定してください。
+
+- **POTCAR: ...** (VASP)
+
+  POTCAR を組み立てられなかった場合に出力されます。 ``pp_file`` が読めない、 ``pp_file`` に元素の行がない、POTCAR ファイルが読めない、 ``pp_file`` も ``PMG_VASP_PSP_DIR`` も設定されていない、pymatgen が汎関数とシンボルに対応する POTCAR を見つけられない、のいずれかです。 ``optional`` セクションを修正するか (ファイルフォーマットの章を参照)、意図的に POTCAR を省く場合は ``content.potcar.skip: true`` を指定してください。
+
+- **the structure has partially occupied (disordered) sites**
+
+  Quantum ESPRESSO、VASP、OpenMX の入力生成には規則構造が必要です。合金は規則配置のスーパーセルモデルにするか、コヒーレントポテンシャル近似で不規則サイトを扱える ``akaikkr`` ターゲットを使用してください。

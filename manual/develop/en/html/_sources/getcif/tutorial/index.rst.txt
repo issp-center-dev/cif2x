@@ -35,7 +35,7 @@ The API key is made available to getcif by one of the following ways:
 	  $ export MP_API_KEY
 
   (c) storing the API key to a file located in the directory where getcif is run.
-      The default value of the file name is ``materials_project.key``. Otherwise, it is given in the input parameter file. The file name must end with ``.key``.
+      The default value of the file name is ``materials_project.key``. Otherwise, it is given in the input parameter file. Any file name may be used; the ``.key`` suffix is a convention that makes the file easy to exclude from version control.
 
         .. code:: yaml
 
@@ -61,7 +61,7 @@ For the search conditions and data fields, a list may be given by a space-separa
 
 The input parameter file consists of ``database``, ``option``, ``properties``, and ``fields`` sections.
 The ``database`` section describes settings about connecting to databases.
-In the example, ``target`` is set to Materials Project, though this term is not considered at present. To read the API key from a file, ``api_key_file`` specifies the file name (which must end with ``.key``); the default file name is ``materials_project.key``. Note that there is no entry in the ``database`` section to set the API key value directly. Besides ``api_key_file``, the API key can be provided through the environment variable ``MP_API_KEY`` or registered as ``PMG_MAPI_KEY`` in the pymatgen configuration file (``~/.config/.pmgrc.yaml``); see "Getting an API key" above. In this tutorial, ``api_key_file`` is not specified, and the key is assumed to be provided via the environment variable or the pymatgen configuration file.
+In the example, ``target`` is set to Materials Project, though this term is not considered at present. To read the API key from a file, ``api_key_file`` specifies the file name; the default file name is ``materials_project.key``. Note that there is no entry in the ``database`` section to set the API key value directly. Besides ``api_key_file``, the API key can be provided through the environment variable ``MP_API_KEY`` or registered as ``PMG_MAPI_KEY`` in the pymatgen configuration file (``~/.config/.pmgrc.yaml``); see "Getting an API key" above. In this tutorial, ``api_key_file`` is not specified, and the key is assumed to be provided via the environment variable or the pymatgen configuration file.
 
 The ``option`` section describes optional settings for the command execution.
 ``output_dir`` specifies the directory to place the obtained data. The default is the current directory. If ``dry_run`` is set to ``true``, getcif does not connect to the database; instead, it just prints the search conditions and exits. ``dry_run`` may be specified in the command-line option.

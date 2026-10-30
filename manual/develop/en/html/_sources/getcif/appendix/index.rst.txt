@@ -331,7 +331,7 @@ Common issues that may occur when running ``getcif`` and how to resolve them are
 
 - **API key not found**
 
-  If no API key can be obtained, the connection to the Materials Project fails. ``getcif`` first reads the ``.key`` file specified by ``api_key_file`` in the ``database`` section (default ``materials_project.key``); a present file takes precedence and its first non-comment line is used (which must be non-empty). If it is not found (or its first non-comment line is empty), key resolution is delegated to ``MPRester``, which falls back to the ``MP_API_KEY`` environment variable or the ``PMG_MAPI_KEY`` entry in the pymatgen configuration file ``~/.config/.pmgrc.yaml``. Make sure a valid API key is provided by one of these means (see "Getting an API key" in the tutorial).
+  If no API key can be obtained, the connection to the Materials Project fails. ``getcif`` first reads the file specified by ``api_key_file`` in the ``database`` section (default ``materials_project.key``); a present file takes precedence and its first line that is neither blank nor a comment is used. If the default file is not found (or the file holds no key), key resolution is delegated to ``MPRester``, which falls back to the ``MP_API_KEY`` environment variable or the ``PMG_MAPI_KEY`` entry in the pymatgen configuration file ``~/.config/.pmgrc.yaml``. An explicitly named file that does not exist is reported as an error. Make sure a valid API key is provided by one of these means (see "Getting an API key" in the tutorial).
 
 - **fields check failed / unknown query key**
 
