@@ -90,7 +90,9 @@ def inflate(content):
     def _matcher(m):
         count = len(tbl) + 1
         key = f"${count}"
-        matched = m.group(1)
+        # m matches a whole JSON string literal "${...}": decode it so that
+        # quotes inside the parameter set are not seen JSON-escaped (\")
+        matched = json.loads(m.group(0))[2:-1]
         tbl[key] = _item_parser(matched)
         return key
 
@@ -149,7 +151,9 @@ def inflate(content):
     ss = content.serialize()
 
     # find parameter sets that form a whole (JSON string) value: "${...}"
-    ss = re.sub(r'"\$\{(.*?)\}"', lambda m: json.dumps(_matcher(m)), ss)
+    # (a JSON string body is any run of non-quote characters and escapes, so a
+    # "}" followed by an escaped quote inside the value does not end the match)
+    ss = re.sub(r'"\$\{(?:[^"\\]|\\.)*\}"', lambda m: json.dumps(_matcher(m)), ss)
 
     # a ${...} left over sits inside a longer string, which is not supported
     leftover = re.search(r"\$\{(.*?)\}", ss)

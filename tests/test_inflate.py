@@ -46,6 +46,19 @@ def test_utils_inflate_two_placeholders_cartesian_product():
     assert combos == [(1, 0), (1, 1), (2, 0), (2, 1)]
 
 
+@pytest.mark.parametrize("placeholder", ['${["a", "b"]}', "${['a', 'b']}", "${[a, b]}"])
+def test_utils_inflate_expands_string_list(placeholder):
+    # quoted and unquoted strings give the same plain values (the JSON
+    # escaping of the serialized content must not leak into them)
+    results = utils_inflate(DictContent({"prefix": placeholder}))
+    assert [(k, c.data["prefix"]) for k, c in results] == [("a", "a"), ("b", "b")]
+
+
+def test_utils_inflate_string_with_braces_and_quotes():
+    results = utils_inflate(DictContent({"s": '${["x}y", "p\\"q"]}'}))
+    assert [c.data["s"] for _, c in results] == ["x}y", 'p"q']
+
+
 def test_qe_inflate_expands_list_placeholder():
     c = Content()
     c.namelist = {"system": {"ecutwfc": "${[30, 40]}"}}
