@@ -1,9 +1,8 @@
 """Phase-4 corrections: nbnd spin factor, optional merge order, k-mesh from the
 reciprocal lattice, OpenMX coordinate noise and pseudopotential variants, and
-pyakaikkr's stdout kept out of the generated output."""
+the AkaiKKR input reader's leftover tokens."""
 
 import logging
-import sys
 import types
 
 import numpy as np
@@ -149,25 +148,7 @@ def test_openmx_vps_variant_must_be_a_mapping():
         _openmx({"content": {}, "optional": {"vps_variant": "S"}}, s)
 
 
-# --- pyakaikkr stdout (C-18) and the debug-log call (C-10) -------------------
-
-def test_pyakaikkr_stdout_is_captured_not_printed(monkeypatch, capsys, caplog):
-    from cif2x.akaikkr import run_cif2kkr
-
-    def fake_cif2kkr(path):
-        print("cif_primitive= True")
-        print("prim_stand_nsite=2, nsite_kkr=2")
-        return {"brvtyp": "fcc"}
-
-    monkeypatch.setitem(sys.modules, "pyakaikkr",
-                        types.SimpleNamespace(ak_cif2kkrparam=fake_cif2kkr))
-    fake_struct = types.SimpleNamespace(to=lambda filename, fmt: None)
-    with caplog.at_level(logging.DEBUG, logger="run_cif2kkr"):
-        data = run_cif2kkr.ak_struct2kkr(fake_struct)
-    assert data == {"brvtyp": "fcc"}
-    assert capsys.readouterr().out == ""
-    assert "cif_primitive= True" in caplog.text
-
+# --- the debug-log call (C-10) ------------------------------------------------
 
 def test_read_input_leftover_tokens_log_without_error(caplog, capsys):
     from cif2x.akaikkr.read_input import parse_readin

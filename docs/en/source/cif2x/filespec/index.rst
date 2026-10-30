@@ -379,7 +379,7 @@ optional
 
   ``workdir``
 
-    This parameter specifies the directory in which temporal files are stored. If it is not given, ``/tmp`` or the value of the environment variable ``TMPDIR`` is used.
+    Accepted for compatibility with earlier versions and ignored: the structure used to be passed to the converter through a temporary file in this directory, and is now converted in memory.
 
 
 content
