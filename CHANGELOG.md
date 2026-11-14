@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Changed behaviour
+
+- The `beautifulsoup4` dependency is gone. The cutoffs and the valence charge
+  are read from the header of a UPF pseudopotential file with the standard
+  library (`cif2x.qe.upf`); only the beginning of the file is read. The
+  values found are the same for UPF v1 and v2 files. A file with bytes that
+  are not UTF-8 (in the author line of `PP_INFO`, say) used to be reported as
+  unreadable and is now read.
+
 ## 1.2.0 (unreleased)
 
 ### Changed behaviour

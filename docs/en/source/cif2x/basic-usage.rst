@@ -11,7 +11,6 @@ Installation and basic usage
   - pandas module
   - pymatgen module
   - f90nml module
-  - beautifulsoup4 module
   - mp_api module
   - ruamel.yaml module
 
@@ -87,6 +86,7 @@ Installation and basic usage
      |   |   |   |-- content.py
      |   |   |   |-- qeutil.py
      |   |   |   |-- tools.py
+     |   |   |   |-- upf.py
      |   |   |-- struct2vasp.py
      |   |   |-- struct2openmx.py
      |   |   |-- openmx/

@@ -11,7 +11,6 @@
   - pandas モジュール
   - pymatgen モジュール
   - f90nml モジュール
-  - beautifulsoup4 モジュール
   - mp_api モジュール
   - ruamel.yaml モジュール
 
@@ -86,6 +85,7 @@
      |   |   |   |-- content.py
      |   |   |   |-- qeutil.py
      |   |   |   |-- tools.py
+     |   |   |   |-- upf.py
      |   |   |-- struct2vasp.py
      |   |   |-- struct2openmx.py
      |   |   |-- openmx/

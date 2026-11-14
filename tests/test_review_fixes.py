@@ -261,7 +261,6 @@ def test_nspin_2_with_noncollinear_moments_switches_with_a_warning(tmp_path, cap
 # --- UPF v1 valence charge (review item 8) ------------------------------------
 
 def test_zvalence_from_upf_v1_header_text(tmp_path):
-    pytest.importorskip("bs4")
     from cif2x.struct2qe import Struct2QE
     pseudo = tmp_path / "pseudo"
     pseudo.mkdir()

@@ -54,7 +54,6 @@ def test_cutoff_table_lookup_uses_soc_filename():
 
 
 def test_cutoff_file_lookup_uses_soc_filename(tmp_path):
-    pytest.importorskip("bs4")
     qe = _qe(True, pseudo_dir=tmp_path)
     _write_upf(tmp_path, 'wfc_cutoff="40.0" rho_cutoff="320.0"',
                name=f"Fe.rel-{FE_PP}.UPF")
@@ -85,7 +84,6 @@ def test_find_elem_cutoff_resolves_from_table():
 
 def test_find_elem_cutoff_resolves_from_upf(tmp_path):
     # Regression guard: a UPF-header hit resolves without error.
-    pytest.importorskip("bs4")
     qe = _qe(pseudo_dir=tmp_path)
     _write_upf(tmp_path, 'wfc_cutoff="40.0" rho_cutoff="320.0"')
     assert qe._find_elem_cutoff("Fe") == (40.0, 320.0)
@@ -94,7 +92,6 @@ def test_find_elem_cutoff_resolves_from_upf(tmp_path):
 def test_find_elem_cutoff_skips_unneeded_wfc(tmp_path):
     # ecutwfc supplied by the user (need_wfc=False): a UPF exposing only
     # rho_cutoff must resolve ecutrho without raising for the absent wfc.
-    pytest.importorskip("bs4")
     qe = _qe(pseudo_dir=tmp_path)
     _write_upf(tmp_path, 'rho_cutoff="320.0"')
     ecutwfc, ecutrho = qe._find_elem_cutoff("Fe", need_wfc=False, need_rho=True)
@@ -104,7 +101,6 @@ def test_find_elem_cutoff_skips_unneeded_wfc(tmp_path):
 def test_find_elem_cutoff_skips_unneeded_rho(tmp_path):
     # ecutrho supplied by the user (need_rho=False): a UPF exposing only
     # wfc_cutoff must resolve ecutwfc without raising for the absent rho.
-    pytest.importorskip("bs4")
     qe = _qe(pseudo_dir=tmp_path)
     _write_upf(tmp_path, 'wfc_cutoff="40.0"')
     ecutwfc, ecutrho = qe._find_elem_cutoff("Fe", need_wfc=True, need_rho=False)
@@ -123,7 +119,6 @@ def test_cutoff_table_blank_cell_treated_as_missing():
 def test_cutoff_blank_csv_cell_falls_back_to_upf_per_field(tmp_path):
     # Only the blank (NaN) CSV field falls back to the UPF header; the value
     # present in the CSV wins over the UPF one.
-    pytest.importorskip("bs4")
     qe = _qe(cutoff_list=_fe_cutoff_csv(40.0, float("nan")),
              pseudo_dir=tmp_path)
     _write_upf(tmp_path, 'wfc_cutoff="60.0" rho_cutoff="320.0"')
@@ -133,7 +128,6 @@ def test_cutoff_blank_csv_cell_falls_back_to_upf_per_field(tmp_path):
 def test_upf_zero_cutoff_treated_as_missing(tmp_path):
     # ld1.x-generated UPFs may carry wfc_cutoff="0.0" (attribute present but
     # unset); 0.0 must be rejected as unresolved, not written into the input.
-    pytest.importorskip("bs4")
     qe = _qe(pseudo_dir=tmp_path)
     _write_upf(tmp_path, 'wfc_cutoff="0.000000000000000E+000"'
                          ' rho_cutoff="0.000000000000000E+000"')
@@ -144,7 +138,6 @@ def test_upf_zero_cutoff_treated_as_missing(tmp_path):
 def test_unresolved_rho_returns_none_instead_of_raising(tmp_path):
     # ecutrho is optional in QE (defaults to 4*ecutwfc): an unresolvable rho
     # cutoff yields None so the key can be omitted, rather than a hard error.
-    pytest.importorskip("bs4")
     qe = _qe(pseudo_dir=tmp_path)
     _write_upf(tmp_path, 'wfc_cutoff="40.0"')
     assert qe._find_elem_cutoff("Fe") == (40.0, None)
@@ -153,7 +146,6 @@ def test_unresolved_rho_returns_none_instead_of_raising(tmp_path):
 def test_find_cutoff_info_omits_rho_when_no_pseudo_suggests_one(tmp_path):
     # Pure norm-conserving set: no pseudopotential suggests ecutrho, so the
     # aggregate must be (max wfc, None) and the key gets left to pw.x.
-    pytest.importorskip("bs4")
     from types import SimpleNamespace
     qe = _qe(pseudo_dir=tmp_path)
     qe.struct = SimpleNamespace(elem_names=["Fe"])
@@ -202,7 +194,6 @@ def test_update_cutoff_info_fills_ecutwfc_absent_from_template():
 def test_update_cutoff_info_drops_unresolved_rho_placeholder(tmp_path):
     # Blank ecutrho placeholder + no resolvable rho: the key must be removed
     # from the namelist so pw.x applies its 4*ecutwfc default.
-    pytest.importorskip("bs4")
     from types import SimpleNamespace
 
     qe = _qe(pseudo_dir=tmp_path)
@@ -287,7 +278,6 @@ def test_update_cutoff_info_resolves_rho_when_no_cutoff_keys():
 def test_update_cutoff_info_no_cutoff_keys_and_unresolved_rho(tmp_path):
     # Template has no cutoff keys and no pseudo suggests ecutrho: ecutwfc is
     # filled and no ecutrho key is invented (must not raise on the absent key).
-    pytest.importorskip("bs4")
     from types import SimpleNamespace
     qe = _qe(pseudo_dir=tmp_path)
     qe.struct = SimpleNamespace(elem_names=["Fe"])
@@ -304,7 +294,6 @@ def test_pp_info_fills_only_missing_fields(tmp_path):
     # A valid header wfc_cutoff must not be overwritten by the pp_info
     # "Suggested" fallback (which may carry an unset 0.0); only the field
     # missing from the header is filled from pp_info.
-    pytest.importorskip("bs4")
     qe = _qe(pseudo_dir=tmp_path)
     (tmp_path / FE_UPF).write_text(
         '<UPF><PP_INFO>\n'
@@ -396,7 +385,6 @@ def test_update_cutoff_info_keeps_user_wfc_and_fills_rho(tmp_path):
     # Regression: when the user supplies ecutwfc and leaves ecutrho empty,
     # _update_cutoff_info must keep the user's ecutwfc and fill only ecutrho
     # from a UPF that exposes only rho_cutoff -- not reject the input.
-    pytest.importorskip("bs4")
     from types import SimpleNamespace
 
     qe = _qe(pseudo_dir=tmp_path)

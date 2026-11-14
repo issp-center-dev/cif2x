@@ -13,6 +13,7 @@ from cif2x.qe.tools import deepupdate, is_empty_key
 from cif2x.qe.qeutil import QEInputGeneral
 from cif2x.qe.content import Content, inflate
 from cif2x.qe.calc_mode import create_modeproc
+from cif2x.qe.upf import read_upf_header, suggested_cutoffs
 
 import logging
 logger = logging.getLogger(__name__)
@@ -179,42 +180,36 @@ class Struct2QE:
                 logger.debug(f"cutoff: from csv: entry not found: {pseudo_file}")
         return ecutwfc, ecutrho
 
-    def _find_elem_cutoff_from_file(self, ename):
-        from bs4 import BeautifulSoup
+    def _read_upf_header(self, ename):
+        """Header of the pseudopotential file of ``ename`` in pseudo_dir, or
+        None (with a warning) when the file cannot be read."""
+        pseudo_file = "{}/{}".format(self.pseudo_dir, self._pp_filename(ename))
+        try:
+            return read_upf_header(pseudo_file)
+        except OSError as e:
+            logger.warning(f"{pseudo_file}: {e}")
+            return None
 
+    def _find_elem_cutoff_from_file(self, ename):
         ecutwfc, ecutrho = None, None
 
         if self.pp_list is None:
             return ecutwfc, ecutrho
 
-        pseudo_file = "{}/{}".format(self.pseudo_dir, self._pp_filename(ename))
-        bs = None
-        try:
-            with open(pseudo_file, "r") as fp:
-                bs = BeautifulSoup(fp, "html.parser")
-        except Exception as e:
-            logger.warning(f"{pseudo_file}: {e}")
-            pass
-
-        # bs.find works for UPF v2 (<UPF> root) and UPF v1 (no root element)
-        header = bs.find("pp_header") if bs else None
-        if header is not None:
-            if header.has_attr("wfc_cutoff"):
-                ecutwfc = _normalize_cutoff(header["wfc_cutoff"])
-            if header.has_attr("rho_cutoff"):
-                ecutrho = _normalize_cutoff(header["rho_cutoff"])
-        if ecutwfc is None or ecutrho is None:
-            # fill only the fields the header did not provide; a "Suggested"
-            # line may itself carry an unset 0.0 and must not clobber them
-            info = bs.find("pp_info") if bs else None
-            if info is not None:
-                lines = str(info).splitlines()
-                sg = [s for s in lines if "Suggested" in s]
-                for s in sg:
-                    if "wavefunctions" in s and ecutwfc is None:
-                        ecutwfc = _normalize_cutoff(s.split()[5])
-                    elif "charge density" in s and ecutrho is None:
-                        ecutrho = _normalize_cutoff(s.split()[6])
+        upf = self._read_upf_header(ename)
+        if upf is not None:
+            # UPF v2: attributes of PP_HEADER
+            ecutwfc = _normalize_cutoff(upf.get("wfc_cutoff"))
+            ecutrho = _normalize_cutoff(upf.get("rho_cutoff"))
+            if ecutwfc is None or ecutrho is None:
+                # fill only the fields the header did not provide; a
+                # "Suggested" line may itself carry an unset 0.0 and must not
+                # clobber them
+                suggested = suggested_cutoffs(upf.info)
+                if ecutwfc is None:
+                    ecutwfc = suggested[0]
+                if ecutrho is None:
+                    ecutrho = suggested[1]
 
         return ecutwfc, ecutrho
 
@@ -233,25 +228,14 @@ class Struct2QE:
                         return value
 
         if self.pp_list is not None and self.pseudo_dir is not None:
-            from bs4 import BeautifulSoup
-            pseudo_file = "{}/{}".format(self.pseudo_dir, self._pp_filename(ename))
-            try:
-                with open(pseudo_file, "r") as fp:
-                    bs = BeautifulSoup(fp, "html.parser")
-            except OSError as e:
-                logger.warning(f"{pseudo_file}: {e}")
-                bs = None
-            # UPF v2 wraps everything in <UPF>; UPF v1 has no root element, so
-            # search the tree rather than going through bs.upf
-            header = bs.find("pp_header") if bs else None
-            if header is not None and header.has_attr("z_valence"):
+            upf = self._read_upf_header(ename)
+            if upf is not None:
                 # UPF v2: attribute of <PP_HEADER>
-                value = _normalize_cutoff(header["z_valence"])
+                value = _normalize_cutoff(upf.get("z_valence"))
                 if value is not None:
                     return value
-            if header is not None:
                 # UPF v1: a text line such as "   16.00000000000   Z valence"
-                for line in header.get_text().splitlines():
+                for line in upf.text.splitlines():
                     if "z valence" in line.lower():
                         value = _normalize_cutoff(line.split()[0])
                         if value is not None:

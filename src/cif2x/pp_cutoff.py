@@ -34,12 +34,12 @@ DESCRIPTION
 
 """
 
-from bs4 import BeautifulSoup
 import csv
 import os
 import logging
 logger = logging.getLogger(__name__)
 
+from cif2x.qe.upf import read_upf_header, suggested_cutoffs
 from cif2x.utils import normalize_cutoff as _normalize_cutoff
 
 
@@ -48,27 +48,22 @@ def read_pseudo_cutoff(pp_file, use_header=True):
     ecutrho = None
 
     try:
-        with open(pp_file, "r") as fp:
-            bs = BeautifulSoup(fp, "html.parser")
-    except Exception as e:
+        upf = read_upf_header(pp_file)
+    except OSError as e:
         logger.error("{}: {}".format(pp_file, e))
         return None
 
-    header = bs.find("pp_header") if bs is not None else None
-    info = bs.find("pp_info") if bs is not None else None
-    if header is None:
+    if upf is None:
         logger.error("{}: unknown pseudopotential file format".format(pp_file))
         return None
 
     if use_header:
         # UPF v2: attributes of <PP_HEADER>
-        if header.has_attr("wfc_cutoff"):
-            ecutwfc = _normalize_cutoff(header["wfc_cutoff"])
-        if header.has_attr("rho_cutoff"):
-            ecutrho = _normalize_cutoff(header["rho_cutoff"])
+        ecutwfc = _normalize_cutoff(upf.get("wfc_cutoff"))
+        ecutrho = _normalize_cutoff(upf.get("rho_cutoff"))
         # UPF v1: a header text line "<wfc> <rho> Suggested cutoff for wfc and rho"
         if ecutwfc is None or ecutrho is None:
-            for line in header.get_text().splitlines():
+            for line in upf.text.splitlines():
                 if "suggested cutoff for wfc and rho" in line.lower():
                     tokens = line.split()
                     if len(tokens) >= 2:
@@ -82,14 +77,11 @@ def read_pseudo_cutoff(pp_file, use_header=True):
     if ecutwfc is None or ecutrho is None:
         # read cutoff from pp_info text description; fill only the missing
         # fields so header values survive an unset "Suggested ... 0.0" line
-        if info is not None:
-            lines = str(info).splitlines()
-            sg = [s for s in lines if "Suggested" in s]
-            for s in sg:
-                if "wavefunctions" in s and ecutwfc is None:
-                    ecutwfc = _normalize_cutoff(s.split()[5])
-                elif "charge density" in s and ecutrho is None:
-                    ecutrho = _normalize_cutoff(s.split()[6])
+        suggested = suggested_cutoffs(upf.info)
+        if ecutwfc is None:
+            ecutwfc = suggested[0]
+        if ecutrho is None:
+            ecutrho = suggested[1]
 
     # cif2x looks the cutoffs up by the bare pseudopotential file name (the
     # name written to ATOMIC_SPECIES), so the CSV key must not carry a path

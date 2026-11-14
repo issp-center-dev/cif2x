@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("bs4")
 pymatgen = pytest.importorskip("pymatgen.core")
 
 SAMPLE_DIR = Path(__file__).resolve().parent.parent / "sample" / "cif2x" / "respack" / "SrVO3"
