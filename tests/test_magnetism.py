@@ -142,7 +142,6 @@ def test_qe_missing_valence_charge_is_a_clear_error(tmp_path):
 
 
 def test_qe_valence_charge_from_upf_header(tmp_path):
-    pytest.importorskip("bs4")
     from cif2x.struct2qe import Struct2QE
     pseudo = tmp_path / "pseudo"
     pseudo.mkdir()

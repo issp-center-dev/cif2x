@@ -1,7 +1,3 @@
-import pytest
-
-pytest.importorskip("bs4")
-
 from cif2x.pp_cutoff import read_pseudo_cutoff
 
 

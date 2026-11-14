@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Changed behaviour
+
+- The `beautifulsoup4` dependency is gone. The cutoffs and the valence charge
+  are read from the header of a UPF pseudopotential file with the standard
+  library (`cif2x.qe.upf`); normally only the beginning of the file is read.
+  The values found are the same as before for UPF v2 files. A file with
+  bytes that are not UTF-8 (in the author line of `PP_INFO`, say) used to be
+  reported as unreadable and is now read.
+
+### Fixed
+
+- cif2x did not read the cutoffs from the header line of a UPF version 1
+  file (`Suggested cutoff for wfc and rho`) although `cif2x-pp-cutoff` did,
+  so the command could report cutoffs for a file that cif2x then rejected.
+  Both use one lookup now.
+- Without `pseudo_dir`, the cutoff lookup tried to open `None/<file>` and
+  warned about it; it is skipped.
+
 ## 1.2.0 (unreleased)
 
 ### Changed behaviour

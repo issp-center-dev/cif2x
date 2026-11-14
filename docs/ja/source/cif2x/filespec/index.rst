@@ -166,7 +166,7 @@ content
 
   - pw.x のモード (``scf``, ``nscf``, ``relax``, ``vc-relax``, ``bands``) では、 ``&control`` の ``calculation`` がタスクの ``mode`` にセットされ、 ``&control`` の ``pseudo_dir`` が空欄なら ``optional.pseudo_dir`` の値が転記されます (いずれもテンプレートまたは ``content`` に ``&control`` namelist がある場合のみ)。
 
-  - カットオフ ``ecutwfc`` および ``ecutrho`` は、値が空欄の場合 (``ecutwfc`` はキー自体がない場合、 ``ecutrho`` は両方のキーがない場合も) に解決されます。元素ごとに、まず ``cutoff_file``、次に ``pseudo_dir`` 内の UPF ファイルの ``wfc_cutoff`` / ``rho_cutoff`` 属性または "Suggested minimum cutoff" 行を参照し、元素全体での最大値を書き出します。どちらの参照にも ``pp_file`` が必要です。 ``ecutwfc`` は必ず解決できなければならず、できない場合は ``cutoff_file`` または明示的な値を求めるエラーで停止します。 ``ecutrho`` が解決できない場合はキーを出力せず、 ``pw.x`` のデフォルト (``4 * ecutwfc``) に任せます。参照して得た ``ecutrho`` がこのデフォルトより小さい場合はデフォルト値まで引き上げられますが、明示的に指定した ``ecutrho`` はそのまま書き出されます。
+  - カットオフ ``ecutwfc`` および ``ecutrho`` は、値が空欄の場合 (``ecutwfc`` はキー自体がない場合、 ``ecutrho`` は両方のキーがない場合も) に解決されます。元素ごとに、まず ``cutoff_file``、次に ``pseudo_dir`` 内の UPF ファイルを参照します。UPF ファイルではヘッダ (``wfc_cutoff`` / ``rho_cutoff`` 属性、UPF バージョン 1 では "Suggested cutoff for wfc and rho" の行) を先に見て、ヘッダにない値は "Suggested minimum cutoff" 行から補います。こうして得た値のうち元素全体での最大値を書き出します。どちらの参照にも ``pp_file`` が必要です。 ``ecutwfc`` は必ず解決できなければならず、できない場合は ``cutoff_file`` または明示的な値を求めるエラーで停止します。 ``ecutrho`` が解決できない場合はキーを出力せず、 ``pw.x`` のデフォルト (``4 * ecutwfc``) に任せます。参照して得た ``ecutrho`` がこのデフォルトより小さい場合はデフォルト値まで引き上げられますが、明示的に指定した ``ecutrho`` はそのまま書き出されます。
 
   - ``nbnd`` が空欄の場合は、 ``pp_file`` の ``nexclude`` と ``orbitals`` 列から ``nexclude + 2 W + E`` として見積もられます。 ``W`` は Wannier 化する軌道の数、 ``E`` は ``W/2`` の整数部分を偶数に切り上げた値 (``W = 9`` なら ``E = 4``) で、内殻バンドの上におよそ 2.5 W のバンドを取ることになります。非共線計算では ``nexclude`` と ``W`` が 2 倍になります。これらの列がない場合は ``nbnd`` を明示的に指定してください。
 
