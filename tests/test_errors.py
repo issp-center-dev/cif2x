@@ -185,15 +185,6 @@ def test_openmx_unknown_element_is_input_error(tmp_path):
         _lookup_vps_table("Og")
 
 
-# --- AkaiKKR ---------------------------------------------------------------
-
-def test_akaikkr_missing_workdir_is_input_error(tmp_path):
-    pytest.importorskip("pyakaikkr")
-    from cif2x.akaikkr.run_cif2kkr import ak_struct2kkr
-    with pytest.raises(InputValidationError, match="workdir"):
-        ak_struct2kkr(None, workdir=str(tmp_path / "none"))
-
-
 # --- CLI -------------------------------------------------------------------
 
 def _cli(monkeypatch, tmp_path, yaml_text, cif_path):

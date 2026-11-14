@@ -15,9 +15,9 @@ Installation and basic usage
   - mp_api module
   - ruamel.yaml module
 
-  To generate input files for AkaiKKR, the AkaiKKRPythonUtil module is additionally required. It is not installed automatically and must be installed separately (see below).
+  This version was checked with Python 3.11 to 3.14, pymatgen 2026.10, f90nml 1.5, and mp-api 0.47.
 
-  This version was checked with Python 3.11 to 3.14, pymatgen 2026.10, f90nml 1.5, and mp-api 0.47. AkaiKKRPythonUtil 2023.2.1 relies on pymatgen and spglib interfaces that are deprecated; it works with pymatgen 2026.10, but a future release of those libraries may stop supporting it.
+  The AkaiKKR structure converter is included (adapted from `AkaiKKRPythonUtil <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_, Apache License 2.0); the AkaiKKRPythonUtil package is no longer needed.
 
 
 **Official pages**
@@ -43,15 +43,6 @@ Installation and basic usage
 
   The executable files ``cif2x``, ``getcif``, and ``cif2x-pp-cutoff`` will be installed.
   You may need to add ``--user`` option next to ``install`` keyword above in case you are not allowed to install packages system-wide.
-
-  AkaiKKRPythonUtil module need to be installed separately. The source package is available from `the repository <https://github.com/AkaiKKRteam/AkaiKKRPythonUtil>`_. Then follow the steps below to install the module along with the required seaborn module:
-
-  .. code-block:: bash
-
-     $ git clone https://github.com/AkaiKKRteam/AkaiKKRPythonUtil.git
-     $ cd ./AkaiKKRPythonUtil/library/PyAkaiKKR
-     $ python3 -m pip install .
-     $ python3 -m pip install seaborn
 
 
 **Directory structure**
@@ -93,9 +84,9 @@ Installation and basic usage
      |   |   |   |-- vps_table.py
      |   |   |-- struct2akaikkr.py
      |   |   |-- akaikkr/
+     |   |   |   |-- cif2kkr.py
      |   |   |   |-- make_input.py
      |   |   |   |-- read_input.py
-     |   |   |   |-- run_cif2kkr.py
      |   |   |-- struct2respack.py
      |   |-- getcif/
      |       |-- __init__.py
