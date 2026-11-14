@@ -146,3 +146,99 @@ def test_suggested_cutoffs_skip_unset_and_short_lines():
             "    Suggested minimum cutoff for wavefunctions:  45. Ry\n")
     assert suggested_cutoffs(info) == (45.0, None)
     assert suggested_cutoffs("") == (None, None)
+
+
+# --- lenient parsing: comments and bare attribute values ----------------------
+
+def test_commented_out_header_does_not_shadow_the_real_one(tmp_path):
+    path = _write(tmp_path, ('<UPF>\n<!-- old: <PP_HEADER z_valence="1.0" wfc_cutoff="10.0"/> -->\n'
+                             "<PP_INFO>\nnote\n<!-- <PP_INFO>hidden</PP_INFO> -->\n</PP_INFO>\n"
+                             '<PP_HEADER z_valence="2.0" wfc_cutoff="20.0"/>\n</UPF>\n'))
+    upf = read_upf_header(path)
+    assert upf.attrs == {"z_valence": "2.0", "wfc_cutoff": "20.0"}
+    assert "hidden" not in upf.info
+
+
+def test_header_only_inside_a_comment_is_no_header(tmp_path):
+    assert read_upf_header(_write(tmp_path, '<UPF>\n<!-- <PP_HEADER z_valence="1.0"/> -->\n</UPF>\n')) is None
+    # an unterminated comment hides what follows it
+    assert read_upf_header(_write(tmp_path, '<UPF>\n<!-- <PP_HEADER z_valence="1.0"/>\n</UPF>\n')) is None
+
+
+def test_unquoted_attribute_values(tmp_path):
+    path = _write(tmp_path, "<UPF>\n<PP_HEADER z_valence=4.0 element=C wfc_cutoff=30.0 rho_cutoff=240.0/>\n</UPF>\n")
+    upf = read_upf_header(path)
+    assert upf.attrs == {"z_valence": "4.0", "element": "C", "wfc_cutoff": "30.0", "rho_cutoff": "240.0"}
+    assert upf.cutoffs() == (30.0, 240.0)
+
+
+def test_text_inside_a_quoted_value_is_not_an_attribute(tmp_path):
+    path = _write(tmp_path, '<UPF>\n<PP_HEADER comment="set z_valence=9.0 by hand" z_valence="4.0"/>\n</UPF>\n')
+    assert read_upf_header(path).attrs == {"comment": "set z_valence=9.0 by hand", "z_valence": "4.0"}
+
+
+# --- the first read may end anywhere ------------------------------------------
+
+def _padded(before_header, tail):
+    """A UPF whose PP_INFO is padded so that ``before_header`` characters
+    precede what follows PP_INFO."""
+    opening, closing = "<UPF>\n<PP_INFO>\n", "\n</PP_INFO>\n"
+    return opening + "x" * (before_header - len(opening) - len(closing)) + closing + tail
+
+
+def test_v2_header_cut_by_the_first_read_at_any_position(tmp_path):
+    from cif2x.qe.upf import _HEAD_SIZE
+    header = '<PP_HEADER element="Fe" comment="a > b" z_valence="16.0" wfc_cutoff="64.0" rho_cutoff="782.0"/>'
+    expected = {"element": "Fe", "comment": "a > b", "z_valence": "16.0",
+                "wfc_cutoff": "64.0", "rho_cutoff": "782.0"}
+    # the first read ends before, at every character of, and after the tag
+    for cut in range(-2, len(header) + 3):
+        path = _write(tmp_path, _padded(_HEAD_SIZE - cut, header + "\n<PP_MESH>\n1.0\n</PP_MESH>\n</UPF>\n"))
+        upf = read_upf_header(path)
+        assert upf is not None and upf.attrs == expected, f"cut at {cut}"
+        assert upf.info.strip("x\n") == ""
+
+
+def test_v1_header_body_cut_by_the_first_read_at_any_position(tmp_path):
+    from cif2x.qe.upf import _HEAD_SIZE
+    header = ("<PP_HEADER>\n   16.00000000000   Z valence\n"
+              "   25.0  200.0  Suggested cutoff for wfc and rho\n</PP_HEADER>\n")
+    for cut in range(-2, len(header) + 3):
+        path = _write(tmp_path, _padded(_HEAD_SIZE - cut, header + "<PP_MESH>\n1.0\n</PP_MESH>\n"))
+        upf = read_upf_header(path)
+        assert upf is not None, f"cut at {cut}"
+        assert upf.z_valence() == 16.0, f"cut at {cut}"
+        assert upf.header_cutoffs() == (25.0, 200.0), f"cut at {cut}"
+
+
+def test_info_cut_by_the_first_read(tmp_path):
+    from cif2x.qe.upf import _HEAD_SIZE
+    info = ("    Suggested minimum cutoff for wavefunctions:  45. Ry\n"
+            "    Suggested minimum cutoff for charge density: 360. Ry\n")
+    text = "<UPF>\n<PP_INFO>\n" + "x" * (_HEAD_SIZE - 40) + "\n" + info + '</PP_INFO>\n<PP_HEADER z_valence="8.0"/>\n</UPF>\n'
+    upf = read_upf_header(_write(tmp_path, text))
+    assert upf.z_valence() == 8.0
+    assert upf.cutoffs() == (45.0, 360.0)
+
+
+# --- one lookup for cif2x and cif2x-pp-cutoff ---------------------------------
+
+def test_cutoffs_header_first_then_info_for_what_is_missing():
+    from cif2x.qe.upf import UPFHeader
+    info = ("    Suggested minimum cutoff for wavefunctions:  45. Ry\n"
+            "    Suggested minimum cutoff for charge density: 360. Ry\n")
+    v2 = UPFHeader(attrs={"wfc_cutoff": "64.0", "rho_cutoff": "0.0"}, info=info)
+    assert v2.header_cutoffs() == (64.0, None)
+    assert v2.cutoffs() == (64.0, 360.0)                    # only rho filled from PP_INFO
+    assert v2.cutoffs(use_header=False) == (45.0, 360.0)
+    v1 = UPFHeader(text="   25.0  200.0  Suggested cutoff for wfc and rho\n", info=info)
+    assert v1.cutoffs() == (25.0, 200.0)
+    assert UPFHeader().cutoffs() == (None, None)
+
+
+def test_z_valence_from_attribute_or_v1_line():
+    from cif2x.qe.upf import UPFHeader
+    assert UPFHeader(attrs={"z_valence": "1.600000000000e1"}).z_valence() == 16.0
+    assert UPFHeader(text="  Fe  Element\n    8.000   Z valence\n").z_valence() == 8.0
+    assert UPFHeader(attrs={"z_valence": "0.0"}).z_valence() is None
+    assert UPFHeader().z_valence() is None

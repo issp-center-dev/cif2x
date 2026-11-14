@@ -22,6 +22,7 @@ from cif2x.utils import normalize_cutoff
 # whole file is read when this is not enough
 _HEAD_SIZE = 1 << 16
 
+_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 _NAME = r"[A-Za-z_][\w.\-]*"
 # opening tag of PP_HEADER with its attributes; a quoted value may contain '>'
 _HEADER_OPEN = re.compile(
@@ -30,7 +31,9 @@ _HEADER_OPEN = re.compile(
 _HEADER_CLOSE = re.compile(r"</PP_HEADER\s*>", re.IGNORECASE)
 _INFO_OPEN = re.compile(r"<PP_INFO(?=[\s/>])[^>]*>", re.IGNORECASE)
 _INFO_CLOSE = re.compile(r"</PP_INFO\s*>", re.IGNORECASE)
-_ATTR = re.compile(rf"({_NAME})\s*=\s*(?:\"([^\"]*)\"|'([^']*)')")
+# name="value", name='value', or a bare value (not what QE writes, but legal
+# for the lenient parser this replaces)
+_ATTR = re.compile(rf"({_NAME})\s*=\s*(?:\"([^\"]*)\"|'([^']*)'|([^\s\"'=<>`]+))")
 
 
 @dataclass(frozen=True)
@@ -49,38 +52,52 @@ class UPFHeader:
         """Value of a PP_HEADER attribute, or None."""
         return self.attrs.get(name)
 
+    def z_valence(self):
+        """Valence charge: the ``z_valence`` attribute (UPF v2) or the header
+        line ``16.00000000000   Z valence`` (UPF v1). None when not given."""
+        value = normalize_cutoff(self.get("z_valence"))
+        if value is None:
+            for line in self.text.splitlines():
+                if "z valence" in line.lower():
+                    value = normalize_cutoff(line.split()[0])
+                    if value is not None:
+                        break
+        return value
 
-def _parse(text):
-    """(UPFHeader or None, complete). ``complete`` is False when reading more
-    of the file could change the result."""
-    m = _HEADER_OPEN.search(text)
-    if m is None:
-        return None, False
+    def header_cutoffs(self):
+        """(ecutwfc, ecutrho) given in PP_HEADER: the ``wfc_cutoff`` and
+        ``rho_cutoff`` attributes (UPF v2) or the header line
+        ``<wfc> <rho>  Suggested cutoff for wfc and rho`` (UPF v1). A value
+        that is absent, unparseable or an unset 0.0 comes back as None."""
+        ecutwfc = normalize_cutoff(self.get("wfc_cutoff"))
+        ecutrho = normalize_cutoff(self.get("rho_cutoff"))
+        if ecutwfc is None or ecutrho is None:
+            for line in self.text.splitlines():
+                if "suggested cutoff for wfc and rho" in line.lower():
+                    tokens = line.split()
+                    if len(tokens) >= 2:
+                        if ecutwfc is None:
+                            ecutwfc = normalize_cutoff(tokens[0])
+                        if ecutrho is None:
+                            ecutrho = normalize_cutoff(tokens[1])
+        return ecutwfc, ecutrho
 
-    attrs = {a.group(1).lower(): html.unescape(a.group(2) if a.group(2) is not None else a.group(3))
-             for a in _ATTR.finditer(m.group("attrs"))}
-    complete = True
-    body = ""
-    if not m.group("empty"):
-        close = _HEADER_CLOSE.search(text, m.end())
-        if close is None:
-            body, complete = text[m.end():], False
-        else:
-            body = text[m.end():close.start()]
+    def cutoffs(self, use_header=True):
+        """(ecutwfc, ecutrho) of the pseudopotential, None where unknown.
 
-    info = ""
-    info_open = _INFO_OPEN.search(text)
-    if info_open is None:
-        # PP_INFO precedes PP_HEADER in every file seen, but nothing forces it
-        complete = False
-    else:
-        info_close = _INFO_CLOSE.search(text, info_open.end())
-        if info_close is None:
-            info, complete = text[info_open.end():], False
-        else:
-            info = text[info_open.end():info_close.start()]
-
-    return UPFHeader(attrs=attrs, text=body, info=info), complete
+        The header values come first; the "Suggested minimum cutoff" lines
+        of PP_INFO fill only what the header leaves open, so a header value
+        survives an unset ``0.`` in those lines. With ``use_header`` False
+        only the PP_INFO lines are used.
+        """
+        ecutwfc, ecutrho = self.header_cutoffs() if use_header else (None, None)
+        if ecutwfc is None or ecutrho is None:
+            info_wfc, info_rho = suggested_cutoffs(self.info)
+            if ecutwfc is None:
+                ecutwfc = info_wfc
+            if ecutrho is None:
+                ecutrho = info_rho
+        return ecutwfc, ecutrho
 
 
 def suggested_cutoffs(info):
@@ -103,6 +120,48 @@ def suggested_cutoffs(info):
             if len(tokens) > 6:
                 ecutrho = normalize_cutoff(tokens[6])
     return ecutwfc, ecutrho
+
+
+def _parse(text):
+    """(UPFHeader or None, complete). ``complete`` is False when reading more
+    of the file could change the result."""
+    # comments do not count: a commented-out header must not shadow the real
+    # one. What follows an unterminated "<!--" is comment as far as is known.
+    text = _COMMENT.sub("", text)
+    unterminated = text.find("<!--")
+    if unterminated != -1:
+        text = text[:unterminated]
+
+    m = _HEADER_OPEN.search(text)
+    if m is None:
+        return None, False
+
+    attrs = {}
+    for a in _ATTR.finditer(m.group("attrs")):
+        value = next(v for v in a.groups()[1:] if v is not None)
+        attrs[a.group(1).lower()] = html.unescape(value)
+    complete = True
+    body = ""
+    if not m.group("empty"):
+        close = _HEADER_CLOSE.search(text, m.end())
+        if close is None:
+            body, complete = text[m.end():], False
+        else:
+            body = text[m.end():close.start()]
+
+    info = ""
+    info_open = _INFO_OPEN.search(text)
+    if info_open is None:
+        # PP_INFO precedes PP_HEADER in every file seen, but nothing forces it
+        complete = False
+    else:
+        info_close = _INFO_CLOSE.search(text, info_open.end())
+        if info_close is None:
+            info, complete = text[info_open.end():], False
+        else:
+            info = text[info_open.end():info_close.start()]
+
+    return UPFHeader(attrs=attrs, text=body, info=info), complete
 
 
 def read_upf_header(path):

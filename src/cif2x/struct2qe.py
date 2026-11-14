@@ -13,7 +13,7 @@ from cif2x.qe.tools import deepupdate, is_empty_key
 from cif2x.qe.qeutil import QEInputGeneral
 from cif2x.qe.content import Content, inflate
 from cif2x.qe.calc_mode import create_modeproc
-from cif2x.qe.upf import read_upf_header, suggested_cutoffs
+from cif2x.qe.upf import read_upf_header
 
 import logging
 logger = logging.getLogger(__name__)
@@ -181,8 +181,14 @@ class Struct2QE:
         return ecutwfc, ecutrho
 
     def _read_upf_header(self, ename):
-        """Header of the pseudopotential file of ``ename`` in pseudo_dir, or
-        None (with a warning) when the file cannot be read."""
+        """Header of the pseudopotential file of ``ename`` in pseudo_dir.
+
+        None when there is nothing to read: no pp_file table or no pseudo_dir
+        (both already reported when the input was read), or a file that
+        cannot be opened (warned about here) or is not a UPF.
+        """
+        if self.pp_list is None or self.pseudo_dir is None:
+            return None
         pseudo_file = "{}/{}".format(self.pseudo_dir, self._pp_filename(ename))
         try:
             return read_upf_header(pseudo_file)
@@ -191,34 +197,20 @@ class Struct2QE:
             return None
 
     def _find_elem_cutoff_from_file(self, ename):
-        ecutwfc, ecutrho = None, None
-
-        if self.pp_list is None:
-            return ecutwfc, ecutrho
-
+        # the same lookup as cif2x-pp-cutoff: PP_HEADER (UPF v2 attributes or
+        # the UPF v1 header line), then the "Suggested" lines of PP_INFO
         upf = self._read_upf_header(ename)
-        if upf is not None:
-            # UPF v2: attributes of PP_HEADER
-            ecutwfc = _normalize_cutoff(upf.get("wfc_cutoff"))
-            ecutrho = _normalize_cutoff(upf.get("rho_cutoff"))
-            if ecutwfc is None or ecutrho is None:
-                # fill only the fields the header did not provide; a
-                # "Suggested" line may itself carry an unset 0.0 and must not
-                # clobber them
-                suggested = suggested_cutoffs(upf.info)
-                if ecutwfc is None:
-                    ecutwfc = suggested[0]
-                if ecutrho is None:
-                    ecutrho = suggested[1]
-
-        return ecutwfc, ecutrho
+        if upf is None:
+            return None, None
+        return upf.cutoffs()
 
     def _find_elem_zvalence(self, ename, itype=None):
         """Valence charge of the pseudopotential of ``ename``.
 
         Looked up in a ``zval`` (or ``z_valence``) column of pp_file first, then
-        in the ``z_valence`` attribute of the UPF header in pseudo_dir. Needed to
-        convert a magnetic moment to QE's starting_magnetization.
+        in the header of the UPF file in pseudo_dir (the ``z_valence``
+        attribute, or the "Z valence" line of UPF v1). Needed to convert a
+        magnetic moment to QE's starting_magnetization.
         """
         if self.pp_list is not None and ename in self.pp_list.index:
             for col in ("zval", "z_valence"):
@@ -227,19 +219,11 @@ class Struct2QE:
                     if value is not None:
                         return value
 
-        if self.pp_list is not None and self.pseudo_dir is not None:
-            upf = self._read_upf_header(ename)
-            if upf is not None:
-                # UPF v2: attribute of <PP_HEADER>
-                value = _normalize_cutoff(upf.get("z_valence"))
-                if value is not None:
-                    return value
-                # UPF v1: a text line such as "   16.00000000000   Z valence"
-                for line in upf.text.splitlines():
-                    if "z valence" in line.lower():
-                        value = _normalize_cutoff(line.split()[0])
-                        if value is not None:
-                            return value
+        upf = self._read_upf_header(ename)
+        if upf is not None:
+            value = upf.z_valence()
+            if value is not None:
+                return value
 
         key = "starting_magnetization({})".format(itype if itype is not None else "i")
         raise InputValidationError(

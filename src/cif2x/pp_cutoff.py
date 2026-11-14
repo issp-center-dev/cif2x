@@ -39,14 +39,10 @@ import os
 import logging
 logger = logging.getLogger(__name__)
 
-from cif2x.qe.upf import read_upf_header, suggested_cutoffs
-from cif2x.utils import normalize_cutoff as _normalize_cutoff
+from cif2x.qe.upf import read_upf_header
 
 
 def read_pseudo_cutoff(pp_file, use_header=True):
-    ecutwfc = None
-    ecutrho = None
-
     try:
         upf = read_upf_header(pp_file)
     except OSError as e:
@@ -57,31 +53,12 @@ def read_pseudo_cutoff(pp_file, use_header=True):
         logger.error("{}: unknown pseudopotential file format".format(pp_file))
         return None
 
-    if use_header:
-        # UPF v2: attributes of <PP_HEADER>
-        ecutwfc = _normalize_cutoff(upf.get("wfc_cutoff"))
-        ecutrho = _normalize_cutoff(upf.get("rho_cutoff"))
-        # UPF v1: a header text line "<wfc> <rho> Suggested cutoff for wfc and rho"
-        if ecutwfc is None or ecutrho is None:
-            for line in upf.text.splitlines():
-                if "suggested cutoff for wfc and rho" in line.lower():
-                    tokens = line.split()
-                    if len(tokens) >= 2:
-                        if ecutwfc is None:
-                            ecutwfc = _normalize_cutoff(tokens[0])
-                        if ecutrho is None:
-                            ecutrho = _normalize_cutoff(tokens[1])
-        if ecutwfc is None or ecutrho is None:
-            logger.warning("{}: cutoff info not found in header".format(pp_file))
-
-    if ecutwfc is None or ecutrho is None:
-        # read cutoff from pp_info text description; fill only the missing
-        # fields so header values survive an unset "Suggested ... 0.0" line
-        suggested = suggested_cutoffs(upf.info)
-        if ecutwfc is None:
-            ecutwfc = suggested[0]
-        if ecutrho is None:
-            ecutrho = suggested[1]
+    # the header (UPF v2 attributes, or the UPF v1 header line) first, then
+    # the "Suggested" lines of pp_info for what the header leaves open; the
+    # same lookup cif2x itself does when it reads a pseudopotential file
+    ecutwfc, ecutrho = upf.cutoffs(use_header)
+    if use_header and None in upf.header_cutoffs():
+        logger.warning("{}: cutoff info not found in header".format(pp_file))
 
     # cif2x looks the cutoffs up by the bare pseudopotential file name (the
     # name written to ATOMIC_SPECIES), so the CSV key must not carry a path
